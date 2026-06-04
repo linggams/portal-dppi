@@ -1,14 +1,14 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import Link from "next/link"
 import { Eye, Inbox } from "lucide-react"
 import {
   ContentEmpty,
   DashboardLayout,
   PageActions,
+  PageSection,
   SectionCard,
-  StatCard,
 } from "@/components/layout"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -37,6 +37,7 @@ interface AntrianItem {
   judul: string
   status: number
   prioritas: string
+  ditugaskanKe: string | null
   tglDibuat: string
   kategori: { nama: string }
   posisiAntrian: number
@@ -73,6 +74,15 @@ export default function UserAntrianPage() {
   const antrianSaya = data?.antrianSaya ?? []
   const terdepan = antrianSaya[0]
 
+  const antrianGlobalTabel = useMemo(
+    () =>
+      [...antrianGlobal].sort(
+        (a, b) =>
+          new Date(b.tglDibuat).getTime() - new Date(a.tglDibuat).getTime()
+      ),
+    [antrianGlobal]
+  )
+
   return (
     <DashboardLayout title="Antrian Tiket">
       <PageActions>
@@ -85,31 +95,9 @@ export default function UserAntrianPage() {
       </PageActions>
 
       {loading ? (
-        <div className="space-y-6">
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <Skeleton key={i} className="h-28" />
-            ))}
-          </div>
-          <Skeleton className="h-48 w-full" />
-        </div>
+        <Skeleton className="h-48 w-full" />
       ) : (
         <div className="space-y-6">
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            <StatCard
-              label="Total Antrian IT"
-              value={data?.totalAntrian ?? 0}
-            />
-            <StatCard
-              label="Tiket Anda Dalam Antrian"
-              value={antrianSaya.length}
-            />
-            <StatCard
-              label="Tiket Anda Selesai"
-              value={data?.tiketSelesai ?? 0}
-            />
-          </div>
-
           {terdepan ? (
             <SectionCard title="Posisi Antrian Terdekat (Tiket Anda)">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -142,7 +130,7 @@ export default function UserAntrianPage() {
             </SectionCard>
           ) : null}
 
-          <SectionCard title="Antrian Tiket (Semua)">
+          <PageSection title="Antrian Tiket (Semua)">
             {antrianGlobal.length === 0 ? (
               <ContentEmpty
                 title="Antrian kosong"
@@ -160,12 +148,13 @@ export default function UserAntrianPage() {
                       <TableHead>Kategori</TableHead>
                       <TableHead>Prioritas</TableHead>
                       <TableHead>Status</TableHead>
+                      <TableHead>Ditugaskan</TableHead>
                       <TableHead>Tanggal</TableHead>
                       <TableHead className="text-right">Aksi</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {antrianGlobal.map((t) => (
+                    {antrianGlobalTabel.map((t) => (
                       <TableRow
                         key={t.idTiket}
                         className={cn(
@@ -193,6 +182,7 @@ export default function UserAntrianPage() {
                         <TableCell>{t.kategori.nama}</TableCell>
                         <TableCell>{getPrioritasBadge(t.prioritas)}</TableCell>
                         <TableCell>{getStatusBadge(t.status)}</TableCell>
+                        <TableCell>{t.ditugaskanKe ?? "-"}</TableCell>
                         <TableCell className="whitespace-nowrap text-sm">
                           {formatTiketDate(t.tglDibuat)}
                         </TableCell>
@@ -215,12 +205,13 @@ export default function UserAntrianPage() {
                 </Table>
               </TableContainer>
             )}
-          </SectionCard>
+          </PageSection>
 
           <p className="text-xs text-muted-foreground">
-            Urutan antrian: prioritas (Kritis → Rendah), lalu tanggal pengajuan
-            terlama lebih dulu. Baris dengan label &quot;Anda&quot; adalah tiket
-            milik Anda; detail hanya dapat dibuka untuk tiket sendiri.
+            Tabel diurutkan tiket terbaru di atas. Kolom # adalah posisi antrian
+            sebenarnya (prioritas Kritis → Rendah, lalu tanggal terlama lebih
+            dulu). Baris &quot;Anda&quot; adalah tiket milik Anda; detail hanya
+            untuk tiket sendiri.
           </p>
         </div>
       )}

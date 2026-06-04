@@ -1,8 +1,8 @@
 ﻿"use client"
 
 import { useState, useEffect } from "react"
+import { PageSection } from "@/components/layout"
 import { DashboardLayout } from "@/components/layout/DashboardLayout"
-import { Card } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
   Table,
@@ -239,18 +239,16 @@ export default function DataPengajuanPage() {
         {loading ? (
           <div className="space-y-6">
             {[1, 2].map((i) => (
-              <Card key={i} className="p-6">
-                <div className="space-y-3">
-                  <div className="flex justify-between">
-                    <Skeleton className="h-6 w-32" />
-                    <Skeleton className="h-9 w-28" />
-                  </div>
-                  <Skeleton className="h-10 w-full" />
-                  {[...Array(2)].map((_, j) => (
-                    <Skeleton key={j} className="h-12 w-full" />
-                  ))}
+              <div key={i} className="space-y-3 rounded-md border p-6">
+                <div className="flex justify-between">
+                  <Skeleton className="h-6 w-32" />
+                  <Skeleton className="h-9 w-28" />
                 </div>
-              </Card>
+                <Skeleton className="h-10 w-full" />
+                {[...Array(2)].map((_, j) => (
+                  <Skeleton key={j} className="h-12 w-full" />
+                ))}
+              </div>
             ))}
           </div>
         ) : Object.keys(groupedPengajuan).length === 0 ? (
@@ -260,14 +258,11 @@ export default function DataPengajuanPage() {
         ) : (
           <div className="space-y-6">
             {Object.values(groupedPengajuan).map((group, index) => (
-              <Card key={index} className="p-6">
-                <div className="flex justify-between items-center mb-4">
-                  <div>
-                    <h2 className="text-lg font-semibold text-foreground">{group.unit}</h2>
-                    <p className="text-sm text-muted-foreground">
-                      {formatDate(group.tglPengajuan)}
-                    </p>
-                  </div>
+              <PageSection
+                key={index}
+                title={group.unit}
+                description={formatDate(group.tglPengajuan)}
+                action={
                   <div className="flex gap-2">
                     {group.items.some((item) => item.status === 0) && (
                       <Button asChild>
@@ -286,8 +281,9 @@ export default function DataPengajuanPage() {
                       Cetak PDF
                     </Button>
                   </div>
-                </div>
-                <div className="text-center mb-4 pb-4 border-b">
+                }
+              >
+                <div className="mb-4 border-b pb-4 text-center">
                   <h2 className="text-lg font-bold text-foreground">PT DASAN PAN PACIFIC INDONESIA</h2>
                   <p className="text-sm text-muted-foreground">Parakansalak, Bojonglongok, Kec. Parakansalak, Kabupaten Sukabumi, Jawa Barat 43355</p>
                 </div>
@@ -329,7 +325,7 @@ export default function DataPengajuanPage() {
                     </span>
                   </div>
                 </div>
-              </Card>
+              </PageSection>
             ))}
           </div>
         )}

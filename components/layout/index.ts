@@ -1,4 +1,5 @@
 export { PageActions } from "./page-actions"
+export { PageSection } from "./page-section"
 export { SetPageTitle, usePageTitle } from "./page-title-context"
 export { StatCard } from "./stat-card"
 export { AuthCard } from "./auth-card"

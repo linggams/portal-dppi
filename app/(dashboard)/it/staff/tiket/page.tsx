@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { Eye } from "lucide-react"
-import { ContentEmpty, DashboardLayout, PageActions, SectionCard } from "@/components/layout"
+import { ContentEmpty, DashboardLayout, PageSection } from "@/components/layout"
 import { Button } from "@/components/ui/button"
 import { TableActionLink } from "@/components/ui/table-actions"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -64,7 +64,7 @@ export default function ItAntrianPage() {  const [tiket, setTiket] = useState<T
 
   return (
     <DashboardLayout title="Antrian Tiket">
-      <SectionCard
+      <PageSection
         title="Daftar Tiket"
         action={
           <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -131,7 +131,7 @@ export default function ItAntrianPage() {  const [tiket, setTiket] = useState<T
             </Table>
           </TableContainer>
         )}
-      </SectionCard>
+      </PageSection>
     </DashboardLayout>
   )
 }

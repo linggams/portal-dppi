@@ -6,6 +6,10 @@ import { ItSupportAnnouncementDialog } from "@/components/it/ItSupportAnnounceme
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar"
 import { AppSidebar } from "./Sidebar"
 import { Header } from "./Header"
+import {
+  PageActionsBar,
+  PageActionsProvider,
+} from "./page-actions-context"
 import { PageTitleProvider, SetPageTitle } from "./page-title-context"
 
 interface DashboardLayoutProps {
@@ -38,13 +42,16 @@ export function DashboardLayout({ children, title }: DashboardLayoutProps) {
       <AppSidebar userLevel={userLevel} />
       <SidebarInset>
         <PageTitleProvider>
-          {title ? <SetPageTitle title={title} /> : null}
-          <Header userLevel={userLevel} />
-          <main className="relative flex-1 overflow-y-auto focus:outline-none">
-            <div className="mx-auto w-full max-w-7xl space-y-6 px-4 py-6 sm:px-6 lg:px-8">
-              {children}
-            </div>
-          </main>
+          <PageActionsProvider>
+            {title ? <SetPageTitle title={title} /> : null}
+            <Header userLevel={userLevel} />
+            <PageActionsBar />
+            <main className="relative flex-1 overflow-y-auto focus:outline-none">
+              <div className="w-full space-y-6 px-4 py-6 sm:px-6 lg:px-8">
+                {children}
+              </div>
+            </main>
+          </PageActionsProvider>
           {showItSupportAnnouncement && username ? (
             <ItSupportAnnouncementDialog username={username} />
           ) : null}

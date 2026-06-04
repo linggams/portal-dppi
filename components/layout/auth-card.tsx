@@ -5,6 +5,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
+import { APP_DESCRIPTION, APP_NAME, COMPANY_NAME } from "@/lib/app-branding"
 import { cn } from "@/lib/utils"
 
 interface AuthCardProps {
@@ -39,7 +40,11 @@ export function AuthCard({
           ) : null}
           {description ? (
             <CardDescription className="pt-1">{description}</CardDescription>
-          ) : null}
+          ) : (
+            <CardDescription className="pt-1 text-xs">
+              {APP_NAME} · {COMPANY_NAME} — {APP_DESCRIPTION}
+            </CardDescription>
+          )}
         </CardHeader>
         <CardContent>{children}</CardContent>
       </Card>

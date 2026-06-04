@@ -2,8 +2,8 @@
 
 import { useState } from "react"
 import { DashboardLayout } from "@/components/layout/DashboardLayout"
+import { PageActions } from "@/components/layout"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useUsers } from "./hooks/useUsers"
 import {
@@ -38,15 +38,11 @@ export default function UsersPage() {
   if (loading) {
     return (
       <DashboardLayout title="Data User">
-        <div className="space-y-6">
-                    <Card>
-            <div className="space-y-3 p-4">
-              <Skeleton className="h-10 w-full" />
-              {[...Array(5)].map((_, i) => (
-                <Skeleton key={i} className="h-12 w-full" />
-              ))}
-            </div>
-          </Card>
+        <div className="space-y-3 rounded-md border p-4">
+          <Skeleton className="h-10 w-full" />
+          {[...Array(5)].map((_, i) => (
+            <Skeleton key={i} className="h-12 w-full" />
+          ))}
         </div>
       </DashboardLayout>
     )
@@ -55,8 +51,8 @@ export default function UsersPage() {
   return (
     <DashboardLayout title="Data User">
       <div className="space-y-6">
-        <div className="flex justify-end items-center"><Button onClick={handleAddClick}>Tambah User</Button>
-        </div>
+        <PageActions><Button onClick={handleAddClick}>Tambah User</Button>
+        </PageActions>
 
         <UserFormDialog
           open={formOpen}
@@ -65,15 +61,11 @@ export default function UsersPage() {
           onSubmit={saveUser}
         />
 
-        <Card>
-          <CardContent>
-            <UsersTable
-              data={users}
-              onEdit={handleEditClick}
-              onDelete={handleDeleteClick}
-            />
-          </CardContent>
-        </Card>
+        <UsersTable
+          data={users}
+          onEdit={handleEditClick}
+          onDelete={handleDeleteClick}
+        />
 
         <DeleteUserDialog
           user={userToDelete}

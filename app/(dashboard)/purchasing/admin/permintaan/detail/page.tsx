@@ -16,7 +16,6 @@ import {
 } from "@/components/ui/table"
 import { TableContainer } from "@/components/ui/table-container"
 import { Badge } from "@/components/ui/badge"
-import { Card } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { toast } from "sonner"
 import { format } from "date-fns"
@@ -215,14 +214,12 @@ export default function DetailPermintaanPage() {  const searchParams = useSearc
         </div>
 
         {loading ? (
-          <Card>
-            <div className="space-y-3 p-4">
-              <Skeleton className="h-10 w-full" />
-              {[...Array(5)].map((_, i) => (
-                <Skeleton key={i} className="h-12 w-full" />
-              ))}
-            </div>
-          </Card>
+          <div className="space-y-3 rounded-md border p-4">
+            <Skeleton className="h-10 w-full" />
+            {[...Array(5)].map((_, i) => (
+              <Skeleton key={i} className="h-12 w-full" />
+            ))}
+          </div>
         ) : permintaan.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-muted-foreground">Tidak ada data permintaan</p>
@@ -231,8 +228,7 @@ export default function DetailPermintaanPage() {  const searchParams = useSearc
             </Button>
           </div>
         ) : (
-          <Card>
-            <TableContainer>
+          <TableContainer>
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -275,7 +271,6 @@ export default function DetailPermintaanPage() {  const searchParams = useSearc
                   ))}
                 </TableBody>
               </Table></TableContainer>
-          </Card>
         )}
 
         <AlertDialog open={approveDialogOpen} onOpenChange={setApproveDialogOpen}>

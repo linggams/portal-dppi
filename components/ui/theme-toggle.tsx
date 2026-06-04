@@ -13,19 +13,25 @@ export function ThemeToggle() {
     () => false
   )
 
-  const isDark = (resolvedTheme ?? theme) === "dark"
+  const isDark = mounted && (resolvedTheme ?? theme) === "dark"
 
   return (
     <Button
       type="button"
       variant="ghost"
       size="icon-sm"
-      aria-label={isDark ? "Mode terang" : "Mode gelap"}
-      title={isDark ? "Mode terang" : "Mode gelap"}
+      aria-label={mounted ? (isDark ? "Mode terang" : "Mode gelap") : "Ubah tema"}
+      title={mounted ? (isDark ? "Mode terang" : "Mode gelap") : "Ubah tema"}
       onClick={() => setTheme(isDark ? "light" : "dark")}
       disabled={!mounted}
     >
-      {isDark ? <Sun className="size-4" /> : <Moon className="size-4" />}
+      {!mounted ? (
+        <Moon className="size-4 opacity-50" aria-hidden />
+      ) : isDark ? (
+        <Sun className="size-4" />
+      ) : (
+        <Moon className="size-4" />
+      )}
     </Button>
   )
 }

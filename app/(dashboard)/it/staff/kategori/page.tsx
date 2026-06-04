@@ -2,7 +2,7 @@
 
 import { Ban, Pencil } from "lucide-react"
 import { useEffect, useState } from "react"
-import { DashboardLayout, SectionCard } from "@/components/layout"
+import { DashboardLayout, PageSection, SectionCard } from "@/components/layout"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -129,7 +129,7 @@ export default function ItKategoriPage() {  const [kategori, setKategori] = use
         </form>
       </SectionCard>
 
-      <SectionCard title="Daftar Kategori">
+      <PageSection title="Daftar Kategori">
         {loading ? (
           <Skeleton className="h-32 w-full" />
         ) : (
@@ -179,7 +179,7 @@ export default function ItKategoriPage() {  const [kategori, setKategori] = use
             </Table>
           </TableContainer>
         )}
-      </SectionCard>
+      </PageSection>
 
       <EditKategoriDialog
         item={editItem}

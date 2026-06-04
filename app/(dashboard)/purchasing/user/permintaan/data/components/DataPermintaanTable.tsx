@@ -1,6 +1,6 @@
 "use client"
 
-import { Card } from "@/components/ui/card"
+import { PageSection } from "@/components/layout"
 import {
   Table,
   TableBody,
@@ -38,10 +38,7 @@ export function DataPermintaanTable({
   return (
     <div className="space-y-6">
       {Object.entries(groupedPermintaan).map(([date, items]) => (
-        <Card key={date} className="p-6">
-          <h2 className="text-lg font-semibold mb-4 text-foreground">
-            {formatDate(date)}
-          </h2>
+        <PageSection key={date} title={formatDate(date)}>
           <TableContainer>
             <Table>
               <TableHeader>
@@ -54,9 +51,9 @@ export function DataPermintaanTable({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {items.map((item, index) => (
+                {items.map((item, idx) => (
                   <TableRow key={item.idPermintaan}>
-                    <TableCell>{index + 1}</TableCell>
+                    <TableCell>{idx + 1}</TableCell>
                     <TableCell>{item.stokbarang.namaBrg}</TableCell>
                     <TableCell>{item.jumlah}</TableCell>
                     <TableCell>{item.stokbarang.satuan}</TableCell>
@@ -66,7 +63,7 @@ export function DataPermintaanTable({
               </TableBody>
             </Table>
           </TableContainer>
-        </Card>
+        </PageSection>
       ))}
     </div>
   )

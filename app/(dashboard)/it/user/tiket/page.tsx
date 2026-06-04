@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import Link from "next/link"
 import { Eye, Inbox, XCircle } from "lucide-react"
 import { toast } from "sonner"
-import { ContentEmpty, DashboardLayout, PageActions, SectionCard } from "@/components/layout"
+import { ContentEmpty, DashboardLayout, PageActions } from "@/components/layout"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import {
@@ -156,16 +156,15 @@ export default function UserTiketPage() {
         </Button>
       </PageActions>
 
-      <SectionCard title="Daftar Tiket">
-        {loading ? (
-          <Skeleton className="h-40 w-full" />
-        ) : tiket.length === 0 ? (
-          <ContentEmpty
-            title="Belum ada tiket"
-            description="Buat tiket baru jika Anda membutuhkan bantuan IT"
-          />
-        ) : (
-          <TableContainer>
+      {loading ? (
+        <Skeleton className="h-40 w-full rounded-md" />
+      ) : tiket.length === 0 ? (
+        <ContentEmpty
+          title="Belum ada tiket"
+          description="Buat tiket baru jika Anda membutuhkan bantuan IT"
+        />
+      ) : (
+        <TableContainer>
             <Table>
             <TableHeader>
               <TableRow>
@@ -219,9 +218,8 @@ export default function UserTiketPage() {
               ))}
             </TableBody>
             </Table>
-          </TableContainer>
-        )}
-      </SectionCard>
+        </TableContainer>
+      )}
 
       <AlertDialog
         open={cancelTarget != null}

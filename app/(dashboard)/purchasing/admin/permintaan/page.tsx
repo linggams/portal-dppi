@@ -1,9 +1,9 @@
 ﻿"use client"
 
 import { useState, useEffect } from "react"
+import { PageSection } from "@/components/layout"
 import { DashboardLayout } from "@/components/layout/DashboardLayout"
 import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
   Table,
@@ -101,18 +101,16 @@ export default function PermintaanPage() {
                 {loading ? (
           <div className="space-y-6">
             {[1, 2].map((i) => (
-              <Card key={i} className="p-6">
-                <div className="space-y-3">
-                  <div className="flex justify-between">
-                    <Skeleton className="h-6 w-32" />
-                    <Skeleton className="h-9 w-36" />
-                  </div>
-                  <Skeleton className="h-10 w-full" />
-                  {[...Array(3)].map((_, j) => (
-                    <Skeleton key={j} className="h-12 w-full" />
-                  ))}
+              <div key={i} className="space-y-3 rounded-md border p-6">
+                <div className="flex justify-between">
+                  <Skeleton className="h-6 w-32" />
+                  <Skeleton className="h-9 w-36" />
                 </div>
-              </Card>
+                <Skeleton className="h-10 w-full" />
+                {[...Array(3)].map((_, j) => (
+                  <Skeleton key={j} className="h-12 w-full" />
+                ))}
+              </div>
             ))}
           </div>
         ) : Object.keys(groupedPermintaan).length === 0 ? (
@@ -122,14 +120,11 @@ export default function PermintaanPage() {
         ) : (
           <div className="space-y-6">
             {Object.values(groupedPermintaan).map((group, index) => (
-              <Card key={index} className="p-6">
-                <div className="flex justify-between items-center mb-4">
-                  <div>
-                    <h2 className="text-lg font-semibold text-foreground">{group.unit}</h2>
-                    <p className="text-sm text-muted-foreground">
-                      {group.instansi} - {formatDate(group.tglPermintaan)}
-                    </p>
-                  </div>
+              <PageSection
+                key={index}
+                title={group.unit}
+                description={`${group.instansi} - ${formatDate(group.tglPermintaan)}`}
+                action={
                   <Button asChild>
                     <Link
                       href={`/purchasing/admin/permintaan/detail?unit=${group.unit}&tgl=${group.tglPermintaan.split("T")[0]}`}
@@ -137,7 +132,8 @@ export default function PermintaanPage() {
                       Detail Permintaan
                     </Link>
                   </Button>
-                </div>
+                }
+              >
                 <TableContainer>
                   <Table>
                     <TableHeader>
@@ -161,7 +157,7 @@ export default function PermintaanPage() {
                       ))}
                     </TableBody>
                   </Table></TableContainer>
-              </Card>
+              </PageSection>
             ))}
           </div>
         )}

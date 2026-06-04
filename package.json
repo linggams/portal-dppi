@@ -12,7 +12,8 @@
     "prisma:migrate:dev": "prisma migrate dev",
     "prisma:migrate:deploy": "prisma migrate deploy",
     "prisma:studio": "prisma studio",
-    "db:seed": "prisma db seed"
+    "db:seed": "prisma db seed",
+    "migrate:page-actions": "node scripts/migrate-page-actions.mjs"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

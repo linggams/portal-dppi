@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { DashboardLayout } from "@/components/layout/DashboardLayout"
-import { Card, CardContent } from "@/components/ui/card"
+import { PageActions } from "@/components/layout"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useKategori } from "./hooks/useKategori"
 import {
@@ -25,15 +25,11 @@ export default function KategoriPage() {
   if (loading) {
     return (
       <DashboardLayout title="Data Kategori">
-        <div className="space-y-6">
-                    <Card>
-            <div className="space-y-3 p-4">
-              <Skeleton className="h-10 w-full" />
-              {[...Array(5)].map((_, i) => (
-                <Skeleton key={i} className="h-12 w-full" />
-              ))}
-            </div>
-          </Card>
+        <div className="space-y-3 rounded-md border p-4">
+          <Skeleton className="h-10 w-full" />
+          {[...Array(5)].map((_, i) => (
+            <Skeleton key={i} className="h-12 w-full" />
+          ))}
         </div>
       </DashboardLayout>
     )
@@ -42,14 +38,10 @@ export default function KategoriPage() {
   return (
     <DashboardLayout title="Data Kategori">
       <div className="space-y-6">
-        <div className="flex justify-end items-center"><AddKategoriDialog onSubmit={addKategori} />
-        </div>
+        <PageActions><AddKategoriDialog onSubmit={addKategori} />
+        </PageActions>
 
-        <Card>
-          <CardContent>
-            <KategoriTable data={kategori} onDelete={handleDeleteClick} />
-          </CardContent>
-        </Card>
+        <KategoriTable data={kategori} onDelete={handleDeleteClick} />
 
         <DeleteKategoriDialog
           item={kategoriToDelete}

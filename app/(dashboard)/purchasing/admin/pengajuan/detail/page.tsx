@@ -16,7 +16,6 @@ import {
 } from "@/components/ui/table"
 import { TableContainer } from "@/components/ui/table-container"
 import { Badge } from "@/components/ui/badge"
-import { Card } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { toast } from "sonner"
 import { format } from "date-fns"
@@ -215,14 +214,12 @@ export default function DetailPengajuanPage() {  const searchParams = useSearch
         </div>
 
         {loading ? (
-          <Card>
-            <div className="space-y-3 p-4">
-              <Skeleton className="h-10 w-full" />
-              {[...Array(5)].map((_, i) => (
-                <Skeleton key={i} className="h-12 w-full" />
-              ))}
-            </div>
-          </Card>
+          <div className="space-y-3 rounded-md border p-4">
+            <Skeleton className="h-10 w-full" />
+            {[...Array(5)].map((_, i) => (
+              <Skeleton key={i} className="h-12 w-full" />
+            ))}
+          </div>
         ) : pengajuan.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-muted-foreground">Tidak ada data pengajuan</p>
@@ -232,8 +229,7 @@ export default function DetailPengajuanPage() {  const searchParams = useSearch
           </div>
         ) : (
           <>
-            <Card>
-              <TableContainer>
+            <TableContainer>
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -269,13 +265,12 @@ export default function DetailPengajuanPage() {  const searchParams = useSearch
                     ))}
                   </TableBody>
                 </Table></TableContainer>
-            </Card>
-            <Card className="p-4">
-              <div className="flex justify-between font-semibold text-lg text-foreground">
+            <div className="rounded-md border bg-muted/40 p-4">
+              <div className="flex justify-between text-lg font-semibold text-foreground">
                 <span>Total Pengajuan:</span>
                 <span>{formatRupiah(totalAll)}</span>
               </div>
-            </Card>
+            </div>
           </>
         )}
 

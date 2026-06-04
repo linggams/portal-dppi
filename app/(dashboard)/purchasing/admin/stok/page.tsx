@@ -60,15 +60,11 @@ export default function StokPage() {  const {
   if (loading) {
     return (
       <DashboardLayout title="Data Stok Barang">
-        <div className="space-y-6">
-                    <Card>
-            <div className="space-y-3 p-4">
-              <Skeleton className="h-10 w-full" />
-              {[...Array(6)].map((_, i) => (
-                <Skeleton key={i} className="h-12 w-full" />
-              ))}
-            </div>
-          </Card>
+        <div className="space-y-3 rounded-md border p-4">
+          <Skeleton className="h-10 w-full" />
+          {[...Array(6)].map((_, i) => (
+            <Skeleton key={i} className="h-12 w-full" />
+          ))}
         </div>
       </DashboardLayout>
     )
@@ -76,8 +72,7 @@ export default function StokPage() {  const {
 
   return (
     <DashboardLayout title="Data Stok Barang">
-      <div className="space-y-6">
-        <PageActions>
+      <PageActions>
             <Button
               onClick={downloadPDF}
               variant="default"
@@ -102,7 +97,8 @@ export default function StokPage() {  const {
               Export
             </Button>
             <Button onClick={handleAddClick}>Tambah Stok Barang</Button>
-          </PageActions>
+      </PageActions>
+      <div className="space-y-6">
         <StokFormDialog
           open={formOpen}
           onOpenChange={setFormOpen}

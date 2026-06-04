@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useSession } from "next-auth/react"
+import { PageSection } from "@/components/layout"
 import { DashboardLayout } from "@/components/layout/DashboardLayout"
 import { Button } from "@/components/ui/button"
 import {
@@ -392,17 +393,16 @@ export default function PengajuanPage() {
             </form>
           </Card>
 
-          {/* List Sementara */}
-          <Card className="p-6">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold text-foreground">Pengajuan Hari Ini</h2>
-              {sementaraList.length > 0 && (
+          <PageSection
+            title="Pengajuan Hari Ini"
+            action={
+              sementaraList.length > 0 ? (
                 <Button onClick={handleSubmitClick} disabled={submitting} size="sm">
                   {submitting ? "Mengirim..." : "Kirim Pengajuan"}
                 </Button>
-              )}
-            </div>
-
+              ) : undefined
+            }
+          >
             {loading ? (
               <div className="space-y-3 py-4">
                 <Skeleton className="h-10 w-full" />
@@ -465,7 +465,7 @@ export default function PengajuanPage() {
                 </div>
               </div>
             )}
-          </Card>
+          </PageSection>
         </div>
       </div>
 
