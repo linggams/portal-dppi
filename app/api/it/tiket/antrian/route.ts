@@ -3,8 +3,7 @@ import { getSessionFromRequest } from "@/lib/get-session"
 import { canAccessItUser } from "@/lib/auth/permissions"
 import { prisma } from "@/lib/db/prisma"
 import {
-  buildQueuePositionMap,
-  getQueuePosition,
+  compareTiketQueueOrder,
   isTiketInQueue,
   IT_QUEUE_ACTIVE_STATUSES,
 } from "@/lib/it/queue"
@@ -35,47 +34,44 @@ export async function GET(request: NextRequest) {
       orderBy: { tglDibuat: "asc" },
     })
 
-    const positionMap = buildQueuePositionMap(allInQueue)
-    const totalAntrian = positionMap.size
+    const sorted = allInQueue
+      .filter((t) => isTiketInQueue(t.status))
+      .sort(compareTiketQueueOrder)
 
-    const tiketUser = await prisma.itTiket.findMany({
-      where: { username },
-      select: {
-        idTiket: true,
-        nomorTiket: true,
-        judul: true,
-        status: true,
-        prioritas: true,
-        tglDibuat: true,
-        kategori: { select: { nama: true } },
-      },
-      orderBy: { tglDibuat: "desc" },
+    const totalAntrian = sorted.length
+
+    const antrianGlobal = sorted.map((t, index) => {
+      const posisiAntrian = index + 1
+      return {
+        idTiket: t.idTiket,
+        nomorTiket: t.nomorTiket,
+        username: t.username,
+        judul: t.judul,
+        status: t.status,
+        prioritas: t.prioritas,
+        tglDibuat: t.tglDibuat,
+        kategori: t.kategori,
+        posisiAntrian,
+        antrianDiDepan: Math.max(0, posisiAntrian - 1),
+        totalAntrian,
+        isMine: t.username === username,
+      }
     })
 
-    const antrianSaya = tiketUser
-      .filter((t) => isTiketInQueue(t.status))
-      .map((t) => {
-        const posisiAntrian = getQueuePosition(t.idTiket, positionMap)
-        return {
-          idTiket: t.idTiket,
-          nomorTiket: t.nomorTiket,
-          judul: t.judul,
-          status: t.status,
-          prioritas: t.prioritas,
-          tglDibuat: t.tglDibuat,
-          kategori: t.kategori,
-          posisiAntrian,
-          antrianDiDepan:
-            posisiAntrian != null ? Math.max(0, posisiAntrian - 1) : null,
-          totalAntrian,
-        }
-      })
-      .sort((a, b) => (a.posisiAntrian ?? 999) - (b.posisiAntrian ?? 999))
+    const antrianSaya = antrianGlobal.filter((t) => t.isMine)
+
+    const tiketSelesai = await prisma.itTiket.count({
+      where: {
+        username,
+        status: { notIn: IT_QUEUE_ACTIVE_STATUSES },
+      },
+    })
 
     return NextResponse.json({
       totalAntrian,
+      antrianGlobal,
       antrianSaya,
-      tiketSelesai: tiketUser.filter((t) => !isTiketInQueue(t.status)).length,
+      tiketSelesai,
     })
   } catch (error) {
     console.error("Error fetching antrian tiket:", error)

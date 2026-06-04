@@ -23,6 +23,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { TableContainer } from "@/components/ui/table-container"
+import { cn } from "@/lib/utils"
 import {
   formatTiketDate,
   getPrioritasBadge,
@@ -32,25 +33,23 @@ import {
 interface AntrianItem {
   idTiket: number
   nomorTiket: string
+  username: string
   judul: string
   status: number
   prioritas: string
   tglDibuat: string
   kategori: { nama: string }
-  posisiAntrian: number | null
-  antrianDiDepan: number | null
+  posisiAntrian: number
+  antrianDiDepan: number
   totalAntrian: number
+  isMine: boolean
 }
 
 interface AntrianResponse {
   totalAntrian: number
+  antrianGlobal: AntrianItem[]
   antrianSaya: AntrianItem[]
   tiketSelesai: number
-}
-
-function formatPosisiAntrian(item: AntrianItem): string {
-  if (item.posisiAntrian == null) return "-"
-  return `Ke-${item.posisiAntrian} dari ${item.totalAntrian}`
 }
 
 export default function UserAntrianPage() {
@@ -70,6 +69,7 @@ export default function UserAntrianPage() {
       .finally(() => setLoading(false))
   }, [])
 
+  const antrianGlobal = data?.antrianGlobal ?? []
   const antrianSaya = data?.antrianSaya ?? []
   const terdepan = antrianSaya[0]
 
@@ -110,8 +110,8 @@ export default function UserAntrianPage() {
             />
           </div>
 
-          {terdepan?.posisiAntrian != null ? (
-            <SectionCard title="Posisi Antrian Terdekat">
+          {terdepan ? (
+            <SectionCard title="Posisi Antrian Terdekat (Tiket Anda)">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div className="space-y-1">
                   <p className="text-sm text-muted-foreground">
@@ -124,7 +124,7 @@ export default function UserAntrianPage() {
                       dari {terdepan.totalAntrian} tiket
                     </span>
                   </p>
-                  {terdepan.antrianDiDepan != null && terdepan.antrianDiDepan > 0 ? (
+                  {terdepan.antrianDiDepan > 0 ? (
                     <p className="text-sm text-muted-foreground">
                       Ada {terdepan.antrianDiDepan} tiket di depan Anda
                     </p>
@@ -136,27 +136,28 @@ export default function UserAntrianPage() {
                 </div>
                 <Badge variant="secondary" className="w-fit gap-1">
                   <Inbox className="size-3.5" />
-                  {formatPosisiAntrian(terdepan)}
+                  Ke-{terdepan.posisiAntrian}/{terdepan.totalAntrian}
                 </Badge>
               </div>
             </SectionCard>
           ) : null}
 
-          <SectionCard title="Tiket Anda dalam Antrian">
-            {antrianSaya.length === 0 ? (
+          <SectionCard title="Antrian Tiket (Semua)">
+            {antrianGlobal.length === 0 ? (
               <ContentEmpty
-                title="Tidak ada tiket dalam antrian"
-                description="Semua tiket Anda sudah selesai ditangani, atau belum ada tiket yang diajukan"
+                title="Antrian kosong"
+                description="Belum ada tiket yang menunggu penanganan tim IT"
               />
             ) : (
               <TableContainer>
                 <Table>
                   <TableHeader>
                     <TableRow>
+                      <TableHead className="w-12">#</TableHead>
                       <TableHead>No. Tiket</TableHead>
                       <TableHead>Judul</TableHead>
-                      <TableHead>Antrian</TableHead>
-                      <TableHead>Di Depan</TableHead>
+                      <TableHead>Pemohon</TableHead>
+                      <TableHead>Kategori</TableHead>
                       <TableHead>Prioritas</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Tanggal</TableHead>
@@ -164,31 +165,49 @@ export default function UserAntrianPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {antrianSaya.map((t) => (
-                      <TableRow key={t.idTiket}>
+                    {antrianGlobal.map((t) => (
+                      <TableRow
+                        key={t.idTiket}
+                        className={cn(
+                          t.isMine &&
+                            "bg-primary/5 border-l-2 border-l-primary"
+                        )}
+                      >
+                        <TableCell className="font-mono text-sm font-medium">
+                          {t.posisiAntrian}
+                        </TableCell>
                         <TableCell className="font-medium">
-                          {t.nomorTiket}
+                          <span className="flex flex-wrap items-center gap-2">
+                            {t.nomorTiket}
+                            {t.isMine ? (
+                              <Badge variant="default" className="text-[10px]">
+                                Anda
+                              </Badge>
+                            ) : null}
+                          </span>
                         </TableCell>
-                        <TableCell>{t.judul}</TableCell>
-                        <TableCell>
-                          <Badge variant="outline" className="font-mono">
-                            {formatPosisiAntrian(t)}
-                          </Badge>
+                        <TableCell className="max-w-[200px] truncate">
+                          {t.judul}
                         </TableCell>
-                        <TableCell>
-                          {t.antrianDiDepan != null && t.antrianDiDepan > 0
-                            ? `${t.antrianDiDepan} tiket`
-                            : "—"}
-                        </TableCell>
+                        <TableCell>{t.username}</TableCell>
+                        <TableCell>{t.kategori.nama}</TableCell>
                         <TableCell>{getPrioritasBadge(t.prioritas)}</TableCell>
                         <TableCell>{getStatusBadge(t.status)}</TableCell>
-                        <TableCell>{formatTiketDate(t.tglDibuat)}</TableCell>
+                        <TableCell className="whitespace-nowrap text-sm">
+                          {formatTiketDate(t.tglDibuat)}
+                        </TableCell>
                         <TableCell className="text-right">
-                          <TableActionLink
-                            label="Detail"
-                            icon={Eye}
-                            href={`/it/user/tiket/${t.idTiket}`}
-                          />
+                          {t.isMine ? (
+                            <TableActionLink
+                              label="Detail"
+                              icon={Eye}
+                              href={`/it/user/tiket/${t.idTiket}`}
+                            />
+                          ) : (
+                            <span className="text-xs text-muted-foreground">
+                              —
+                            </span>
+                          )}
                         </TableCell>
                       </TableRow>
                     ))}
@@ -200,7 +219,8 @@ export default function UserAntrianPage() {
 
           <p className="text-xs text-muted-foreground">
             Urutan antrian: prioritas (Kritis → Rendah), lalu tanggal pengajuan
-            terlama lebih dulu.
+            terlama lebih dulu. Baris dengan label &quot;Anda&quot; adalah tiket
+            milik Anda; detail hanya dapat dibuka untuk tiket sendiri.
           </p>
         </div>
       )}
