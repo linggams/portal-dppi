@@ -37,6 +37,15 @@ export function getPrioritasBadge(prioritas: string) {
   }
 }
 
+/** Normalisasi pesan riwayat lama yang masih memakai kode angka status. */
+export function formatRiwayatPesan(pesan: string): string {
+  const match = pesan.match(/^Status diubah menjadi (\d+)$/)
+  if (!match) return pesan
+  const code = Number(match[1])
+  const label = IT_TIKET_STATUS_LABEL[code]
+  return label ? `Status diubah menjadi ${label}` : pesan
+}
+
 export function formatTiketDate(date: string | Date) {
   try {
     return new Date(date).toLocaleString("id-ID", {

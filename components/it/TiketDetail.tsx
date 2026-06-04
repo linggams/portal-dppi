@@ -28,6 +28,7 @@ import {
   canUserCancelTiket,
 } from "@/lib/it/constants"
 import {
+  formatRiwayatPesan,
   formatTiketDate,
   getPrioritasBadge,
   getStatusBadge,
@@ -242,7 +243,7 @@ export function TiketDetail({
                         </span>
                       ) : null}
                     </div>
-                    <p className="text-sm">{k.pesan}</p>
+                    <p className="text-sm">{formatRiwayatPesan(k.pesan)}</p>
                   </div>
                 ))
               )}

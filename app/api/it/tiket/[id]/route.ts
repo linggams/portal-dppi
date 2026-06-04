@@ -5,6 +5,7 @@ import {
   canManageItTiket,
   canUserCancelTiket,
   IT_TIKET_STATUS,
+  IT_TIKET_STATUS_LABEL,
 } from "@/lib/it/constants"
 import { z } from "zod"
 
@@ -180,7 +181,9 @@ export async function PATCH(
 
     if (data.status !== undefined) {
       updateData.status = data.status
-      statusNote = `Status diubah menjadi ${data.status}`
+      const statusLabel =
+        IT_TIKET_STATUS_LABEL[data.status] ?? String(data.status)
+      statusNote = `Status diubah menjadi ${statusLabel}`
       if (
         data.status === IT_TIKET_STATUS.SELESAI ||
         data.status === IT_TIKET_STATUS.DITUTUP
