@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import Link from "next/link"
-import { Eye, Inbox, XCircle } from "lucide-react"
+import { Eye, XCircle } from "lucide-react"
 import { toast } from "sonner"
 import { ContentEmpty, DashboardLayout, PageActions } from "@/components/layout"
 import { Button } from "@/components/ui/button"
@@ -146,10 +146,7 @@ export default function UserTiketPage() {
     <DashboardLayout title="Tiket Saya">
       <PageActions>
         <Button asChild variant="outline">
-          <Link href="/it/user/antrian">
-            <Inbox className="size-4" />
-            Antrian Tiket
-          </Link>
+          <Link href="/it/user/antrian">Antrian Tiket</Link>
         </Button>
         <Button asChild>
           <Link href="/it/user/tiket/buat">Buat Tiket</Link>

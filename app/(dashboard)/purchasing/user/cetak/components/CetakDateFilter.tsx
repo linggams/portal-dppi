@@ -2,14 +2,11 @@
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
+  CompactFilterCard,
+  FILTER_CONTROL_CLASS,
+  FilterField,
+} from "@/components/layout"
 
 interface CetakDateFilterProps {
   selectedDate: string
@@ -27,36 +24,33 @@ export function CetakDateFilter({
   hasData,
 }: CetakDateFilterProps) {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Pilih Tanggal</CardTitle>
-        <CardDescription>
-          Pilih tanggal permintaan yang ingin dicetak
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="grid gap-4 md:grid-cols-2">
-          <div className="grid gap-2">
-            <Label htmlFor="date">Tanggal Permintaan</Label>
-            <Input
-              id="date"
-              type="date"
-              value={selectedDate}
-              onChange={(e) => onDateChange(e.target.value)}
-            />
-          </div>
-          <div className="flex items-end gap-2">
-            <Button onClick={onShowData}>
-              Tampilkan Data
+    <CompactFilterCard
+      title="Pilih Tanggal"
+      description="Tanggal permintaan untuk cetak"
+      footer={
+        <>
+          <Button size="sm" onClick={onShowData}>
+            Tampilkan
+          </Button>
+          {hasData ? (
+            <Button size="sm" variant="outline" onClick={onExportAll}>
+              Export
             </Button>
-            {hasData && (
-              <Button variant="outline" onClick={onExportAll}>
-                Export
-              </Button>
-            )}
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+          ) : null}
+        </>
+      }
+    >
+      <div className="max-w-xs">
+        <FilterField label="Tanggal permintaan" htmlFor="date">
+          <Input
+            id="date"
+            type="date"
+            className={FILTER_CONTROL_CLASS}
+            value={selectedDate}
+            onChange={(e) => onDateChange(e.target.value)}
+          />
+        </FilterField>
+      </div>
+    </CompactFilterCard>
   )
 }

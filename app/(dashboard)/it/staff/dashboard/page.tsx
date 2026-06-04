@@ -67,6 +67,9 @@ export default function ItDashboardPage() {  const [stats, setStats] = useState
             <Link href="/it/staff/tiket">Kelola Antrian</Link>
           </Button>
           <Button asChild variant="outline">
+            <Link href="/it/staff/maintenance">Log Pekerjaan</Link>
+          </Button>
+          <Button asChild variant="outline">
             <Link href="/it/staff/kategori">Kelola Kategori</Link>
           </Button>
         </div>

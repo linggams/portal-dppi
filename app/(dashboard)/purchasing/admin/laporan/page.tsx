@@ -1,6 +1,9 @@
 "use client"
 
-import { DashboardLayout } from "@/components/layout/DashboardLayout"
+import {
+  DashboardLayout,
+  FilterSummaryPanel,
+} from "@/components/layout"
 import {
   Table,
   TableBody,
@@ -33,16 +36,21 @@ export default function LaporanPage() {
 
   return (
     <DashboardLayout title="Laporan">
-      <div className="space-y-6">
-                <LaporanFiltersComponent
-          filters={filters}
-          onFiltersChange={setFilters}
-          onFetch={fetchData}
+      <div className="space-y-4">
+        <FilterSummaryPanel
+          filter={
+            <LaporanFiltersComponent
+              filters={filters}
+              onFiltersChange={setFilters}
+              onFetch={fetchData}
+            />
+          }
+          summary={
+            Object.keys(summary).length > 0 ? (
+              <LaporanSummaryCards summary={summary} />
+            ) : undefined
+          }
         />
-
-        {Object.keys(summary).length > 0 && (
-          <LaporanSummaryCards summary={summary} />
-        )}
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-5 lg:w-auto lg:inline-grid">

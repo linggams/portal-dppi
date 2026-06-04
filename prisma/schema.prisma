@@ -161,6 +161,7 @@ model ItTiketKategori {
   nama       String   @db.VarChar(100)
   aktif      Boolean  @default(true)
   tiket      ItTiket[]
+  maintenanceLog ItMaintenanceLog[]
 
   @@map("it_tiket_kategori")
 }
@@ -182,6 +183,7 @@ model ItTiket {
 
   kategori ItTiketKategori  @relation(fields: [idKategori], references: [idKategori])
   komentar ItTiketKomentar[]
+  maintenanceLog ItMaintenanceLog[]
 
   @@map("it_tiket")
   @@index([username])
@@ -201,5 +203,29 @@ model ItTiketKomentar {
   tiket ItTiket @relation(fields: [idTiket], references: [idTiket], onDelete: Cascade)
 
   @@map("it_tiket_komentar")
+  @@index([idTiket])
+}
+
+model ItMaintenanceLog {
+  idMaintenance  Int      @id @default(autoincrement()) @map("id_maintenance")
+  idKategori     Int      @map("id_kategori")
+  username       String   @db.VarChar(20)
+  tglKerja       DateTime @map("tgl_kerja")
+  jenisPekerjaan String?  @map("jenis_pekerjaan") @db.VarChar(30)
+  lokasi         String?  @db.VarChar(100)
+  judul          String   @db.VarChar(200)
+  uraian         String   @db.Text
+  durasiMenit    Int?     @map("durasi_menit")
+  hasil          String   @default("selesai") @db.VarChar(30)
+  idTiket        Int?     @map("id_tiket")
+  tglDibuat      DateTime @default(now()) @map("tgl_dibuat")
+
+  kategori ItTiketKategori @relation(fields: [idKategori], references: [idKategori])
+  tiket    ItTiket?         @relation(fields: [idTiket], references: [idTiket], onDelete: SetNull)
+
+  @@map("it_maintenance_log")
+  @@index([idKategori])
+  @@index([username])
+  @@index([tglKerja])
   @@index([idTiket])
 }

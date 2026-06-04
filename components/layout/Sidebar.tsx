@@ -18,6 +18,7 @@ import {
   Inbox,
   PlusCircle,
   List,
+  Wrench,
 } from "lucide-react"
 import {
   Sidebar,
@@ -176,6 +177,11 @@ function getStaffItMenu(): NavLink[] {
       title: "Antrian Tiket",
       href: "/it/staff/tiket",
       icon: Inbox,
+    },
+    {
+      title: "Maintenance",
+      href: "/it/staff/maintenance",
+      icon: Wrench,
     },
     {
       title: "Kategori Tiket",

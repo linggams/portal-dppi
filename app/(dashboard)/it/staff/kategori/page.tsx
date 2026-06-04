@@ -2,10 +2,7 @@
 
 import { Ban, Pencil } from "lucide-react"
 import { useEffect, useState } from "react"
-import { DashboardLayout, PageSection, SectionCard } from "@/components/layout"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { DashboardLayout, PageActions, PageSection } from "@/components/layout"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
   Table,
@@ -24,16 +21,16 @@ import {
   TableActions,
 } from "@/components/ui/table-actions"
 import {
+  AddKategoriDialog,
   EditKategoriDialog,
   type ItKategoriItem,
 } from "./components"
 
 interface Kategori extends ItKategoriItem {}
 
-export default function ItKategoriPage() {  const [kategori, setKategori] = useState<Kategori[]>([])
+export default function ItKategoriPage() {
+  const [kategori, setKategori] = useState<Kategori[]>([])
   const [loading, setLoading] = useState(true)
-  const [nama, setNama] = useState("")
-  const [submitting, setSubmitting] = useState(false)
   const [editOpen, setEditOpen] = useState(false)
   const [editItem, setEditItem] = useState<Kategori | null>(null)
 
@@ -49,24 +46,20 @@ export default function ItKategoriPage() {  const [kategori, setKategori] = use
     load()
   }, [])
 
-  const handleAdd = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!nama.trim()) return
-    setSubmitting(true)
+  const handleAdd = async (nama: string): Promise<boolean> => {
     try {
       const res = await fetch("/api/it/kategori", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ nama: nama.trim() }),
+        body: JSON.stringify({ nama }),
       })
       if (!res.ok) throw new Error()
-      setNama("")
       load()
       toast.success("Kategori ditambahkan")
+      return true
     } catch {
       toast.error("Gagal menambah kategori")
-    } finally {
-      setSubmitting(false)
+      return false
     }
   }
 
@@ -108,26 +101,9 @@ export default function ItKategoriPage() {  const [kategori, setKategori] = use
 
   return (
     <DashboardLayout title="Kategori Tiket">
-      <SectionCard title="Tambah Kategori">
-        <form
-          onSubmit={handleAdd}
-          className="flex max-w-md flex-col gap-3 sm:flex-row sm:items-end"
-        >
-          <div className="flex-1 space-y-2">
-            <Label htmlFor="nama">Nama kategori</Label>
-            <Input
-              id="nama"
-              value={nama}
-              onChange={(e) => setNama(e.target.value)}
-              placeholder="Contoh: Hardware, Jaringan"
-              required
-            />
-          </div>
-          <Button type="submit" disabled={submitting}>
-            {submitting ? "Menyimpan..." : "Tambah"}
-          </Button>
-        </form>
-      </SectionCard>
+      <PageActions>
+        <AddKategoriDialog onSubmit={handleAdd} />
+      </PageActions>
 
       <PageSection title="Daftar Kategori">
         {loading ? (
@@ -135,47 +111,48 @@ export default function ItKategoriPage() {  const [kategori, setKategori] = use
         ) : (
           <TableContainer>
             <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Nama</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Aksi</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {kategori.length === 0 ? (
-                <TableEmptyState colSpan={3} title="Tidak ada kategori" />
-              ) : (
-              kategori.map((k) => (
-                <TableRow key={k.idKategori}>
-                  <TableCell>{k.nama}</TableCell>
-                  <TableCell>
-                    {k.aktif ? (
-                      <Badge>Aktif</Badge>
-                    ) : (
-                      <Badge variant="secondary">Nonaktif</Badge>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <TableActions>
-                      <TableActionButton
-                        label="Edit"
-                        icon={Pencil}
-                        onClick={() => handleEditClick(k)}
-                      />
-                      {k.aktif ? (
-                        <TableActionButton
-                          label="Nonaktifkan"
-                          icon={Ban}
-                          className="text-destructive hover:text-destructive"
-                          onClick={() => handleDeactivate(k.idKategori)}
-                        />
-                      ) : null}
-                    </TableActions>
-                  </TableCell>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nama</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Aksi</TableHead>
                 </TableRow>
-              )))}
-            </TableBody>
+              </TableHeader>
+              <TableBody>
+                {kategori.length === 0 ? (
+                  <TableEmptyState colSpan={3} title="Tidak ada kategori" />
+                ) : (
+                  kategori.map((k) => (
+                    <TableRow key={k.idKategori}>
+                      <TableCell>{k.nama}</TableCell>
+                      <TableCell>
+                        {k.aktif ? (
+                          <Badge>Aktif</Badge>
+                        ) : (
+                          <Badge variant="secondary">Nonaktif</Badge>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <TableActions>
+                          <TableActionButton
+                            label="Edit"
+                            icon={Pencil}
+                            onClick={() => handleEditClick(k)}
+                          />
+                          {k.aktif ? (
+                            <TableActionButton
+                              label="Nonaktifkan"
+                              icon={Ban}
+                              className="text-destructive hover:text-destructive"
+                              onClick={() => handleDeactivate(k.idKategori)}
+                            />
+                          ) : null}
+                        </TableActions>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
             </Table>
           </TableContainer>
         )}
