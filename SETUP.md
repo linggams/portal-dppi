@@ -1,4 +1,4 @@
-# Setup Instructions - ATK Management System Migration
+# Setup Instructions - Portal Support Migration
 
 ## Prerequisites
 - Node.js 18+ installed
@@ -73,21 +73,36 @@ pnpm dev
 
 Aplikasi akan berjalan di `http://localhost:3000`
 
-> Catatan: Untuk menjalankan aplikasi build di Windows, Anda juga bisa menggunakan script `run-app.bat` yang akan melakukan `pnpm build` lalu `pnpm start`.
+### 6. Production di Windows (PM2)
+
+Untuk server Windows (port **2000**, auto-restart), gunakan PM2:
+
+```batch
+pnpm build
+pnpm pm2:start
+pnpm pm2:save
+```
+
+Panduan lengkap: **[SERVICE-PM2.md](./SERVICE-PM2.md)**.  
+Skrip cepat: `scripts\pm2-setup.bat`. Auto-start saat boot: `scripts\pm2-startup-install.bat` (Administrator).
 
 ## Database Schema Notes
 
 ### Important Notes:
-1. **id_jenis**: 
-   - Di `jenis_barang` dan `stokbarang`: `id_jenis` adalah `Int` dengan foreign key relation
+1. **Nama tabel**: Tabel bisnis memakai prefix `atk_` (mis. `atk_stokbarang`, `atk_permintaan`). Tabel akun tetap `user` (tanpa prefix).
+   - Migrasi prefix: `npx prisma db execute --file prisma/migrations/rename_tables_atk_prefix.sql`
+   - Jika `user` sempat jadi `atk_user`: `npx prisma db execute --file prisma/migrations/rename_user_remove_atk_prefix.sql`
+
+2. **id_jenis**: 
+   - Di `atk_jenis_barang` dan `atk_stokbarang`: `id_jenis` adalah `Int` dengan foreign key relation
    - Jika melakukan migrasi dari database lama (VARCHAR), jalankan: `npx prisma db execute --file prisma/migrations/fix_jenis_barang_id.sql`
 
-2. **Password Hashing**:
+3. **Password Hashing**:
    - Database existing menggunakan MD5
    - Aplikasi mendukung MD5 (legacy) dan bcrypt
    - Disarankan untuk migrate password ke bcrypt secara bertahap
 
-3. **Status Values**:
+4. **Status Values**:
    - `0` = Pending
    - `1` = Approved/Completed
    - `2` = Rejected

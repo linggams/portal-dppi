@@ -1,5 +1,6 @@
-import { redirect } from "next/navigation"
+﻿import { redirect } from "next/navigation"
 import { getServerSession } from "@/lib/get-session"
+import { getDefaultHomePath } from "@/lib/auth/permissions"
 
 export default async function HomePage() {
   const session = await getServerSession()
@@ -8,14 +9,5 @@ export default async function HomePage() {
     redirect("/login")
   }
 
-  // Redirect berdasarkan level user
-  if (session.user.level === "admin") {
-    redirect("/admin/dashboard")
-  } else if (session.user.level === "user") {
-    redirect("/user/dashboard")
-  } else {
-    redirect("/unauthorized")
-  }
-
-  return null
+  redirect(getDefaultHomePath(session.user.level))
 }

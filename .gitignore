@@ -20,6 +20,18 @@
 # production
 /build
 
+# pm2
+/logs/*.log
+
+# legacy windows service (removed)
+WinSW-x64.exe
+atk-service.exe
+atk-service.xml
+
+# database dumps (do not commit)
+dump-*.sql
+*.sql.dump
+
 # misc
 .DS_Store
 *.pem

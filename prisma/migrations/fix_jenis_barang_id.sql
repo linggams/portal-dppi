@@ -1,13 +1,12 @@
--- Migration: Convert jenis_barang.id_jenis from VARCHAR to INTEGER
--- This enables proper foreign key relation with stokbarang and other tables
--- Run with: npx prisma db execute --file prisma/migrations/fix_jenis_barang_id.sql
+-- Migration: Convert atk_jenis_barang.id_jenis from VARCHAR to INTEGER
+-- Run: npx prisma db execute --file prisma/migrations/fix_jenis_barang_id.sql
+-- Note: If tables are not yet renamed, run rename_tables_atk_prefix.sql first,
+-- or replace atk_* with legacy names below.
 
--- Step 1: Convert id_jenis column type from VARCHAR to INTEGER
-ALTER TABLE "jenis_barang" 
+ALTER TABLE "atk_jenis_barang"
   ALTER COLUMN "id_jenis" TYPE INTEGER USING ("id_jenis"::integer);
 
--- Step 2: Add foreign key from stokbarang to jenis_barang
-ALTER TABLE "stokbarang" 
-  ADD CONSTRAINT "stokbarang_id_jenis_fkey" 
-  FOREIGN KEY ("id_jenis") REFERENCES "jenis_barang"("id_jenis") 
+ALTER TABLE "atk_stokbarang"
+  ADD CONSTRAINT "atk_stokbarang_id_jenis_fkey"
+  FOREIGN KEY ("id_jenis") REFERENCES "atk_jenis_barang"("id_jenis")
   ON DELETE RESTRICT ON UPDATE CASCADE;

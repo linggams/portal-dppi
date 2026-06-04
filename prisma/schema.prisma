@@ -21,7 +21,9 @@ model User {
 
 enum UserLevel {
   user
-  admin
+  administrator
+  it_support
+  purchasing
 }
 
 model JenisBarang {
@@ -30,7 +32,7 @@ model JenisBarang {
 
   stokbarang Stokbarang[]
 
-  @@map("jenis_barang")
+  @@map("atk_jenis_barang")
 }
 
 model Stokbarang {
@@ -53,7 +55,7 @@ model Stokbarang {
   pemasukan   Pemasukan[]
   pengeluaran Pengeluaran[]
 
-  @@map("stokbarang")
+  @@map("atk_stokbarang")
 }
 
 model Permintaan {
@@ -68,7 +70,7 @@ model Permintaan {
 
   stokbarang Stokbarang @relation(fields: [kodeBrg], references: [kodeBrg])
 
-  @@map("permintaan")
+  @@map("atk_permintaan")
   @@index([unit, tglPermintaan])
   @@index([status])
 }
@@ -85,7 +87,7 @@ model Sementara {
 
   stokbarang Stokbarang @relation(fields: [kodeBrg], references: [kodeBrg])
 
-  @@map("sementara")
+  @@map("atk_sementara")
   @@index([unit, tglPermintaan])
 }
 
@@ -103,7 +105,7 @@ model Pengajuan {
 
   stokbarang Stokbarang @relation(fields: [kodeBrg], references: [kodeBrg])
 
-  @@map("pengajuan")
+  @@map("atk_pengajuan")
   @@index([unit, tglPengajuan])
   @@index([status])
 }
@@ -122,7 +124,7 @@ model PengajuanSementara {
 
   stokbarang Stokbarang @relation(fields: [kodeBrg], references: [kodeBrg])
 
-  @@map("pengajuan_sementara")
+  @@map("atk_pengajuan_sementara")
   @@index([unit, tglPengajuan])
 }
 
@@ -135,7 +137,7 @@ model Pemasukan {
 
   stokbarang Stokbarang @relation(fields: [kodeBrg], references: [kodeBrg])
 
-  @@map("pemasukan")
+  @@map("atk_pemasukan")
   @@index([tglMasuk])
   @@index([unit])
 }
@@ -149,7 +151,55 @@ model Pengeluaran {
 
   stokbarang Stokbarang @relation(fields: [kodeBrg], references: [kodeBrg])
 
-  @@map("pengeluaran")
+  @@map("atk_pengeluaran")
   @@index([tglKeluar])
   @@index([unit])
+}
+
+model ItTiketKategori {
+  idKategori Int      @id @default(autoincrement()) @map("id_kategori")
+  nama       String   @db.VarChar(100)
+  aktif      Boolean  @default(true)
+  tiket      ItTiket[]
+
+  @@map("it_tiket_kategori")
+}
+
+model ItTiket {
+  idTiket      Int       @id @default(autoincrement()) @map("id_tiket")
+  nomorTiket   String    @unique @map("nomor_tiket") @db.VarChar(20)
+  username     String    @db.VarChar(20)
+  jabatan      String    @db.VarChar(50)
+  judul        String    @db.VarChar(200)
+  deskripsi    String    @db.Text
+  idKategori   Int       @map("id_kategori")
+  prioritas    String    @db.VarChar(20)
+  status       Int       @default(0)
+  ditugaskanKe String?   @map("ditugaskan_ke") @db.VarChar(20)
+  tglDibuat    DateTime  @default(now()) @map("tgl_dibuat")
+  tglDiupdate  DateTime  @updatedAt @map("tgl_diupdate")
+  tglSelesai   DateTime? @map("tgl_selesai")
+
+  kategori ItTiketKategori  @relation(fields: [idKategori], references: [idKategori])
+  komentar ItTiketKomentar[]
+
+  @@map("it_tiket")
+  @@index([username])
+  @@index([status])
+  @@index([ditugaskanKe])
+  @@index([tglDibuat])
+}
+
+model ItTiketKomentar {
+  idKomentar Int      @id @default(autoincrement()) @map("id_komentar")
+  idTiket    Int      @map("id_tiket")
+  username   String   @db.VarChar(20)
+  pesan      String   @db.Text
+  tipe       String   @default("komentar") @db.VarChar(20)
+  tglDibuat  DateTime @default(now()) @map("tgl_dibuat")
+
+  tiket ItTiket @relation(fields: [idTiket], references: [idTiket], onDelete: Cascade)
+
+  @@map("it_tiket_komentar")
+  @@index([idTiket])
 }

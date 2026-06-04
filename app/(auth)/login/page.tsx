@@ -1,8 +1,9 @@
-"use client"
+﻿"use client"
 
 import { useState } from "react"
 import { signIn } from "next-auth/react"
 import { useRouter } from "next/navigation"
+import { AuthCard } from "@/components/layout/auth-card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -15,6 +16,7 @@ import {
 } from "@/components/ui/select"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { AlertCircle } from "lucide-react"
+import { APP_DESCRIPTION, APP_NAME, COMPANY_NAME } from "@/lib/app-branding"
 
 export default function LoginPage() {
   const router = useRouter()
@@ -38,17 +40,18 @@ export default function LoginPage() {
       })
 
       if (result?.error) {
-        // Parse error message from NextAuth
-        const errorMessage = result.error === "CredentialsSignin" 
-          ? "Username, password, atau level yang Anda masukkan salah."
-          : result.error
+        const errorMessage =
+          result.error === "CredentialsSignin"
+            ? "Username, password, atau level yang Anda masukkan salah."
+            : result.error
         setError(errorMessage)
       } else if (result?.ok) {
-        // Redirect berdasarkan level
-        if (level === "admin") {
-          router.push("/admin/dashboard")
+        if (level === "administrator" || level === "purchasing") {
+          router.push("/purchasing/admin/dashboard")
+        } else if (level === "it_support") {
+          router.push("/it/staff/dashboard")
         } else if (level === "user") {
-          router.push("/user/dashboard")
+          router.push("/purchasing/user/dashboard")
         } else {
           router.push("/")
         }
@@ -56,87 +59,84 @@ export default function LoginPage() {
       }
     } catch (error) {
       console.error("Login error:", error)
-      setError(error instanceof Error ? error.message : "Terjadi kesalahan saat login. Silakan coba lagi.")
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Terjadi kesalahan saat login. Silakan coba lagi."
+      )
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background px-4">
-      <div className="w-full max-w-md">
-        <div className="bg-card rounded-lg shadow-lg border border-border p-8">
-          <div className="text-center mb-8">
-            <h1 className="text-2xl font-bold text-foreground mb-2">
-              PT DASAN
-            </h1>
-            <p className="text-muted-foreground">
-              Aplikasi Pengajuan dan Kontrol Penggunaan Barang
-            </p>
-          </div>
+    <AuthCard
+      title={APP_NAME}
+      subtitle={COMPANY_NAME}
+      description={APP_DESCRIPTION}
+    >
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {error && (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {error && (
-              <Alert variant="destructive">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
-
-            <div className="space-y-2">
-              <Label htmlFor="username">Username</Label>
-              <Input
-                id="username"
-                type="text"
-                placeholder="Masukkan username"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                required
-                disabled={loading}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="Masukkan password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                disabled={loading}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="level">Level</Label>
-              <Select
-                value={level}
-                onValueChange={setLevel}
-                required
-                disabled={loading}
-              >
-                <SelectTrigger id="level">
-                  <SelectValue placeholder="Pilih Level" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="user">User</SelectItem>
-                  <SelectItem value="admin">Admin</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <Button
-              type="submit"
-              className="w-full"
-              disabled={loading || !username || !password || !level}
-            >
-              {loading ? "Memproses..." : "Login"}
-            </Button>
-          </form>
+        <div className="space-y-2">
+          <Label htmlFor="username">Username</Label>
+          <Input
+            id="username"
+            type="text"
+            placeholder="Masukkan username"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            required
+            disabled={loading}
+          />
         </div>
-      </div>
-    </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="password">Password</Label>
+          <Input
+            id="password"
+            type="password"
+            placeholder="Masukkan password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            disabled={loading}
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="level">Level</Label>
+          <Select
+            value={level}
+            onValueChange={setLevel}
+            required
+            disabled={loading}
+          >
+            <SelectTrigger id="level">
+              <SelectValue placeholder="Pilih Level" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="user">User</SelectItem>
+              <SelectItem value="purchasing">Purchasing</SelectItem>
+              <SelectItem value="administrator">Administrator</SelectItem>
+              <SelectItem value="it_support">IT Support</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <Button
+          type="submit"
+          className="w-full"
+          disabled={loading || !username || !password || !level}
+        >
+          {loading ? "Memproses..." : "Login"}
+        </Button>
+      </form>
+    </AuthCard>
   )
 }

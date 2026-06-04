@@ -22,7 +22,7 @@ async function main() {
   // Seed User
   console.log('👤 Seeding User...')
   const users = [
-    { username: 'sheva', password: '56125c418bb93293b42172a9eb031040', level: 'admin' as const, jabatan: 'Purchasing' },
+    { username: 'sheva', password: '56125c418bb93293b42172a9eb031040', level: 'administrator' as const, jabatan: 'Purchasing' },
     { username: 'ratih', password: 'c5d2c604b2051517c3a709ebb5723d38', level: 'user' as const, jabatan: 'EXIM' },
     { username: 'yetti', password: 'fcf33583572d4dc7c98c6c71fe040619', level: 'user' as const, jabatan: 'PPIC Gap' },
     { username: 'bulan', password: 'a7750882e3748bea67aa5e3c76926676', level: 'user' as const, jabatan: 'QA' },
@@ -50,6 +50,24 @@ async function main() {
       update: {},
       create: user,
     })
+  }
+
+  // Seed IT ticket categories
+  console.log('🎫 Seeding IT kategori...')
+  const itKategori = [
+    'Hardware',
+    'Software',
+    'Jaringan / Internet',
+    'Email & Akun',
+    'Printer',
+    'Lainnya',
+  ]
+
+  for (const nama of itKategori) {
+    const existing = await prisma.itTiketKategori.findFirst({ where: { nama } })
+    if (!existing) {
+      await prisma.itTiketKategori.create({ data: { nama, aktif: true } })
+    }
   }
 
   console.log('✅ Seed completed successfully!')

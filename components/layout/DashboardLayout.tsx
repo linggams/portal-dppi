@@ -4,16 +4,24 @@ import { useSession } from "next-auth/react"
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar"
 import { AppSidebar } from "./Sidebar"
 import { Header } from "./Header"
+import { PageTitleProvider, SetPageTitle } from "./page-title-context"
 
 interface DashboardLayoutProps {
   children: React.ReactNode
+  title?: string
 }
 
-export function DashboardLayout({ children }: DashboardLayoutProps) {
+export function DashboardLayout({ children, title }: DashboardLayoutProps) {
   const { data: session } = useSession()
-  const userLevel = session?.user?.level as "admin" | "user"
+  const userLevel = session?.user?.level
 
-  if (!userLevel || (userLevel !== "admin" && userLevel !== "user")) {
+  if (
+    !userLevel ||
+    (userLevel !== "administrator" &&
+      userLevel !== "user" &&
+      userLevel !== "it_support" &&
+      userLevel !== "purchasing")
+  ) {
     return null
   }
 
@@ -21,14 +29,15 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     <SidebarProvider>
       <AppSidebar userLevel={userLevel} />
       <SidebarInset>
-        <Header userLevel={userLevel} />
-        <main className="flex-1 relative overflow-y-auto focus:outline-none">
-          <div className="py-4">
-            <div className="max-w-7xl mx-auto px-4 sm:px-4 md:px-6">
+        <PageTitleProvider>
+          {title ? <SetPageTitle title={title} /> : null}
+          <Header userLevel={userLevel} />
+          <main className="relative flex-1 overflow-y-auto focus:outline-none">
+            <div className="mx-auto w-full max-w-7xl space-y-6 px-4 py-6 sm:px-6 lg:px-8">
               {children}
             </div>
-          </div>
-        </main>
+          </main>
+        </PageTitleProvider>
       </SidebarInset>
     </SidebarProvider>
   )
