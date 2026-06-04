@@ -1,7 +1,6 @@
 "use client"
 
-import { Ban } from "lucide-react"
-
+import { Ban, Pencil } from "lucide-react"
 import { useEffect, useState } from "react"
 import { DashboardLayout, SectionCard } from "@/components/layout"
 import { Button } from "@/components/ui/button"
@@ -20,18 +19,23 @@ import { TableContainer } from "@/components/ui/table-container"
 import { TableEmptyState } from "@/components/ui/table-empty-state"
 import { Badge } from "@/components/ui/badge"
 import { toast } from "sonner"
-import { TableActionButton } from "@/components/ui/table-actions"
+import {
+  TableActionButton,
+  TableActions,
+} from "@/components/ui/table-actions"
+import {
+  EditKategoriDialog,
+  type ItKategoriItem,
+} from "./components"
 
-interface Kategori {
-  idKategori: number
-  nama: string
-  aktif: boolean
-}
+interface Kategori extends ItKategoriItem {}
 
 export default function ItKategoriPage() {  const [kategori, setKategori] = useState<Kategori[]>([])
   const [loading, setLoading] = useState(true)
   const [nama, setNama] = useState("")
   const [submitting, setSubmitting] = useState(false)
+  const [editOpen, setEditOpen] = useState(false)
+  const [editItem, setEditItem] = useState<Kategori | null>(null)
 
   const load = () => {
     fetch("/api/it/kategori?aktif=false")
@@ -74,6 +78,31 @@ export default function ItKategoriPage() {  const [kategori, setKategori] = use
       toast.success("Kategori dinonaktifkan")
     } catch {
       toast.error("Gagal menonaktifkan kategori")
+    }
+  }
+
+  const handleEditClick = (item: Kategori) => {
+    setEditItem(item)
+    setEditOpen(true)
+  }
+
+  const handleEditSubmit = async (
+    id: number,
+    data: { nama: string; aktif: boolean }
+  ): Promise<boolean> => {
+    try {
+      const res = await fetch(`/api/it/kategori/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      })
+      if (!res.ok) throw new Error()
+      load()
+      toast.success("Kategori diperbarui")
+      return true
+    } catch {
+      toast.error("Gagal memperbarui kategori")
+      return false
     }
   }
 
@@ -128,9 +157,21 @@ export default function ItKategoriPage() {  const [kategori, setKategori] = use
                     )}
                   </TableCell>
                   <TableCell className="text-right">
-                    {k.aktif ? (
-                      <TableActionButton label="Nonaktifkan" icon={Ban} onClick={() => handleDeactivate(k.idKategori)} />
-                    ) : null}
+                    <TableActions>
+                      <TableActionButton
+                        label="Edit"
+                        icon={Pencil}
+                        onClick={() => handleEditClick(k)}
+                      />
+                      {k.aktif ? (
+                        <TableActionButton
+                          label="Nonaktifkan"
+                          icon={Ban}
+                          className="text-destructive hover:text-destructive"
+                          onClick={() => handleDeactivate(k.idKategori)}
+                        />
+                      ) : null}
+                    </TableActions>
                   </TableCell>
                 </TableRow>
               )))}
@@ -139,6 +180,13 @@ export default function ItKategoriPage() {  const [kategori, setKategori] = use
           </TableContainer>
         )}
       </SectionCard>
+
+      <EditKategoriDialog
+        item={editItem}
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        onSubmit={handleEditSubmit}
+      />
     </DashboardLayout>
   )
 }
