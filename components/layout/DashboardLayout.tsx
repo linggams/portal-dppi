@@ -1,6 +1,8 @@
 "use client"
 
+import { usePathname } from "next/navigation"
 import { useSession } from "next-auth/react"
+import { ItSupportAnnouncementDialog } from "@/components/it/ItSupportAnnouncementDialog"
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar"
 import { AppSidebar } from "./Sidebar"
 import { Header } from "./Header"
@@ -11,9 +13,15 @@ interface DashboardLayoutProps {
   title?: string
 }
 
+const USER_DASHBOARD_PATH = "/purchasing/user/dashboard"
+
 export function DashboardLayout({ children, title }: DashboardLayoutProps) {
+  const pathname = usePathname()
   const { data: session } = useSession()
   const userLevel = session?.user?.level
+  const username = session?.user?.username ?? ""
+  const showItSupportAnnouncement =
+    userLevel === "user" && pathname === USER_DASHBOARD_PATH
 
   if (
     !userLevel ||
@@ -37,6 +45,9 @@ export function DashboardLayout({ children, title }: DashboardLayoutProps) {
               {children}
             </div>
           </main>
+          {showItSupportAnnouncement && username ? (
+            <ItSupportAnnouncementDialog username={username} />
+          ) : null}
         </PageTitleProvider>
       </SidebarInset>
     </SidebarProvider>
