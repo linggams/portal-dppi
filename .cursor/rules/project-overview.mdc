@@ -11,13 +11,17 @@ Next.js App Router + PostgreSQL + Prisma + NextAuth + shadcn/ui.
 
 | Modul | UI | API | Tabel DB |
 |-------|-----|-----|----------|
+| Platform | `/platform/*` (dashboard admin: `/platform/dashboard`) | `/api/platform/*` | `user` |
 | Purchasing admin | `/purchasing/admin/*` | `/api/purchasing/*` | `atk_*` |
 | Purchasing user | `/purchasing/user/*` | `/api/purchasing/*` | `atk_*` |
 | IT staff | `/it/staff/*` | `/api/it/*` | `it_*` |
 | IT user | `/it/user/*` | `/api/it/*` | `it_*` |
-| Platform | `/platform/*` | `/api/platform/*` | `user` |
 
 Permission: `lib/auth/permissions.ts`. Arsitektur: `docs/architecture.md`.
+
+## Layout halaman
+
+Ikuti `.cursor/rules/dashboard-pages.mdc` untuk shell, `PageActions`, filter horizontal, tabel tanpa Card, dan judul hanya di header.
 
 ## Konvensi umum
 

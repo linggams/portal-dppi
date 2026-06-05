@@ -1,81 +1,212 @@
 ---
-description: Pola pembuatan halaman dashboard (Purchasing & IT)
-globs: app/(dashboard)/**/*.tsx
+description: Pola layout halaman dashboard — shell, filter, tabel, aksi, dan komponen layout
+globs: app/(dashboard)/**/*.tsx,components/layout/**/*.tsx,components/dashboard/**/*.tsx
 alwaysApply: false
 ---
 
-# Halaman Dashboard
+# Layout Halaman Dashboard
 
-## Struktur folder (halaman kompleks)
+## Hierarki shell (wajib)
+
+Setiap halaman dashboard memakai `DashboardLayout`. Urutan UI dari atas ke bawah:
 
 ```
-app/(dashboard)/{modul}/{role}/{fitur}/
-  page.tsx              # komposisi tipis, "use client"
-  types.ts              # tipe UI / response API
-  hooks/use{Fitur}.ts   # fetch, state, handler
-  components/
-    index.ts            # barrel export
-    {Fitur}Table.tsx
-    {Fitur}Filters.tsx
-    {Fitur}Skeleton.tsx
-  utils.tsx             # format tanggal, badge (re-export dari lib jika perlu)
+Sidebar
+└─ SidebarInset
+   ├─ Header          ← judul halaman (prop title), sidebar trigger, badge role, theme toggle
+   ├─ PageActionsBar  ← tombol/filter dari <PageActions> (full width, border-b)
+   └─ main            ← konten halaman (px-4 py-6 sm:px-6 lg:px-8, space-y-6)
 ```
-
-Halaman sederhana boleh satu `page.tsx`; halaman list/laporan wajib pecah hook + components.
-
-## Layout wajib
 
 ```tsx
 "use client"
 
-import { DashboardLayout, FilterSummaryPanel, PageActions, ContentEmpty } from "@/components/layout"
+import { DashboardLayout, PageActions, PageSection } from "@/components/layout"
 
 export default function MyPage() {
   return (
     <DashboardLayout title="Judul Halaman">
-      <div className="space-y-4">
+      <PageActions>
+        <Button size="sm">Tambah</Button>
+      </PageActions>
+
+      <PageSection>
         {/* konten */}
-      </div>
+      </PageSection>
     </DashboardLayout>
   )
 }
 ```
 
-| Kebutuhan | Komponen |
-|-----------|----------|
-| Tombol aksi kanan header | `<PageActions>` |
-| Filter + ringkasan | `<FilterSummaryPanel>` + `<CompactFilterCard>` |
-| Section dengan judul | `<PageSection title="..." action={...}>` |
-| Kartu form/konten | `<SectionCard title="...">` |
-| Kosong | `<ContentEmpty title="..." description="..." />` |
-| Loading | `<Skeleton />` atau komponen `*Skeleton` |
+## Judul halaman
 
-Filter: `FilterField`, `FILTER_GRID_CLASS`, `FILTER_CONTROL_CLASS` dari `@/components/layout`.
+| Lokasi | Aturan |
+|--------|--------|
+| **Header** | Selalu via `title` prop di `DashboardLayout` |
+| **Area konten** | **Jangan** duplikasi judul di atas tabel/list |
+| `contentTitle` | Hanya jika benar-benar dibutuhkan (default: `false`) |
+| `PageSection title` | **Jangan** untuk halaman list/tabel tunggal; boleh untuk sub-section dalam halaman kompleks (form + list, multi blok) |
 
-## Tabel & aksi
+Contoh benar (list tabel): `it/staff/kategori`, `it/staff/tiket`, `purchasing/admin/stok`
+Contoh benar (sub-section): form + "Permintaan Hari Ini" di halaman pengajuan user
 
-- Bungkus tabel: `<TableContainer><Table>...</Table></TableContainer>`
-- Aksi baris: **ikon + tooltip**, bukan tombol teks panjang:
+## Tombol & filter di header action
+
+Semua aksi utama dan filter global → `<PageActions>` (bukan di `PageSection action`, bukan floating di konten).
 
 ```tsx
-import { TableActionLink, TableActionButton, TableActions } from "@/components/ui/table-actions"
-import { Eye } from "lucide-react"
-
-<TableCell className="text-right">
-  <TableActionLink label="Detail" icon={Eye} href={`/path/${id}`} />
-</TableCell>
+<PageActions>
+  <Button size="sm" onClick={handleAdd}>Tambah</Button>
+  <Select>...</Select>           {/* filter status, dll. */}
+  <AddKategoriDialog />          {/* dialog trigger boleh di sini */}
+</PageActions>
 ```
 
-- Badge status: ekstrak ke `lib/{modul}/` atau `utils.tsx` halaman.
+- `PageActions` me-render `null`; konten tampil di `PageActionsBar` di bawah header.
+- Tombol pakai `size="sm"` agar selaras dengan filter bar.
+- Urutan: aksi sekunder (outline) → aksi utama (default).
 
-## Data & performa
+## Pola per jenis halaman
 
-- Client **fetch ke API route**, jangan query Prisma langsung.
-- List besar: pagination/filter di **server** (query params `page`, `start_date`, dll.).
-- Default filter periode: awal bulan → hari ini (lihat `getDefaultPermintaanGroupDateRange`).
-- State loading / empty / data eksplisit; feedback error pakai `toast` dari `sonner`.
+### A. Halaman list / tabel (CRUD master data)
 
-## Detail halaman
+Referensi: `purchasing/admin/stok`, `it/staff/kategori`, `it/staff/tiket`, `platform/users`
 
-- `[id]/page.tsx` atau `detail/page.tsx` + `useSearchParams` untuk query (`unit`, `tgl`).
-- Tombol kembali: `<Button variant="ghost" size="sm" asChild><Link href="...">Kembali</Link></Button>`
+```
+[Header: Judul]
+[PageActionsBar: Tambah | Export | Filter]
+[Tabel langsung — tanpa Card wrapper]
+```
+
+- Tabel: `<TableContainer><Table>...</Table></TableContainer>` di dalam `PageSection` tanpa title.
+- **Jangan** bungkus tabel dengan `<Card>` di konten.
+- Loading: `<Skeleton />` atau komponen `*Skeleton`.
+- Kosong: `<ContentEmpty />` atau `<TableEmptyState />`.
+- Dialog form/hapus: sibling di luar `PageSection`, tidak di dalam Card.
+
+### B. Halaman data + filter + ringkasan (grup/pagination)
+
+Referensi: `purchasing/admin/permintaan/data`, `purchasing/admin/pengajuan/data`, `it/staff/laporan`
+
+```
+[Header: Judul]
+[FilterSummaryPanel]
+  ├─ CompactFilterCard (filter horizontal)
+  └─ CompactSummaryGrid (ringkasan — Card h-full, metric tanpa border dalam)
+[Tabel + Pagination]
+```
+
+- Filter: `CompactFilterCard` + `FilterField` + footer tombol Reset/Tampilkan.
+- Ringkasan: `CompactSummaryGrid` + `SummaryMetric` (bukan `StatCard` ber-card dalam).
+- Wrapper konten: `<div className="space-y-4">`.
+
+### C. Halaman dashboard (statistik)
+
+Referensi: `platform/dashboard`, `it/staff/dashboard`, `purchasing/admin/dashboard`
+
+- `StatCard` untuk angka ringkas.
+- `SectionCard` untuk blok "Perlu perhatian" / daftar pending.
+- `PageActions` untuk quick links jika perlu.
+
+### D. Halaman form + preview (split)
+
+Referensi: `purchasing/user/permintaan`, `purchasing/admin/pengajuan`
+
+- Form: `<Card>` atau `<SectionCard>` boleh dipakai.
+- List samping/bawah: `PageSection title="..."` untuk sub-judul kontekstual (bukan judul halaman).
+- `PageActions` hanya untuk aksi submit global (mis. "Kirim Permintaan").
+
+### E. Halaman detail
+
+- `DashboardLayout title="Detail ..."` — judul di header.
+- Tombol kembali/aksi: `PageActions`.
+- Konten: `SectionCard` atau tabel item; approve per baris.
+
+## Filter (CompactFilterCard)
+
+- Layout **horizontal**: field sejajar, tombol Reset/Tampilkan di kanan (`lg:ml-auto`).
+- **Tanpa label** di atas field — gunakan **placeholder**.
+- Kontrol shadcn wajib:
+  - Tanggal → `<DatePicker>` (`components/ui/date-picker.tsx`) — Popover + Calendar
+  - Teks → `<Input placeholder="...">`
+  - Pilihan → `<Select>` + `<SelectValue placeholder="...">`
+- Konstanta: `FILTER_CONTROL_CLASS`, `FILTER_FIELD_CLASS` dari `@/components/layout`.
+- Field sebagai direct children `CompactFilterCard` (jangan wrapper grid ganda).
+
+```tsx
+<FilterField>
+  <DatePicker className={FILTER_CONTROL_CLASS} placeholder="Tanggal mulai" ... />
+</FilterField>
+```
+
+## Tabel & aksi baris
+
+- Bungkus: `<TableContainer>`.
+- Aksi: ikon + tooltip — `TableActionLink` (navigasi), `TableActionButton` (onClick).
+- Multiple aksi: `<TableActions>` wrapper.
+- **Jangan** tombol teks panjang di kolom aksi.
+
+```tsx
+<TableActionLink label="Detail" icon={Eye} href={`/path/${id}`} />
+```
+
+## Kartu — kapan boleh dipakai
+
+| Boleh | Jangan di konten list |
+|-------|----------------------|
+| `CompactFilterCard` (filter) | Card membungkus tabel master data |
+| `CompactSummaryGrid` (ringkasan filter) | Card per baris ringkasan (`SummaryMetric` tanpa border) |
+| `SectionCard` (blok dashboard/detail) | Duplikasi Card + Table |
+| `Card` di form input user/admin | |
+
+## Struktur folder (halaman kompleks)
+
+```
+app/(dashboard)/{modul}/{role}/{fitur}/
+  page.tsx
+  types.ts
+  hooks/use{Fitur}.ts
+  components/
+    index.ts
+    {Fitur}Table.tsx
+    {Fitur}Filters.tsx
+    {Fitur}Skeleton.tsx
+```
+
+Halaman list/laporan: wajib pecah hook + components. Halaman sederhana boleh satu `page.tsx`.
+
+## Data & state
+
+- Client fetch ke API route; jangan Prisma di client.
+- List besar: pagination/filter di server (`page`, `start_date`, …).
+- Default periode filter: awal bulan → hari ini (WIB untuk purchasing: `getTodayDateWIB()`).
+- State loading / empty / error eksplisit; error pakai `toast` (`sonner`).
+
+## Impor layout (referensi)
+
+```tsx
+import {
+  DashboardLayout,
+  PageActions,
+  PageSection,
+  PageContentTitle,      // jarang — hanya jika contentTitle=true
+  FilterSummaryPanel,
+  CompactFilterCard,
+  CompactSummaryGrid,
+  SummaryMetric,
+  FilterField,
+  StatCard,
+  SectionCard,
+  ContentEmpty,
+  FILTER_CONTROL_CLASS,
+} from "@/components/layout"
+```
+
+## Home per role
+
+| Role | Dashboard |
+|------|-----------|
+| `administrator` | `/platform/dashboard` |
+| `purchasing` | `/purchasing/admin/dashboard` |
+| `it_support` | `/it/staff/dashboard` |
+| `user` | `/purchasing/user/dashboard` |
