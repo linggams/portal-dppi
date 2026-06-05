@@ -1,6 +1,6 @@
 "use client"
 
-import { CompactSummaryGrid, StatCard } from "@/components/layout"
+import { CompactSummaryGrid, SummaryMetric } from "@/components/layout"
 import type { LaporanSummary } from "../types"
 
 interface LaporanSummaryCardsProps {
@@ -25,14 +25,9 @@ export function LaporanSummaryCards({ summary }: LaporanSummaryCardsProps) {
   }
 
   return (
-    <CompactSummaryGrid maxCols={4}>
+    <CompactSummaryGrid>
       {items.map((item) => (
-        <StatCard
-          key={item.label}
-          compact
-          label={item.label}
-          value={item.value}
-        />
+        <SummaryMetric key={item.label} label={item.label} value={item.value} />
       ))}
     </CompactSummaryGrid>
   )

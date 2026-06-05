@@ -105,7 +105,7 @@ export default function ItKategoriPage() {
         <AddKategoriDialog onSubmit={handleAdd} />
       </PageActions>
 
-      <PageSection title="Daftar Kategori">
+      <PageSection>
         {loading ? (
           <Skeleton className="h-32 w-full" />
         ) : (

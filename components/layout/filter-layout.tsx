@@ -4,21 +4,22 @@ import type { ReactNode } from "react"
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
 } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { cn } from "@/lib/utils"
 
-/** Grid field filter — padat, banyak kolom di layar lebar */
+/** Baris field filter — horizontal, wrap di layar sempit */
 export const FILTER_GRID_CLASS =
-  "grid gap-2 grid-cols-2 sm:grid-cols-3 xl:grid-cols-4"
+  "flex min-w-0 flex-1 flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center"
 
-export const FILTER_CONTROL_CLASS = "h-8 text-sm"
+/** Lebar minimum tiap field di baris horizontal */
+export const FILTER_FIELD_CLASS =
+  "min-w-0 w-full sm:min-w-[132px] sm:max-w-full sm:flex-1 lg:w-[148px] lg:flex-none"
+
+export const FILTER_CONTROL_CLASS = "h-8 w-full text-sm"
 
 interface FilterFieldProps {
-  label: string
+  label?: string
   htmlFor?: string
   className?: string
   children: ReactNode
@@ -30,8 +31,14 @@ export function FilterField({
   className,
   children,
 }: FilterFieldProps) {
+  if (!label) {
+    return (
+      <div className={cn(FILTER_FIELD_CLASS, className)}>{children}</div>
+    )
+  }
+
   return (
-    <div className={cn("grid gap-1", className)}>
+    <div className={cn("grid gap-1", FILTER_FIELD_CLASS, className)}>
       <Label htmlFor={htmlFor} className="text-xs text-muted-foreground">
         {label}
       </Label>
@@ -41,7 +48,7 @@ export function FilterField({
 }
 
 interface CompactFilterCardProps {
-  title: string
+  title?: string
   description?: string
   headerAction?: ReactNode
   footer?: ReactNode
@@ -50,33 +57,21 @@ interface CompactFilterCardProps {
 }
 
 export function CompactFilterCard({
-  title,
-  description,
-  headerAction,
   footer,
   children,
   className,
 }: CompactFilterCardProps) {
   return (
-    <Card className={cn("gap-0 py-0 shadow-sm", className)}>
-      <CardHeader className="flex flex-row items-start justify-between gap-2 space-y-0 px-4 py-3">
-        <div className="min-w-0">
-          <CardTitle className="text-sm font-semibold leading-none">
-            {title}
-          </CardTitle>
-          {description ? (
-            <CardDescription className="mt-1 text-xs leading-snug">
-              {description}
-            </CardDescription>
+    <Card className={cn("h-full gap-0 py-0 shadow-sm", className)}>
+      <CardContent className="flex h-full flex-col justify-center px-3 py-3">
+        <div className="flex flex-col gap-2 lg:flex-row lg:items-center">
+          <div className={FILTER_GRID_CLASS}>{children}</div>
+          {footer ? (
+            <div className="flex shrink-0 flex-wrap gap-2 lg:ml-auto">
+              {footer}
+            </div>
           ) : null}
         </div>
-        {headerAction ? (
-          <div className="shrink-0">{headerAction}</div>
-        ) : null}
-      </CardHeader>
-      <CardContent className="space-y-3 px-4 pb-3 pt-0">
-        {children}
-        {footer ? <div className="flex flex-wrap gap-2">{footer}</div> : null}
       </CardContent>
     </Card>
   )
@@ -108,7 +103,7 @@ export function FilterSummaryPanel({
   return (
     <div
       className={cn(
-        "grid gap-3 lg:grid-cols-12 lg:items-start",
+        "grid gap-3 lg:grid-cols-12 lg:items-stretch",
         className
       )}
     >
@@ -118,38 +113,49 @@ export function FilterSummaryPanel({
   )
 }
 
-const SUMMARY_COL_CLASS: Record<1 | 2 | 3 | 4, string> = {
-  1: "grid-cols-1",
-  2: "grid-cols-2",
-  3: "grid-cols-2 sm:grid-cols-3",
-  4: "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4",
+interface SummaryMetricProps {
+  label: string
+  value: React.ReactNode
+  className?: string
 }
 
-/** Grid ringkasan — maksimal 4 kolom */
-export const SUMMARY_GRID_CLASS = `grid gap-2 ${SUMMARY_COL_CLASS[4]}`
+export function SummaryMetric({ label, value, className }: SummaryMetricProps) {
+  return (
+    <div className={cn("min-w-[72px]", className)}>
+      <p className="text-[11px] leading-none text-muted-foreground">{label}</p>
+      <p className="mt-1 text-base font-semibold tabular-nums leading-none">
+        {value}
+      </p>
+    </div>
+  )
+}
 
 interface CompactSummaryGridProps {
   children: ReactNode
   className?: string
-  /** Kolom maksimum (1–4), default 4 */
-  maxCols?: 1 | 2 | 3 | 4
+  title?: string
 }
 
 export function CompactSummaryGrid({
   children,
   className,
-  maxCols = 4,
+  title = "Ringkasan",
 }: CompactSummaryGridProps) {
   return (
-    <Card className={cn("gap-0 py-0 shadow-sm h-full", className)}>
-      <CardHeader className="px-3 py-2.5">
-        <CardTitle className="text-sm font-semibold">Ringkasan</CardTitle>
-      </CardHeader>
-      <CardContent
-        className={cn("grid gap-2 px-3 pb-3 pt-0", SUMMARY_COL_CLASS[maxCols])}
-      >
-        {children}
+    <Card className={cn("h-full gap-0 py-0 shadow-sm", className)}>
+      <CardContent className="flex h-full flex-col justify-center gap-2 px-3 py-3">
+        {title ? (
+          <p className="text-xs font-semibold leading-none text-foreground">
+            {title}
+          </p>
+        ) : null}
+        <div className="flex flex-wrap items-baseline gap-x-4 gap-y-2">
+          {children}
+        </div>
       </CardContent>
     </Card>
   )
 }
+
+/** @deprecated Gunakan CompactSummaryGrid — dipertahankan untuk kompatibilitas impor */
+export const SUMMARY_GRID_CLASS = "flex flex-wrap items-baseline gap-x-4 gap-y-2"

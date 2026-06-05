@@ -10,16 +10,23 @@ import {
   PageActionsBar,
   PageActionsProvider,
 } from "./page-actions-context"
+import { PageContentTitle } from "./page-content-title"
 import { PageTitleProvider, SetPageTitle } from "./page-title-context"
 
 interface DashboardLayoutProps {
   children: React.ReactNode
   title?: string
+  /** Tampilkan judul halaman di atas konten (mis. di atas tabel) */
+  contentTitle?: boolean
 }
 
 const USER_DASHBOARD_PATH = "/purchasing/user/dashboard"
 
-export function DashboardLayout({ children, title }: DashboardLayoutProps) {
+export function DashboardLayout({
+  children,
+  title,
+  contentTitle = false,
+}: DashboardLayoutProps) {
   const pathname = usePathname()
   const { data: session } = useSession()
   const userLevel = session?.user?.level
@@ -48,6 +55,7 @@ export function DashboardLayout({ children, title }: DashboardLayoutProps) {
             <PageActionsBar />
             <main className="relative flex-1 overflow-y-auto focus:outline-none">
               <div className="w-full space-y-6 px-4 py-6 sm:px-6 lg:px-8">
+                {contentTitle ? <PageContentTitle /> : null}
                 {children}
               </div>
             </main>

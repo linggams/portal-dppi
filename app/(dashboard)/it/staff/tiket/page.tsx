@@ -2,8 +2,12 @@
 
 import { useEffect, useState } from "react"
 import { Eye } from "lucide-react"
-import { ContentEmpty, DashboardLayout, PageSection } from "@/components/layout"
-import { Button } from "@/components/ui/button"
+import {
+  ContentEmpty,
+  DashboardLayout,
+  PageActions,
+  PageSection,
+} from "@/components/layout"
 import { TableActionLink } from "@/components/ui/table-actions"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
@@ -23,10 +27,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { IT_TIKET_STATUS_LABEL } from "@/lib/it/constants"
-import {
-  formatTiketDate,
-  getStatusBadge,
-} from "@/lib/it/utils"
+import { formatTiketDate, getStatusBadge } from "@/lib/it/utils"
 
 interface TiketRow {
   idTiket: number
@@ -40,14 +41,14 @@ interface TiketRow {
   kategori: { nama: string }
 }
 
-export default function ItAntrianPage() {  const [tiket, setTiket] = useState<TiketRow[]>([])
+export default function ItAntrianPage() {
+  const [tiket, setTiket] = useState<TiketRow[]>([])
   const [loading, setLoading] = useState(true)
   const [statusFilter, setStatusFilter] = useState("all")
 
   const loadTiket = () => {
     setLoading(true)
-    const q =
-      statusFilter === "all" ? "" : `?status=${statusFilter}`
+    const q = statusFilter === "all" ? "" : `?status=${statusFilter}`
     fetch(`/api/it/tiket${q}`)
       .then((r) => r.json())
       .then((data) => setTiket(Array.isArray(data) ? data : []))
@@ -62,24 +63,23 @@ export default function ItAntrianPage() {  const [tiket, setTiket] = useState<T
 
   return (
     <DashboardLayout title="Antrian Tiket">
-      <PageSection
-        title="Daftar Tiket"
-        action={
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Filter status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Semua status</SelectItem>
-              {Object.entries(IT_TIKET_STATUS_LABEL).map(([code, label]) => (
-                <SelectItem key={code} value={code}>
-                  {label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        }
-      >
+      <PageActions>
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <SelectTrigger className="h-8 w-[180px]">
+            <SelectValue placeholder="Filter status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Semua status</SelectItem>
+            {Object.entries(IT_TIKET_STATUS_LABEL).map(([code, label]) => (
+              <SelectItem key={code} value={code}>
+                {label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </PageActions>
+
+      <PageSection>
         {loading ? (
           <Skeleton className="h-40 w-full" />
         ) : tiket.length === 0 ? (
@@ -87,43 +87,43 @@ export default function ItAntrianPage() {  const [tiket, setTiket] = useState<T
         ) : (
           <TableContainer>
             <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>No. Tiket</TableHead>
-                <TableHead>Judul</TableHead>
-                <TableHead>Pelapor</TableHead>
-                <TableHead>Kategori</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Ditugaskan</TableHead>
-                <TableHead>Tanggal</TableHead>
-                <TableHead className="text-right">Aksi</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {tiket.map((t) => (
-                <TableRow key={t.idTiket}>
-                  <TableCell className="font-medium">{t.nomorTiket}</TableCell>
-                  <TableCell>{t.judul}</TableCell>
-                  <TableCell>
-                    {t.username}
-                    <span className="block text-xs text-muted-foreground">
-                      {t.jabatan}
-                    </span>
-                  </TableCell>
-                  <TableCell>{t.kategori.nama}</TableCell>
-                  <TableCell>{getStatusBadge(t.status)}</TableCell>
-                  <TableCell>{t.ditugaskanKe ?? "-"}</TableCell>
-                  <TableCell>{formatTiketDate(t.tglDibuat)}</TableCell>
-                  <TableCell className="text-right">
-                    <TableActionLink
-                      label="Detail"
-                      icon={Eye}
-                      href={`/it/staff/tiket/${t.idTiket}`}
-                    />
-                  </TableCell>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>No. Tiket</TableHead>
+                  <TableHead>Judul</TableHead>
+                  <TableHead>Pelapor</TableHead>
+                  <TableHead>Kategori</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Ditugaskan</TableHead>
+                  <TableHead>Tanggal</TableHead>
+                  <TableHead className="text-right">Aksi</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
+              </TableHeader>
+              <TableBody>
+                {tiket.map((t) => (
+                  <TableRow key={t.idTiket}>
+                    <TableCell className="font-medium">{t.nomorTiket}</TableCell>
+                    <TableCell>{t.judul}</TableCell>
+                    <TableCell>
+                      {t.username}
+                      <span className="block text-xs text-muted-foreground">
+                        {t.jabatan}
+                      </span>
+                    </TableCell>
+                    <TableCell>{t.kategori.nama}</TableCell>
+                    <TableCell>{getStatusBadge(t.status)}</TableCell>
+                    <TableCell>{t.ditugaskanKe ?? "-"}</TableCell>
+                    <TableCell>{formatTiketDate(t.tglDibuat)}</TableCell>
+                    <TableCell className="text-right">
+                      <TableActionLink
+                        label="Detail"
+                        icon={Eye}
+                        href={`/it/staff/tiket/${t.idTiket}`}
+                      />
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
             </Table>
           </TableContainer>
         )}

@@ -1,5 +1,6 @@
 export { PageActions } from "./page-actions"
 export { PageSection } from "./page-section"
+export { PageContentTitle } from "./page-content-title"
 export { SetPageTitle, usePageTitle } from "./page-title-context"
 export { StatCard } from "./stat-card"
 export {
@@ -7,7 +8,9 @@ export {
   CompactSummaryGrid,
   FilterField,
   FilterSummaryPanel,
+  SummaryMetric,
   FILTER_CONTROL_CLASS,
+  FILTER_FIELD_CLASS,
   FILTER_GRID_CLASS,
   SUMMARY_GRID_CLASS,
 } from "./filter-layout"

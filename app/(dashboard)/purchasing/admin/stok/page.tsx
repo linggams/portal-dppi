@@ -4,7 +4,6 @@ import { useState, useEffect } from "react"
 import { PageActions } from "@/components/layout"
 import { DashboardLayout } from "@/components/layout/DashboardLayout"
 import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useStok } from "./hooks/useStok"
 import { StokTable, StokFormDialog, DeleteStokDialog } from "./components"
@@ -109,25 +108,23 @@ export default function StokPage() {  const {
           onFetchNextKode={fetchNextKode}
         />
 
-        <Card id="pdf-stok-content" className="print:border-none print:shadow-none">
-          <div className="p-4 print:p-0">
-            <div className="text-center mb-4 print:mb-2">
-              <h2 className="text-xl font-bold">PT DASAN PAN PACIFIC INDONESIA</h2>
-              <p className="text-sm">
-                Parakansalak, Bojonglongok, Kec. Parakansalak, Kabupaten Sukabumi, Jawa Barat 43355
-              </p>
-              <hr className="my-2" />
-              <h3 className="text-lg font-bold">
-                LAPORAN DATA STOK BARANG {getJenisName(parseInt(jenisParam)).toUpperCase()}
-              </h3>
-            </div>
-            <StokTable
-              data={stokBarang}
-              onEdit={handleEditClick}
-              onDelete={handleDeleteClick}
-            />
+        <div id="pdf-stok-content" className="space-y-4 print:space-y-2">
+          <div className="hidden text-center print:block print:mb-2">
+            <h2 className="text-xl font-bold">PT DASAN PAN PACIFIC INDONESIA</h2>
+            <p className="text-sm">
+              Parakansalak, Bojonglongok, Kec. Parakansalak, Kabupaten Sukabumi, Jawa Barat 43355
+            </p>
+            <hr className="my-2" />
+            <h3 className="text-lg font-bold">
+              LAPORAN DATA STOK BARANG {getJenisName(parseInt(jenisParam)).toUpperCase()}
+            </h3>
           </div>
-        </Card>
+          <StokTable
+            data={stokBarang}
+            onEdit={handleEditClick}
+            onDelete={handleDeleteClick}
+          />
+        </div>
 
         <DeleteStokDialog
           stok={stokToDelete}

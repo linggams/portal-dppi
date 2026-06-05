@@ -1,6 +1,6 @@
 "use client"
 
-import { Input } from "@/components/ui/input"
+import { DatePicker } from "@/components/ui/date-picker"
 import {
   CompactFilterCard,
   FILTER_CONTROL_CLASS,
@@ -17,21 +17,15 @@ export function CetakDateFilter({
   onDateChange,
 }: CetakDateFilterProps) {
   return (
-    <CompactFilterCard
-      title="Pilih Tanggal"
-      description="Tanggal permintaan untuk cetak"
-    >
-      <div className="max-w-xs">
-        <FilterField label="Tanggal permintaan" htmlFor="date">
-          <Input
-            id="date"
-            type="date"
-            className={FILTER_CONTROL_CLASS}
-            value={selectedDate}
-            onChange={(e) => onDateChange(e.target.value)}
-          />
-        </FilterField>
-      </div>
+    <CompactFilterCard>
+      <FilterField className="sm:max-w-xs">
+        <DatePicker
+          className={FILTER_CONTROL_CLASS}
+          value={selectedDate}
+          onChange={onDateChange}
+          placeholder="Tanggal permintaan"
+        />
+      </FilterField>
     </CompactFilterCard>
   )
 }
