@@ -5,7 +5,7 @@ import {
   canAccessItUser,
   isClientUser,
 } from "@/lib/auth/permissions"
-import { canManageItTiket, IT_PRIORITAS } from "@/lib/it/constants"
+import { canManageItTiket } from "@/lib/it/constants"
 import { generateNomorTiket } from "@/lib/it/nomor"
 import { z } from "zod"
 
@@ -13,7 +13,6 @@ const createSchema = z.object({
   judul: z.string().min(3).max(200),
   deskripsi: z.string().min(5),
   idKategori: z.number().int().positive(),
-  prioritas: z.enum(IT_PRIORITAS),
 })
 
 export async function GET(request: NextRequest) {
@@ -86,7 +85,6 @@ export async function POST(request: NextRequest) {
         judul: data.judul,
         deskripsi: data.deskripsi,
         idKategori: data.idKategori,
-        prioritas: data.prioritas,
         status: 0,
       },
       include: { kategori: true },

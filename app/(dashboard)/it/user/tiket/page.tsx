@@ -35,7 +35,6 @@ import {
 import { TableContainer } from "@/components/ui/table-container"
 import {
   formatTiketDate,
-  getPrioritasBadge,
   getStatusBadge,
 } from "@/lib/it/utils"
 
@@ -43,7 +42,6 @@ interface TiketRow {
   idTiket: number
   nomorTiket: string
   judul: string
-  prioritas: string
   status: number
   tglDibuat: string
   kategori: { nama: string }
@@ -168,7 +166,6 @@ export default function UserTiketPage() {
                 <TableHead>No. Tiket</TableHead>
                 <TableHead>Judul</TableHead>
                 <TableHead>Kategori</TableHead>
-                <TableHead>Prioritas</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Antrian</TableHead>
                 <TableHead>Tanggal</TableHead>
@@ -181,7 +178,6 @@ export default function UserTiketPage() {
                   <TableCell className="font-medium">{t.nomorTiket}</TableCell>
                   <TableCell>{t.judul}</TableCell>
                   <TableCell>{t.kategori.nama}</TableCell>
-                  <TableCell>{getPrioritasBadge(t.prioritas)}</TableCell>
                   <TableCell>{getStatusBadge(t.status)}</TableCell>
                   <TableCell>
                     {t.posisiAntrian != null && t.totalAntrian != null ? (

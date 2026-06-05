@@ -1,0 +1,63 @@
+---
+description: Konvensi API Route Handler (Purchasing, IT, Platform)
+globs: app/api/**/*.ts
+alwaysApply: false
+---
+
+# API Routes
+
+## Template GET
+
+```ts
+import { NextRequest, NextResponse } from "next/server"
+import { getSessionFromRequest } from "@/lib/get-session"
+import { prisma } from "@/lib/db/prisma"
+import { canReadPurchasingTransactions } from "@/lib/auth/permissions"
+
+export async function GET(request: NextRequest) {
+  try {
+    const session = await getSessionFromRequest(request)
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+    if (!canReadPurchasingTransactions(session.user.level)) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+    }
+
+    const searchParams = request.nextUrl.searchParams
+    // parse filter, build where, query prisma
+
+    return NextResponse.json(data)
+  } catch (error) {
+    console.error("Error ...", error)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+  }
+}
+```
+
+## POST/PATCH
+
+- Validasi body dengan **zod** (`schema.parse(body)`).
+- `ZodError` → 400; cek ownership/role sebelum mutasi.
+- Client user hanya akses data milik sendiri (`isClientUser`, filter `username`/`unit`).
+
+## Query Prisma
+
+- `select`/`include` minimal — jangan `include: { rel: true }` jika hanya butuh 2 field.
+- List tanpa batas: tambah `take`/`skip` atau agregasi di DB.
+- Logic bisnis reusable → `lib/{modul}/`, dipanggil dari route.
+
+## Response list berpaginasi
+
+```ts
+return NextResponse.json({
+  data,
+  summary,      // opsional
+  page,
+  pageSize,
+  total,
+  totalPages,
+})
+```
+
+Query params snake_case: `start_date`, `end_date`, `status`, `page`.

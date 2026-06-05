@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useSession } from "next-auth/react"
-import { PageSection } from "@/components/layout"
+import { PageSection, PageActions } from "@/components/layout"
 import { DashboardLayout } from "@/components/layout/DashboardLayout"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
@@ -38,6 +38,12 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { TableActionButton } from "@/components/ui/table-actions"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import {
+  getTodayDateWIB,
+  PERMINTAAN_DAILY_LIMIT_MESSAGE,
+  type PermintaanDailyLimitStatus,
+} from "@/lib/purchasing/permintaan-daily-limit-types"
 
 interface Sementara {
   idSementara: number
@@ -78,6 +84,9 @@ export default function PermintaanPage() {
   const [loading, setLoading] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [submitDialogOpen, setSubmitDialogOpen] = useState(false)
+  const [dailyLimit, setDailyLimit] = useState<PermintaanDailyLimitStatus | null>(
+    null
+  )
   const [formData, setFormData] = useState({
     idJenis: "",
     kodeBrg: "",
@@ -85,9 +94,25 @@ export default function PermintaanPage() {
   })
 
   useEffect(() => {
+    if (!session?.user?.username) return
     fetchJenisBarang()
+    fetchDailyLimit()
     fetchSementara()
-  }, [])
+  }, [session?.user?.username])
+
+  const fetchDailyLimit = async () => {
+    try {
+      const response = await fetch(
+        `/api/purchasing/permintaan/daily-limit?unit=${session?.user?.username}`
+      )
+      if (response.ok) {
+        const data: PermintaanDailyLimitStatus = await response.json()
+        setDailyLimit(data)
+      }
+    } catch {
+      toast.error("Gagal memuat status permintaan harian")
+    }
+  }
 
   useEffect(() => {
     if (formData.idJenis) {
@@ -122,7 +147,7 @@ export default function PermintaanPage() {
   const fetchSementara = async () => {
     setLoading(true)
     try {
-      const today = new Date().toISOString().split("T")[0]
+      const today = getTodayDateWIB()
       const response = await fetch(
         `/api/purchasing/permintaan/sementara?unit=${session?.user?.username}&tgl_permintaan=${today}`
       )
@@ -139,6 +164,11 @@ export default function PermintaanPage() {
 
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    if (dailyLimit?.alreadySubmitted) {
+      toast.error(PERMINTAAN_DAILY_LIMIT_MESSAGE)
+      return
+    }
 
     if (!formData.idJenis || !formData.kodeBrg || !formData.jumlah || formData.jumlah <= 0) {
       toast.error("Mohon lengkapi semua field")
@@ -203,6 +233,11 @@ export default function PermintaanPage() {
   }
 
   const handleSubmitClick = () => {
+    if (dailyLimit?.alreadySubmitted) {
+      toast.error(PERMINTAAN_DAILY_LIMIT_MESSAGE)
+      return
+    }
+
     if (sementaraList.length === 0) {
       toast.error("Tidak ada permintaan untuk disubmit")
       return
@@ -214,7 +249,7 @@ export default function PermintaanPage() {
     setSubmitDialogOpen(false)
     setSubmitting(true)
     try {
-      const today = new Date().toISOString().split("T")[0]
+      const today = getTodayDateWIB()
       const response = await fetch("/api/purchasing/permintaan/submit", {
         method: "POST",
         headers: {
@@ -230,6 +265,7 @@ export default function PermintaanPage() {
       if (response.ok) {
         toast.success("Permintaan berhasil dikirim")
         fetchSementara()
+        fetchDailyLimit()
       } else {
         const error = await response.json()
         toast.error(error.error || "Terjadi kesalahan")
@@ -242,10 +278,29 @@ export default function PermintaanPage() {
   }
 
   const selectedStok = stokBarang.find((s) => s.kodeBrg === formData.kodeBrg)
+  const formDisabled = dailyLimit?.alreadySubmitted ?? false
 
   return (
     <DashboardLayout title="Permintaan Barang">
-<div className="space-y-6">
+      {sementaraList.length > 0 && !formDisabled ? (
+        <PageActions>
+          <Button
+            onClick={handleSubmitClick}
+            disabled={submitting || formDisabled}
+            size="sm"
+          >
+            {submitting ? "Mengirim..." : "Kirim Permintaan"}
+          </Button>
+        </PageActions>
+      ) : null}
+
+      <div className="space-y-6">
+        {formDisabled ? (
+          <Alert>
+            <AlertDescription>{PERMINTAAN_DAILY_LIMIT_MESSAGE}</AlertDescription>
+          </Alert>
+        ) : null}
+
                 <div className="grid gap-6 md:grid-cols-2">
           {/* Form */}
           <Card className="p-6">
@@ -259,6 +314,7 @@ export default function PermintaanPage() {
                     setFormData({ idJenis: value, kodeBrg: "", jumlah: 0 })
                   }}
                   required
+                  disabled={formDisabled}
                 >
                   <SelectTrigger id="idJenis">
                     <SelectValue placeholder="Pilih Jenis Barang" />
@@ -281,7 +337,7 @@ export default function PermintaanPage() {
                     setFormData({ ...formData, kodeBrg: value })
                   }
                   required
-                  disabled={!formData.idJenis}
+                  disabled={!formData.idJenis || formDisabled}
                 >
                   <SelectTrigger id="kodeBrg">
                     <SelectValue placeholder="Pilih Nama Barang" />
@@ -319,29 +375,17 @@ export default function PermintaanPage() {
                   required
                   min="1"
                   max={selectedStok?.sisa || 0}
+                  disabled={formDisabled}
                 />
               </div>
 
-              <Button type="submit" className="w-full">
+              <Button type="submit" className="w-full" disabled={formDisabled}>
                 Tambah ke Permintaan
               </Button>
             </form>
           </Card>
 
-          <PageSection
-            title="Permintaan Hari Ini"
-            action={
-              sementaraList.length > 0 ? (
-                <Button
-                  onClick={handleSubmitClick}
-                  disabled={submitting}
-                  size="sm"
-                >
-                  {submitting ? "Mengirim..." : "Kirim Permintaan"}
-                </Button>
-              ) : undefined
-            }
-          >
+          <PageSection title="Permintaan Hari Ini">
             {loading ? (
               <div className="flex justify-center items-center py-8">
                 <Loader2 className="h-6 w-6 animate-spin" />

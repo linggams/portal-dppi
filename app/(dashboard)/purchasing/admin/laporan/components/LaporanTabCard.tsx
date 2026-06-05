@@ -4,12 +4,13 @@ import { Button } from "@/components/ui/button"
 import { PageSection } from "@/components/layout"
 import { Skeleton } from "@/components/ui/skeleton"
 import { TableContainer } from "@/components/ui/table-container"
+import { Download } from "lucide-react"
 
 interface LaporanTabCardProps {
   title: string
   loading: boolean
   hasData: boolean
-  onExport: () => void
+  onExport?: () => void
   children: React.ReactNode
 }
 
@@ -36,8 +37,9 @@ export function LaporanTabCard({
     <PageSection
       title={title}
       action={
-        hasData ? (
+        onExport && hasData ? (
           <Button variant="outline" size="sm" onClick={onExport}>
+            <Download className="mr-1.5 size-3.5" />
             Ekspor
           </Button>
         ) : undefined

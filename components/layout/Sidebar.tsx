@@ -405,7 +405,7 @@ export function AppSidebar({ userLevel }: SidebarProps) {
   const mainItems: NavLink[] = useMemo(() => {
     if (userLevel === "administrator") {
       return [
-        { title: "Dashboard", href: "/purchasing/admin/dashboard", icon: LayoutDashboard },
+        { title: "Dashboard", href: "/platform/dashboard", icon: LayoutDashboard },
         { title: "Data User", href: "/platform/users", icon: Users },
       ]
     }

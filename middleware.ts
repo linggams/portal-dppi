@@ -66,6 +66,13 @@ export async function middleware(request: NextRequest) {
 
   const userLevel = normalizeUserLevel(token.level as string)
 
+  if (
+    pathname === "/purchasing/admin/dashboard" &&
+    userLevel === "administrator"
+  ) {
+    return NextResponse.redirect(new URL("/platform/dashboard", request.url))
+  }
+
   if (pathname === "/") {
     return NextResponse.redirect(
       new URL(getDefaultHomePath(userLevel), request.url)

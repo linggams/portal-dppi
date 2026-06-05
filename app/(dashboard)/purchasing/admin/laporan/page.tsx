@@ -3,7 +3,10 @@
 import {
   DashboardLayout,
   FilterSummaryPanel,
+  PageActions,
 } from "@/components/layout"
+import { Button } from "@/components/ui/button"
+import { Download } from "lucide-react"
 import {
   Table,
   TableBody,
@@ -36,6 +39,20 @@ export default function LaporanPage() {
 
   return (
     <DashboardLayout title="Laporan">
+      {data.length > 0 ? (
+        <PageActions>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleExport}
+            disabled={loading}
+          >
+            <Download className="mr-1.5 size-3.5" />
+            Ekspor PDF
+          </Button>
+        </PageActions>
+      ) : null}
+
       <div className="space-y-4">
         <FilterSummaryPanel
           filter={
@@ -66,7 +83,6 @@ export default function LaporanPage() {
               title="Laporan Permintaan Barang"
               loading={loading}
               hasData={data.length > 0}
-              onExport={handleExport}
             >
               <Table>
                 <TableHeader>
@@ -110,7 +126,6 @@ export default function LaporanPage() {
               title="Laporan Pengajuan Barang"
               loading={loading}
               hasData={data.length > 0}
-              onExport={handleExport}
             >
               <Table>
                 <TableHeader>
@@ -160,7 +175,6 @@ export default function LaporanPage() {
               title="Laporan Pemasukan Barang"
               loading={loading}
               hasData={data.length > 0}
-              onExport={handleExport}
             >
               <Table>
                 <TableHeader>
@@ -200,7 +214,6 @@ export default function LaporanPage() {
               title="Laporan Pengeluaran Barang"
               loading={loading}
               hasData={data.length > 0}
-              onExport={handleExport}
             >
               <Table>
                 <TableHeader>
@@ -240,7 +253,6 @@ export default function LaporanPage() {
               title="Laporan Stok Barang"
               loading={loading}
               hasData={data.length > 0}
-              onExport={handleExport}
             >
               <Table>
                 <TableHeader>

@@ -15,7 +15,6 @@ function parseFilters(searchParams: URLSearchParams) {
     startDate: searchParams.get("start_date"),
     endDate: searchParams.get("end_date"),
     status: searchParams.get("status") ?? "all",
-    prioritas: searchParams.get("prioritas") ?? "all",
     kategoriId: searchParams.get("kategori_id") ?? "all",
     username: searchParams.get("username"),
     ditugaskanKe: searchParams.get("ditugaskan_ke"),

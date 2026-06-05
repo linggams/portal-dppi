@@ -2,6 +2,12 @@ import { NextRequest, NextResponse } from "next/server"
 import { getSessionFromRequest } from "@/lib/get-session"
 import { isClientUser } from "@/lib/auth/permissions"
 import { prisma } from "@/lib/db/prisma"
+import {
+  getTodayDateWIB,
+  hasSubmittedPermintaanToday,
+  parseDateOnly,
+  PERMINTAAN_DAILY_LIMIT_MESSAGE,
+} from "@/lib/purchasing/permintaan-daily-limit"
 import { z } from "zod"
 
 const sementaraSchema = z.object({
@@ -26,11 +32,15 @@ export async function GET(request: NextRequest) {
 
     const searchParams = request.nextUrl.searchParams
     const unit = searchParams.get("unit") || session.user.username
-    const tglPermintaan = searchParams.get("tgl_permintaan") || new Date().toISOString().split("T")[0]
+    const tglPermintaan =
+      searchParams.get("tgl_permintaan") ?? getTodayDateWIB()
 
-    const where: any = {
+    const where: {
+      unit: string
+      tglPermintaan: Date
+    } = {
       unit,
-      tglPermintaan: new Date(tglPermintaan),
+      tglPermintaan: parseDateOnly(tglPermintaan),
     }
 
     // If user, only show their own
@@ -81,6 +91,13 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    if (await hasSubmittedPermintaanToday(validatedData.unit)) {
+      return NextResponse.json(
+        { error: PERMINTAAN_DAILY_LIMIT_MESSAGE },
+        { status: 409 }
+      )
+    }
+
     // Check stok availability
     const stokBarang = await prisma.stokbarang.findUnique({
       where: { kodeBrg: validatedData.kodeBrg },
@@ -107,7 +124,7 @@ export async function POST(request: NextRequest) {
         kodeBrg: validatedData.kodeBrg,
         idJenis: validatedData.idJenis,
         jumlah: validatedData.jumlah,
-        tglPermintaan: new Date(),
+        tglPermintaan: parseDateOnly(getTodayDateWIB()),
         status: 0,
       },
       include: {

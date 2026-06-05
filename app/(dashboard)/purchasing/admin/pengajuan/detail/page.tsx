@@ -1,9 +1,9 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Check, X } from "lucide-react"
-import { useSearchParams, useRouter } from "next/navigation"
-import { usePageTitle } from "@/components/layout"
+import { Check, X, ArrowLeft, CheckCheck } from "lucide-react"
+import { useSearchParams } from "next/navigation"
+import { PageActions } from "@/components/layout"
 import { DashboardLayout } from "@/components/layout/DashboardLayout"
 import { Button } from "@/components/ui/button"
 import {
@@ -15,8 +15,8 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { TableContainer } from "@/components/ui/table-container"
-import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
+import { getPermintaanItemStatusBadge } from "@/lib/purchasing/permintaan-status"
 import { toast } from "sonner"
 import { format } from "date-fns"
 import { id } from "date-fns/locale"
@@ -53,7 +53,6 @@ interface Pengajuan {
 }
 
 export default function DetailPengajuanPage() {  const searchParams = useSearchParams()
-  const router = useRouter()
   const unit = searchParams.get("unit")
   const tgl = searchParams.get("tgl")
 
@@ -75,7 +74,7 @@ export default function DetailPengajuanPage() {  const searchParams = useSearch
     setLoading(true)
     try {
       const response = await fetch(
-        `/api/purchasing/pengajuan?unit=${unit}&tgl_pengajuan=${tgl}&status=0`
+        `/api/purchasing/pengajuan?unit=${encodeURIComponent(unit!)}&tgl_pengajuan=${tgl}`
       )
       if (response.ok) {
         const data = await response.json()
@@ -144,10 +143,11 @@ export default function DetailPengajuanPage() {  const searchParams = useSearch
     setApproveAllDialogOpen(true)
   }
 
+  const pendingItems = pengajuan.filter((item) => item.status === 0)
+
   const handleApproveAll = async () => {
     setApproveAllDialogOpen(false)
-    // Approve all
-    for (const item of pengajuan) {
+    for (const item of pendingItems) {
       await handleApprove(item.idPengajuan)
     }
   }
@@ -201,18 +201,26 @@ export default function DetailPengajuanPage() {  const searchParams = useSearch
 
   return (
     <DashboardLayout title="Detail Pengajuan Barang">
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <Button variant="ghost" size="sm" asChild>
-            <Link href="/purchasing/admin/pengajuan/data">Kembali</Link>
+      <PageActions>
+        <Button variant="outline" size="sm" asChild>
+          <Link href="/purchasing/admin/pengajuan/data">
+            <ArrowLeft className="mr-1.5 size-3.5" />
+            Kembali
+          </Link>
+        </Button>
+        {pendingItems.length > 0 ? (
+          <Button
+            size="sm"
+            onClick={handleApproveAllClick}
+            disabled={processing !== null}
+          >
+            <CheckCheck className="mr-1.5 size-3.5" />
+            {processing !== null ? "Memproses..." : "Setujui Semua"}
           </Button>
-          {pengajuan.length > 0 && (
-            <Button onClick={handleApproveAllClick} disabled={processing !== null}>
-              {processing !== null ? "Memproses..." : "Setujui Semua"}
-            </Button>
-          )}
-        </div>
+        ) : null}
+      </PageActions>
 
+      <div className="space-y-6">
         {loading ? (
           <div className="space-y-3 rounded-md border p-4">
             <Skeleton className="h-10 w-full" />
@@ -253,13 +261,17 @@ export default function DetailPengajuanPage() {  const searchParams = useSearch
                         <TableCell>{formatRupiah(item.hargabarang)}</TableCell>
                         <TableCell>{formatRupiah(item.total)}</TableCell>
                         <TableCell>
-                          <Badge variant="outline">Pending</Badge>
+                          {getPermintaanItemStatusBadge(item.status)}
                         </TableCell>
                         <TableCell className="text-right">
-                          <TableActions>
-                            <TableActionButton label="Setujui" icon={Check} onClick={() => handleApproveClick(item)} disabled={processing !== null} loading={processing === item.idPengajuan} />
-                            <TableActionButton label="Tolak" icon={X} variant="ghost" className="text-destructive hover:text-destructive" onClick={() => handleRejectClick(item)} disabled={processing !== null} loading={processing === item.idPengajuan} />
-                          </TableActions>
+                          {item.status === 0 ? (
+                            <TableActions>
+                              <TableActionButton label="Setujui" icon={Check} onClick={() => handleApproveClick(item)} disabled={processing !== null} loading={processing === item.idPengajuan} />
+                              <TableActionButton label="Tolak" icon={X} variant="ghost" className="text-destructive hover:text-destructive" onClick={() => handleRejectClick(item)} disabled={processing !== null} loading={processing === item.idPengajuan} />
+                            </TableActions>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">—</span>
+                          )}
                         </TableCell>
                       </TableRow>
                     ))}

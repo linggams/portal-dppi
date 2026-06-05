@@ -174,7 +174,6 @@ model ItTiket {
   judul        String    @db.VarChar(200)
   deskripsi    String    @db.Text
   idKategori   Int       @map("id_kategori")
-  prioritas    String    @db.VarChar(20)
   status       Int       @default(0)
   ditugaskanKe String?   @map("ditugaskan_ke") @db.VarChar(20)
   tglDibuat    DateTime  @default(now()) @map("tgl_dibuat")

@@ -1,6 +1,8 @@
 "use client"
 
-import { DashboardLayout } from "@/components/layout/DashboardLayout"
+import { DashboardLayout, PageActions } from "@/components/layout"
+import { Button } from "@/components/ui/button"
+import { Download, Printer, Search } from "lucide-react"
 import { useCetakBPP } from "./hooks/useCetakBPP"
 import {
   CetakDateFilter,
@@ -26,13 +28,33 @@ export default function CetakBPPPage() {
 
   return (
     <DashboardLayout title="Cetak BPP">
+      <PageActions>
+        <Button size="sm" onClick={fetchPermintaan} disabled={loading}>
+          <Search className="mr-1.5 size-3.5" />
+          Tampilkan
+        </Button>
+        {hasData ? (
+          <>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleExportAllPDF}
+            >
+              <Download className="mr-1.5 size-3.5" />
+              Export
+            </Button>
+            <Button size="sm" variant="outline" onClick={handlePrint}>
+              <Printer className="mr-1.5 size-3.5" />
+              Cetak
+            </Button>
+          </>
+        ) : null}
+      </PageActions>
+
       <div className="space-y-6">
-                <CetakDateFilter
+        <CetakDateFilter
           selectedDate={selectedDate}
           onDateChange={setSelectedDate}
-          onShowData={fetchPermintaan}
-          onExportAll={handleExportAllPDF}
-          hasData={hasData}
         />
 
         {loading ? (

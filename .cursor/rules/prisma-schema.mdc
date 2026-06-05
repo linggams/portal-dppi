@@ -1,0 +1,15 @@
+---
+description: Konvensi Prisma schema dan migrasi
+globs: prisma/**/*
+alwaysApply: false
+---
+
+# Prisma
+
+- Model PascalCase; field camelCase; `@map` / `@@map` ke snake_case DB.
+- Purchasing: prefix tabel `atk_*`; IT: `it_*`.
+- Tambah index untuk kolom filter (`status`, `tglDibuat`, composite `[unit, tglPermintaan]`).
+- Setelah ubah schema: `npx prisma generate`; dev sync: `npx prisma db push` atau migrasi SQL manual di `prisma/migrations/`.
+- **Jangan** commit `.env` / credential.
+
+Field legacy: kolom `user` di `Permintaan` = instansi/jabatan pemohon (UI pakai label "Instansi").

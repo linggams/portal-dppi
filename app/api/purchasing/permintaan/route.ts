@@ -5,6 +5,12 @@ import {
   isClientUser,
 } from "@/lib/auth/permissions"
 import { prisma } from "@/lib/db/prisma"
+import {
+  getTodayDateWIB,
+  hasSubmittedPermintaanToday,
+  parseDateOnly,
+  PERMINTAAN_DAILY_LIMIT_MESSAGE,
+} from "@/lib/purchasing/permintaan-daily-limit"
 import { z } from "zod"
 
 const permintaanSchema = z.object({
@@ -102,6 +108,16 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    if (
+      isClientUser(session.user.level) &&
+      (await hasSubmittedPermintaanToday(validatedData.unit))
+    ) {
+      return NextResponse.json(
+        { error: PERMINTAAN_DAILY_LIMIT_MESSAGE },
+        { status: 409 }
+      )
+    }
+
     // Check stok availability
     const stokBarang = await prisma.stokbarang.findUnique({
       where: { kodeBrg: validatedData.kodeBrg },
@@ -128,7 +144,7 @@ export async function POST(request: NextRequest) {
         kodeBrg: validatedData.kodeBrg,
         idJenis: validatedData.idJenis,
         jumlah: validatedData.jumlah,
-        tglPermintaan: new Date(),
+        tglPermintaan: parseDateOnly(getTodayDateWIB()),
         status: 0, // Pending
       },
       include: {

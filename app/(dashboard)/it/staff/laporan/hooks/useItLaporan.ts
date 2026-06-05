@@ -22,7 +22,6 @@ export function useItLaporan() {
     startDate: "",
     endDate: "",
     status: "all",
-    prioritas: "all",
     kategoriId: "all",
     username: "",
     ditugaskanKe: "",
@@ -49,8 +48,6 @@ export function useItLaporan() {
       if (filters.startDate) params.append("start_date", filters.startDate)
       if (filters.endDate) params.append("end_date", filters.endDate)
       if (filters.status !== "all") params.append("status", filters.status)
-      if (filters.prioritas !== "all")
-        params.append("prioritas", filters.prioritas)
       if (filters.kategoriId !== "all")
         params.append("kategori_id", filters.kategoriId)
       if (filters.username.trim())
@@ -104,7 +101,6 @@ export function useItLaporan() {
           "Judul",
           "Pemohon",
           "Kategori",
-          "Prioritas",
           "Status",
           "Teknisi",
           "Dibuat",
@@ -137,7 +133,6 @@ export function useItLaporan() {
           t.judul,
           t.username,
           t.kategori.nama,
-          t.prioritas,
           IT_TIKET_STATUS_LABEL[t.status] ?? String(t.status),
           t.ditugaskanKe ?? "-",
           formatTiketDate(t.tglDibuat),
@@ -177,7 +172,7 @@ export function useItLaporan() {
       ]
 
       const widthsByTab: Record<ItLaporanTab, (string | number)[]> = {
-        tiket: ["auto", "*", "auto", "auto", "auto", "auto", "auto", "auto", "auto"],
+        tiket: ["auto", "*", "auto", "auto", "auto", "auto", "auto", "auto"],
         kategori: ["*", "auto", "auto", "auto", "auto"],
         teknisi: ["*", "auto", "auto", "auto", "auto"],
       }

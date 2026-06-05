@@ -1,0 +1,81 @@
+---
+description: Pola pembuatan halaman dashboard (Purchasing & IT)
+globs: app/(dashboard)/**/*.tsx
+alwaysApply: false
+---
+
+# Halaman Dashboard
+
+## Struktur folder (halaman kompleks)
+
+```
+app/(dashboard)/{modul}/{role}/{fitur}/
+  page.tsx              # komposisi tipis, "use client"
+  types.ts              # tipe UI / response API
+  hooks/use{Fitur}.ts   # fetch, state, handler
+  components/
+    index.ts            # barrel export
+    {Fitur}Table.tsx
+    {Fitur}Filters.tsx
+    {Fitur}Skeleton.tsx
+  utils.tsx             # format tanggal, badge (re-export dari lib jika perlu)
+```
+
+Halaman sederhana boleh satu `page.tsx`; halaman list/laporan wajib pecah hook + components.
+
+## Layout wajib
+
+```tsx
+"use client"
+
+import { DashboardLayout, FilterSummaryPanel, PageActions, ContentEmpty } from "@/components/layout"
+
+export default function MyPage() {
+  return (
+    <DashboardLayout title="Judul Halaman">
+      <div className="space-y-4">
+        {/* konten */}
+      </div>
+    </DashboardLayout>
+  )
+}
+```
+
+| Kebutuhan | Komponen |
+|-----------|----------|
+| Tombol aksi kanan header | `<PageActions>` |
+| Filter + ringkasan | `<FilterSummaryPanel>` + `<CompactFilterCard>` |
+| Section dengan judul | `<PageSection title="..." action={...}>` |
+| Kartu form/konten | `<SectionCard title="...">` |
+| Kosong | `<ContentEmpty title="..." description="..." />` |
+| Loading | `<Skeleton />` atau komponen `*Skeleton` |
+
+Filter: `FilterField`, `FILTER_GRID_CLASS`, `FILTER_CONTROL_CLASS` dari `@/components/layout`.
+
+## Tabel & aksi
+
+- Bungkus tabel: `<TableContainer><Table>...</Table></TableContainer>`
+- Aksi baris: **ikon + tooltip**, bukan tombol teks panjang:
+
+```tsx
+import { TableActionLink, TableActionButton, TableActions } from "@/components/ui/table-actions"
+import { Eye } from "lucide-react"
+
+<TableCell className="text-right">
+  <TableActionLink label="Detail" icon={Eye} href={`/path/${id}`} />
+</TableCell>
+```
+
+- Badge status: ekstrak ke `lib/{modul}/` atau `utils.tsx` halaman.
+
+## Data & performa
+
+- Client **fetch ke API route**, jangan query Prisma langsung.
+- List besar: pagination/filter di **server** (query params `page`, `start_date`, dll.).
+- Default filter periode: awal bulan → hari ini (lihat `getDefaultPermintaanGroupDateRange`).
+- State loading / empty / data eksplisit; feedback error pakai `toast` dari `sonner`.
+
+## Detail halaman
+
+- `[id]/page.tsx` atau `detail/page.tsx` + `useSearchParams` untuk query (`unit`, `tgl`).
+- Tombol kembali: `<Button variant="ghost" size="sm" asChild><Link href="...">Kembali</Link></Button>`

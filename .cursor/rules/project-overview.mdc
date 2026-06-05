@@ -1,0 +1,28 @@
+---
+description: Konteks proyek ATK Management System — domain, stack, dan struktur folder
+alwaysApply: true
+---
+
+# ATK Management System
+
+Next.js App Router + PostgreSQL + Prisma + NextAuth + shadcn/ui.
+
+## Domain & route
+
+| Modul | UI | API | Tabel DB |
+|-------|-----|-----|----------|
+| Purchasing admin | `/purchasing/admin/*` | `/api/purchasing/*` | `atk_*` |
+| Purchasing user | `/purchasing/user/*` | `/api/purchasing/*` | `atk_*` |
+| IT staff | `/it/staff/*` | `/api/it/*` | `it_*` |
+| IT user | `/it/user/*` | `/api/it/*` | `it_*` |
+| Platform | `/platform/*` | `/api/platform/*` | `user` |
+
+Permission: `lib/auth/permissions.ts`. Arsitektur: `docs/architecture.md`.
+
+## Konvensi umum
+
+- UI teks Bahasa Indonesia; kode/identifier English.
+- Minimalkan scope diff; ikuti pola file terdekat.
+- **Jangan** impor `lib/db/prisma` atau `@prisma/client` dari Client Component / hook client.
+- Pisahkan logic server (`lib/.../fetch*.ts` + API route) vs shared types (`*-types.ts`).
+- Validasi input API dengan **zod**; auth via `getSessionFromRequest`.

@@ -59,7 +59,9 @@ export default function LoginPage() {
             : result.error
         setError(errorMessage)
       } else if (result?.ok) {
-        if (level === "administrator" || level === "purchasing") {
+        if (level === "administrator") {
+          router.push("/platform/dashboard")
+        } else if (level === "purchasing") {
           router.push("/purchasing/admin/dashboard")
         } else if (level === "it_support") {
           router.push("/it/staff/dashboard")

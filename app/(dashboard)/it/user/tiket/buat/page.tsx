@@ -16,7 +16,6 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { toast } from "sonner"
-import { IT_PRIORITAS } from "@/lib/it/constants"
 
 interface Kategori {
   idKategori: number
@@ -31,7 +30,6 @@ export default function BuatTiketPage() {  const router = useRouter()
     judul: "",
     deskripsi: "",
     idKategori: "",
-    prioritas: "sedang",
   })
 
   useEffect(() => {
@@ -62,7 +60,6 @@ export default function BuatTiketPage() {  const router = useRouter()
           judul: form.judul,
           deskripsi: form.deskripsi,
           idKategori: parseInt(form.idKategori),
-          prioritas: form.prioritas,
         }),
       })
       if (!res.ok) throw new Error()
@@ -103,47 +100,27 @@ export default function BuatTiketPage() {  const router = useRouter()
             />
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label>Kategori</Label>
-              <Select
-                value={form.idKategori}
-                onValueChange={(v) => setForm({ ...form, idKategori: v })}
-                required
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Pilih kategori" />
-                </SelectTrigger>
-                <SelectContent>
-                  {kategori.map((k) => (
-                    <SelectItem
-                      key={k.idKategori}
-                      value={String(k.idKategori)}
-                    >
-                      {k.nama}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>Prioritas</Label>
-              <Select
-                value={form.prioritas}
-                onValueChange={(v) => setForm({ ...form, prioritas: v })}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {IT_PRIORITAS.map((p) => (
-                    <SelectItem key={p} value={p}>
-                      {p.charAt(0).toUpperCase() + p.slice(1)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+          <div className="space-y-2">
+            <Label>Kategori</Label>
+            <Select
+              value={form.idKategori}
+              onValueChange={(v) => setForm({ ...form, idKategori: v })}
+              required
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Pilih kategori" />
+              </SelectTrigger>
+              <SelectContent>
+                {kategori.map((k) => (
+                  <SelectItem
+                    key={k.idKategori}
+                    value={String(k.idKategori)}
+                  >
+                    {k.nama}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="space-y-2">

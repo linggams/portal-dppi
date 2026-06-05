@@ -8,7 +8,6 @@ export interface ItLaporanFilterInput {
   startDate?: string | null
   endDate?: string | null
   status?: string | null
-  prioritas?: string | null
   kategoriId?: string | null
   username?: string | null
   ditugaskanKe?: string | null
@@ -51,10 +50,6 @@ export function buildTiketLaporanWhere(
 
   if (filters.status && filters.status !== "all") {
     where.status = parseInt(filters.status, 10)
-  }
-
-  if (filters.prioritas && filters.prioritas !== "all") {
-    where.prioritas = filters.prioritas
   }
 
   if (filters.kategoriId && filters.kategoriId !== "all") {

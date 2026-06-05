@@ -1,5 +1,5 @@
 import { Badge } from "@/components/ui/badge"
-import { IT_PRIORITAS_LABEL, IT_TIKET_STATUS_LABEL } from "./constants"
+import { IT_TIKET_STATUS_LABEL } from "./constants"
 
 export function getStatusBadge(status: number) {
   const label = IT_TIKET_STATUS_LABEL[status] ?? String(status)
@@ -20,20 +20,6 @@ export function getStatusBadge(status: number) {
       return <Badge variant="destructive">{label}</Badge>
     default:
       return <Badge>{label}</Badge>
-  }
-}
-
-export function getPrioritasBadge(prioritas: string) {
-  const label = IT_PRIORITAS_LABEL[prioritas] ?? prioritas
-  switch (prioritas) {
-    case "kritis":
-      return <Badge variant="destructive">{label}</Badge>
-    case "tinggi":
-      return <Badge className="bg-orange-600 hover:bg-orange-600">{label}</Badge>
-    case "sedang":
-      return <Badge variant="secondary">{label}</Badge>
-    default:
-      return <Badge variant="outline">{label}</Badge>
   }
 }
 

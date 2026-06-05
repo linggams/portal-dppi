@@ -25,7 +25,6 @@ import {
 import { IT_TIKET_STATUS_LABEL } from "@/lib/it/constants"
 import {
   formatTiketDate,
-  getPrioritasBadge,
   getStatusBadge,
 } from "@/lib/it/utils"
 
@@ -35,7 +34,6 @@ interface TiketRow {
   judul: string
   username: string
   jabatan: string
-  prioritas: string
   status: number
   ditugaskanKe: string | null
   tglDibuat: string
@@ -95,7 +93,6 @@ export default function ItAntrianPage() {  const [tiket, setTiket] = useState<T
                 <TableHead>Judul</TableHead>
                 <TableHead>Pelapor</TableHead>
                 <TableHead>Kategori</TableHead>
-                <TableHead>Prioritas</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Ditugaskan</TableHead>
                 <TableHead>Tanggal</TableHead>
@@ -114,7 +111,6 @@ export default function ItAntrianPage() {  const [tiket, setTiket] = useState<T
                     </span>
                   </TableCell>
                   <TableCell>{t.kategori.nama}</TableCell>
-                  <TableCell>{getPrioritasBadge(t.prioritas)}</TableCell>
                   <TableCell>{getStatusBadge(t.status)}</TableCell>
                   <TableCell>{t.ditugaskanKe ?? "-"}</TableCell>
                   <TableCell>{formatTiketDate(t.tglDibuat)}</TableCell>

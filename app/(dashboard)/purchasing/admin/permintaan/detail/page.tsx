@@ -1,9 +1,9 @@
 ﻿"use client"
 
 import { useState, useEffect } from "react"
-import { Check, X } from "lucide-react"
-import { useSearchParams, useRouter } from "next/navigation"
-import { usePageTitle } from "@/components/layout"
+import { Check, X, ArrowLeft, CheckCheck } from "lucide-react"
+import { useSearchParams } from "next/navigation"
+import { PageActions } from "@/components/layout"
 import { DashboardLayout } from "@/components/layout/DashboardLayout"
 import { Button } from "@/components/ui/button"
 import {
@@ -15,8 +15,8 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { TableContainer } from "@/components/ui/table-container"
-import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
+import { getPermintaanItemStatusBadge } from "@/lib/purchasing/permintaan-status"
 import { toast } from "sonner"
 import { format } from "date-fns"
 import { id } from "date-fns/locale"
@@ -53,7 +53,6 @@ interface Permintaan {
 }
 
 export default function DetailPermintaanPage() {  const searchParams = useSearchParams()
-  const router = useRouter()
   const unit = searchParams.get("unit")
   const tgl = searchParams.get("tgl")
 
@@ -75,7 +74,7 @@ export default function DetailPermintaanPage() {  const searchParams = useSearc
     setLoading(true)
     try {
       const response = await fetch(
-        `/api/purchasing/permintaan?unit=${unit}&tgl_permintaan=${tgl}&status=0`
+        `/api/purchasing/permintaan?unit=${encodeURIComponent(unit!)}&tgl_permintaan=${tgl}`
       )
       if (response.ok) {
         const data = await response.json()
@@ -144,9 +143,10 @@ export default function DetailPermintaanPage() {  const searchParams = useSearc
     setApproveAllDialogOpen(true)
   }
 
+  const pendingItems = permintaan.filter((item) => item.status === 0)
+
   const handleApproveAll = async () => {
-    // Check if all have sufficient stock
-    for (const item of permintaan) {
+    for (const item of pendingItems) {
       if (item.stokbarang.sisa < item.jumlah) {
         toast.error(
           `Stok ${item.stokbarang.namaBrg} tidak mencukupi. Stok tersedia: ${item.stokbarang.sisa}`
@@ -156,8 +156,7 @@ export default function DetailPermintaanPage() {  const searchParams = useSearc
     }
 
     setApproveAllDialogOpen(false)
-    // Approve all
-    for (const item of permintaan) {
+    for (const item of pendingItems) {
       await handleApprove(item.idPermintaan)
     }
   }
@@ -192,7 +191,7 @@ export default function DetailPermintaanPage() {  const searchParams = useSearc
         <div className="text-center py-12">
           <p className="text-muted-foreground">Parameter tidak valid</p>
           <Button asChild className="mt-4">
-            <Link href="/purchasing/admin/permintaan">Kembali</Link>
+            <Link href="/purchasing/admin/permintaan/data">Kembali</Link>
           </Button>
         </div>
       </DashboardLayout>
@@ -201,18 +200,26 @@ export default function DetailPermintaanPage() {  const searchParams = useSearc
 
   return (
     <DashboardLayout title="Detail Permintaan Barang">
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <Button variant="ghost" size="sm" asChild>
-            <Link href="/purchasing/admin/permintaan">Kembali</Link>
+      <PageActions>
+        <Button variant="outline" size="sm" asChild>
+          <Link href="/purchasing/admin/permintaan/data">
+            <ArrowLeft className="mr-1.5 size-3.5" />
+            Kembali
+          </Link>
+        </Button>
+        {pendingItems.length > 0 ? (
+          <Button
+            size="sm"
+            onClick={handleApproveAllClick}
+            disabled={processing !== null}
+          >
+            <CheckCheck className="mr-1.5 size-3.5" />
+            {processing !== null ? "Memproses..." : "Setujui Semua"}
           </Button>
-          {permintaan.length > 0 && (
-            <Button onClick={handleApproveAllClick} disabled={processing !== null}>
-              {processing !== null ? "Memproses..." : "Setujui Semua"}
-            </Button>
-          )}
-        </div>
+        ) : null}
+      </PageActions>
 
+      <div className="space-y-6">
         {loading ? (
           <div className="space-y-3 rounded-md border p-4">
             <Skeleton className="h-10 w-full" />
@@ -224,7 +231,7 @@ export default function DetailPermintaanPage() {  const searchParams = useSearc
           <div className="text-center py-12">
             <p className="text-muted-foreground">Tidak ada data permintaan</p>
             <Button asChild className="mt-4">
-              <Link href="/purchasing/admin/permintaan">Kembali</Link>
+              <Link href="/purchasing/admin/permintaan/data">Kembali</Link>
             </Button>
           </div>
         ) : (
@@ -258,14 +265,18 @@ export default function DetailPermintaanPage() {  const searchParams = useSearc
                         {item.stokbarang.sisa}
                       </TableCell>
                       <TableCell>
-                        <Badge variant="outline">Pending</Badge>
+                        {getPermintaanItemStatusBadge(item.status)}
                       </TableCell>
                       <TableCell className="text-right">
-                        <TableActions>
-                          <TableActionButton label="Setujui" icon={Check} onClick={() => handleApproveClick(item)} disabled={processing !== null ||
-                              item.stokbarang.sisa < item.jumlah} loading={processing === item.idPermintaan} />
-                          <TableActionButton label="Tolak" icon={X} variant="ghost" className="text-destructive hover:text-destructive" onClick={() => handleRejectClick(item)} disabled={processing !== null} loading={processing === item.idPermintaan} />
-                        </TableActions>
+                        {item.status === 0 ? (
+                          <TableActions>
+                            <TableActionButton label="Setujui" icon={Check} onClick={() => handleApproveClick(item)} disabled={processing !== null ||
+                                item.stokbarang.sisa < item.jumlah} loading={processing === item.idPermintaan} />
+                            <TableActionButton label="Tolak" icon={X} variant="ghost" className="text-destructive hover:text-destructive" onClick={() => handleRejectClick(item)} disabled={processing !== null} loading={processing === item.idPermintaan} />
+                          </TableActions>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">—</span>
+                        )}
                       </TableCell>
                     </TableRow>
                   ))}

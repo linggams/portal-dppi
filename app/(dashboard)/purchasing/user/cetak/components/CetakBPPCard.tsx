@@ -1,6 +1,5 @@
 "use client"
 
-import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   Table,
@@ -11,6 +10,8 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { TableContainer } from "@/components/ui/table-container"
+import { TableActionButton, TableActions } from "@/components/ui/table-actions"
+import { Download, Printer } from "lucide-react"
 import type { Permintaan } from "../types"
 
 interface CetakBPPCardProps {
@@ -35,28 +36,22 @@ export function CetakBPPCard({
   return (
     <Card className="print:shadow-none print:border-none">
       <CardHeader className="print:pb-2">
-        <div className="flex justify-between items-center">
-          <div>
-            <CardTitle className="text-2xl">
-              BUKTI PERMINTAAN BARANG (BPP)
-            </CardTitle>
-          </div>
-          <div className="flex gap-2">
-            <Button
+        <div className="flex items-center justify-between gap-4">
+          <CardTitle className="text-2xl">
+            BUKTI PERMINTAAN BARANG (BPP)
+          </CardTitle>
+          <TableActions className="print:hidden">
+            <TableActionButton
+              label="Unduh PDF"
+              icon={Download}
               onClick={() => onDownloadPDF(date, items)}
-              className="hidden print:hidden"
-              variant="default"
-            >
-              Unduh PDF
-            </Button>
-            <Button
+            />
+            <TableActionButton
+              label="Cetak"
+              icon={Printer}
               onClick={onPrint}
-              className="hidden print:hidden"
-              variant="outline"
-            >
-              Cetak
-            </Button>
-          </div>
+            />
+          </TableActions>
         </div>
       </CardHeader>
       <CardContent>

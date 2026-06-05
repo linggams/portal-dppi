@@ -6,7 +6,6 @@ export interface ItLaporanFilters {
   startDate: string
   endDate: string
   status: string
-  prioritas: string
   kategoriId: string
   username: string
   ditugaskanKe: string
@@ -19,7 +18,6 @@ export interface TiketLaporanItem {
   judul: string
   username: string
   jabatan: string
-  prioritas: string
   status: number
   ditugaskanKe: string | null
   tglDibuat: string

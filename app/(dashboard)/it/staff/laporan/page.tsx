@@ -22,7 +22,6 @@ import { ItLaporanFilters, ItLaporanSummaryCards } from "./components"
 import {
   formatJamAtauHari,
   formatTiketDate,
-  getPrioritasBadge,
   getStatusBadge,
 } from "./utils"
 
@@ -97,7 +96,6 @@ export default function ItLaporanPage() {
                     <TableHead>Judul</TableHead>
                     <TableHead>Pemohon</TableHead>
                     <TableHead>Kategori</TableHead>
-                    <TableHead>Prioritas</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Teknisi</TableHead>
                     <TableHead>Dibuat</TableHead>
@@ -116,7 +114,6 @@ export default function ItLaporanPage() {
                       </TableCell>
                       <TableCell>{t.username}</TableCell>
                       <TableCell>{t.kategori.nama}</TableCell>
-                      <TableCell>{getPrioritasBadge(t.prioritas)}</TableCell>
                       <TableCell>{getStatusBadge(t.status)}</TableCell>
                       <TableCell>{t.ditugaskanKe ?? "-"}</TableCell>
                       <TableCell className="whitespace-nowrap text-sm">

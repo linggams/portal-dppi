@@ -21,16 +21,6 @@ export const IT_TIKET_STATUS_LABEL: Record<number, string> = {
   6: "Dibatalkan",
 }
 
-export const IT_PRIORITAS = ["rendah", "sedang", "tinggi", "kritis"] as const
-export type ItPrioritas = (typeof IT_PRIORITAS)[number]
-
-export const IT_PRIORITAS_LABEL: Record<string, string> = {
-  rendah: "Rendah",
-  sedang: "Sedang",
-  tinggi: "Tinggi",
-  kritis: "Kritis",
-}
-
 export function isItStaff(level: string) {
   return level === "it_support" || level === "administrator"
 }

@@ -26,7 +26,6 @@ import { TableContainer } from "@/components/ui/table-container"
 import { cn } from "@/lib/utils"
 import {
   formatTiketDate,
-  getPrioritasBadge,
   getStatusBadge,
 } from "@/lib/it/utils"
 
@@ -36,7 +35,6 @@ interface AntrianItem {
   username: string
   judul: string
   status: number
-  prioritas: string
   ditugaskanKe: string | null
   tglDibuat: string
   kategori: { nama: string }
@@ -146,7 +144,6 @@ export default function UserAntrianPage() {
                       <TableHead>Judul</TableHead>
                       <TableHead>Pemohon</TableHead>
                       <TableHead>Kategori</TableHead>
-                      <TableHead>Prioritas</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Ditugaskan</TableHead>
                       <TableHead>Tanggal</TableHead>
@@ -180,7 +177,6 @@ export default function UserAntrianPage() {
                         </TableCell>
                         <TableCell>{t.username}</TableCell>
                         <TableCell>{t.kategori.nama}</TableCell>
-                        <TableCell>{getPrioritasBadge(t.prioritas)}</TableCell>
                         <TableCell>{getStatusBadge(t.status)}</TableCell>
                         <TableCell>{t.ditugaskanKe ?? "-"}</TableCell>
                         <TableCell className="whitespace-nowrap text-sm">
@@ -209,8 +205,8 @@ export default function UserAntrianPage() {
 
           <p className="text-xs text-muted-foreground">
             Tabel diurutkan tiket terbaru di atas. Kolom # adalah posisi antrian
-            sebenarnya (prioritas Kritis → Rendah, lalu tanggal terlama lebih
-            dulu). Baris &quot;Anda&quot; adalah tiket milik Anda; detail hanya
+            sebenarnya (berdasarkan tanggal pengajuan terlama lebih dulu).
+            Baris &quot;Anda&quot; adalah tiket milik Anda; detail hanya
             untuk tiket sendiri.
           </p>
         </div>

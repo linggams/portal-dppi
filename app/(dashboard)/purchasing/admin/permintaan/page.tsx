@@ -1,9 +1,9 @@
 ﻿"use client"
 
 import { useState, useEffect } from "react"
+import { Eye } from "lucide-react"
 import { PageSection } from "@/components/layout"
 import { DashboardLayout } from "@/components/layout/DashboardLayout"
-import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
   Table,
@@ -14,11 +14,10 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { TableContainer } from "@/components/ui/table-container"
-import { Loader2 } from "lucide-react"
+import { TableActionLink } from "@/components/ui/table-actions"
 import { toast } from "sonner"
 import { format } from "date-fns"
 import { id } from "date-fns/locale"
-import Link from "next/link"
 
 interface Permintaan {
   idPermintaan: number
@@ -125,13 +124,11 @@ export default function PermintaanPage() {
                 title={group.unit}
                 description={`${group.instansi} - ${formatDate(group.tglPermintaan)}`}
                 action={
-                  <Button asChild>
-                    <Link
-                      href={`/purchasing/admin/permintaan/detail?unit=${group.unit}&tgl=${group.tglPermintaan.split("T")[0]}`}
-                    >
-                      Detail Permintaan
-                    </Link>
-                  </Button>
+                  <TableActionLink
+                    label="Detail Permintaan"
+                    icon={Eye}
+                    href={`/purchasing/admin/permintaan/detail?unit=${encodeURIComponent(group.unit)}&tgl=${group.tglPermintaan.split("T")[0]}`}
+                  />
                 }
               >
                 <TableContainer>

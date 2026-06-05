@@ -30,7 +30,6 @@ import {
 import {
   formatRiwayatPesan,
   formatTiketDate,
-  getPrioritasBadge,
   getStatusBadge,
 } from "@/lib/it/utils"
 import { isTiketInQueue } from "@/lib/it/queue"
@@ -62,7 +61,6 @@ interface Tiket {
   jabatan: string
   judul: string
   deskripsi: string
-  prioritas: string
   status: number
   ditugaskanKe: string | null
   tglDibuat: string
@@ -289,10 +287,6 @@ export function TiketDetail({
                   </dd>
                 </div>
               ) : null}
-              <div>
-                <dt className="text-muted-foreground">Prioritas</dt>
-                <dd className="mt-1">{getPrioritasBadge(tiket.prioritas)}</dd>
-              </div>
               <div>
                 <dt className="text-muted-foreground">Kategori</dt>
                 <dd className="mt-1 font-medium">{tiket.kategori.nama}</dd>

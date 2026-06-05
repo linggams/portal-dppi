@@ -80,7 +80,7 @@ export function getDefaultHomePath(level: string): string {
   const l = normalizeUserLevel(level)
   switch (l) {
     case "administrator":
-      return "/purchasing/admin/dashboard"
+      return "/platform/dashboard"
     case "purchasing":
       return "/purchasing/admin/dashboard"
     case "it_support":

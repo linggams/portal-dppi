@@ -2,6 +2,12 @@ import { NextRequest, NextResponse } from "next/server"
 import { getSessionFromRequest } from "@/lib/get-session"
 import { isClientUser } from "@/lib/auth/permissions"
 import { prisma } from "@/lib/db/prisma"
+import {
+  getTodayDateWIB,
+  hasSubmittedPermintaanOnDate,
+  parseDateOnly,
+  PERMINTAAN_DAILY_LIMIT_MESSAGE,
+} from "@/lib/purchasing/permintaan-daily-limit"
 
 // POST - Submit semua permintaan sementara menjadi permintaan
 export async function POST(request: NextRequest) {
@@ -16,7 +22,8 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { unit, tglPermintaan } = body
+    const { unit, tglPermintaan: tglInput } = body
+    const tglPermintaan = tglInput ?? getTodayDateWIB()
 
     if (session.user.username !== unit) {
       return NextResponse.json(
@@ -25,11 +32,18 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    if (await hasSubmittedPermintaanOnDate(unit, tglPermintaan)) {
+      return NextResponse.json(
+        { error: PERMINTAAN_DAILY_LIMIT_MESSAGE },
+        { status: 409 }
+      )
+    }
+
     // Get all sementara for this unit and date
     const sementaraList = await prisma.sementara.findMany({
       where: {
         unit,
-        tglPermintaan: new Date(tglPermintaan),
+        tglPermintaan: parseDateOnly(tglPermintaan),
         status: 0,
       },
       include: {
@@ -78,7 +92,7 @@ export async function POST(request: NextRequest) {
     await prisma.sementara.deleteMany({
       where: {
         unit,
-        tglPermintaan: new Date(tglPermintaan),
+        tglPermintaan: parseDateOnly(tglPermintaan),
         status: 0,
       },
     })

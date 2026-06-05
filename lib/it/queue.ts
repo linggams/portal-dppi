@@ -8,13 +8,6 @@ export const IT_QUEUE_ACTIVE_STATUSES: number[] = [
   IT_TIKET_STATUS.MENUNGGU_USER,
 ]
 
-const PRIORITAS_RANK: Record<string, number> = {
-  kritis: 0,
-  tinggi: 1,
-  sedang: 2,
-  rendah: 3,
-}
-
 export function isTiketInQueue(status: number): boolean {
   return IT_QUEUE_ACTIVE_STATUSES.includes(status)
 }
@@ -22,7 +15,6 @@ export function isTiketInQueue(status: number): boolean {
 export type TiketQueueSortable = {
   idTiket: number
   status: number
-  prioritas: string
   tglDibuat: Date | string
 }
 
@@ -30,10 +22,6 @@ export function compareTiketQueueOrder(
   a: TiketQueueSortable,
   b: TiketQueueSortable
 ): number {
-  const rankA = PRIORITAS_RANK[a.prioritas] ?? 99
-  const rankB = PRIORITAS_RANK[b.prioritas] ?? 99
-  if (rankA !== rankB) return rankA - rankB
-
   const timeA = new Date(a.tglDibuat).getTime()
   const timeB = new Date(b.tglDibuat).getTime()
   return timeA - timeB

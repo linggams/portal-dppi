@@ -1,8 +1,8 @@
 "use client"
 
 import { useState } from "react"
-import { DashboardLayout } from "@/components/layout/DashboardLayout"
 import { PageActions } from "@/components/layout"
+import { DashboardLayout } from "@/components/layout/DashboardLayout"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useKategori } from "./hooks/useKategori"
 import {
@@ -37,10 +37,11 @@ export default function KategoriPage() {
 
   return (
     <DashboardLayout title="Data Kategori">
-      <div className="space-y-6">
-        <PageActions><AddKategoriDialog onSubmit={addKategori} />
-        </PageActions>
+      <PageActions>
+        <AddKategoriDialog onSubmit={addKategori} />
+      </PageActions>
 
+      <div className="space-y-6">
         <KategoriTable data={kategori} onDelete={handleDeleteClick} />
 
         <DeleteKategoriDialog

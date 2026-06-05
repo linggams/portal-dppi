@@ -15,7 +15,7 @@ import {
   FILTER_GRID_CLASS,
   FilterField,
 } from "@/components/layout"
-import { IT_PRIORITAS, IT_TIKET_STATUS_LABEL } from "@/lib/it/constants"
+import { IT_TIKET_STATUS_LABEL } from "@/lib/it/constants"
 import type { ItLaporanFilters } from "../types"
 
 interface KategoriOption {
@@ -98,26 +98,6 @@ export function ItLaporanFilters({
               {Object.entries(IT_TIKET_STATUS_LABEL).map(([code, label]) => (
                 <SelectItem key={code} value={code}>
                   {label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </FilterField>
-        <FilterField label="Prioritas" htmlFor="prioritas">
-          <Select
-            value={filters.prioritas}
-            onValueChange={(v) =>
-              onFiltersChange({ ...filters, prioritas: v })
-            }
-          >
-            <SelectTrigger id="prioritas" className={FILTER_CONTROL_CLASS}>
-              <SelectValue placeholder="Prioritas" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Semua</SelectItem>
-              {IT_PRIORITAS.map((p) => (
-                <SelectItem key={p} value={p}>
-                  {p.charAt(0).toUpperCase() + p.slice(1)}
                 </SelectItem>
               ))}
             </SelectContent>

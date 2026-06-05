@@ -1,0 +1,34 @@
+---
+description: Batas server/client — Prisma, pg, dan file shared types
+globs: lib/**/*.ts,lib/**/*.tsx,app/**/hooks/**/*.ts
+alwaysApply: false
+---
+
+# Server vs Client Boundary
+
+## Larangan
+
+File yang diimpor hook/`"use client"` **tidak boleh** mengimpor:
+
+- `@/lib/db/prisma`
+- `@prisma/client` (kecuali `import type`)
+- Paket Node (`pg`, `fs`, `dns`, …)
+
+## Pola pemisahan
+
+```
+lib/purchasing/permintaan-group-types.ts   # types, constants, helpers murni — AMAN client
+lib/purchasing/permintaan-groups.ts        # fetchPermintaanGroups + prisma — SERVER ONLY
+app/api/purchasing/permintaan/groups/route.ts
+app/.../hooks/usePermintaanGroups.ts         # import hanya dari *-types.ts + fetch API
+```
+
+## Checklist file baru di `lib/`
+
+1. Butuh database? → file terpisah tanpa export ke client.
+2. Types/constants dipakai UI? → `*-types.ts` tanpa import prisma.
+3. Hook client → `fetch('/api/...')` saja.
+
+## UI server-only
+
+Badge/helper React tanpa DB boleh di `lib/{modul}/*-status.tsx` asalkan hanya import types.
