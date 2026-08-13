@@ -30,7 +30,7 @@ export async function POST(
     }
 
     const isOwner = tiket.username === session.user.username
-    const isStaff = canManageItTiket(session.user.level)
+    const isStaff = canManageItTiket(session.user)
 
     if (!isOwner && !isStaff) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })

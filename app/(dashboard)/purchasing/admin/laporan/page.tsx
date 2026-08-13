@@ -43,11 +43,10 @@ export default function LaporanPage() {
         <PageActions>
           <Button
             variant="outline"
-            size="sm"
             onClick={handleExport}
             disabled={loading}
           >
-            <Download className="mr-1.5 size-3.5" />
+            <Download />
             Ekspor PDF
           </Button>
         </PageActions>

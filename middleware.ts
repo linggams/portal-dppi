@@ -5,7 +5,7 @@ import {
   canAccessUiPath,
   getDefaultHomePath,
 } from "@/lib/auth/permissions"
-import { normalizeUserLevel } from "@/lib/user-level"
+import { sessionUserFromToken } from "@/lib/auth/session-user"
 
 function getLegacyRedirect(pathname: string): string | null {
   if (pathname.startsWith("/api/")) return null
@@ -24,6 +24,9 @@ function getLegacyRedirect(pathname: string): string | null {
   }
   if (pathname.startsWith("/it/user")) {
     return null
+  }
+  if (pathname === "/it/dashboard" || pathname === "/it/staff/dashboard") {
+    return "/it/staff/tiket"
   }
   if (pathname.startsWith("/it/staff")) {
     return null
@@ -64,22 +67,29 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl)
   }
 
-  const userLevel = normalizeUserLevel(token.level as string)
+  const principal = sessionUserFromToken({
+    sub: token.sub,
+    username: token.username as string | undefined,
+    jabatan: token.jabatan as string | undefined,
+    level: token.level as string | undefined,
+    roleName: token.roleName as string | undefined,
+    homePath: token.homePath as string | undefined,
+    capabilities: token.capabilities,
+  })
 
-  if (
-    pathname === "/purchasing/admin/dashboard" &&
-    userLevel === "administrator"
-  ) {
-    return NextResponse.redirect(new URL("/platform/dashboard", request.url))
+  if (pathname === "/purchasing/admin/dashboard") {
+    return NextResponse.redirect(
+      new URL(getDefaultHomePath(principal), request.url)
+    )
   }
 
   if (pathname === "/") {
     return NextResponse.redirect(
-      new URL(getDefaultHomePath(userLevel), request.url)
+      new URL(getDefaultHomePath(principal), request.url)
     )
   }
 
-  if (!canAccessUiPath(userLevel, pathname)) {
+  if (!canAccessUiPath(principal, pathname)) {
     return NextResponse.redirect(new URL("/unauthorized", request.url))
   }
 

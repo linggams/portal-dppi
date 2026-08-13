@@ -15,7 +15,7 @@ export async function PUT(
 ) {
   try {
     const session = await getSessionFromRequest(request)
-    if (!session || !canManageItTiket(session.user.level)) {
+    if (!session || !canManageItTiket(session.user)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
@@ -44,7 +44,7 @@ export async function DELETE(
 ) {
   try {
     const session = await getSessionFromRequest(request)
-    if (!session || !canManageItTiket(session.user.level)) {
+    if (!session || !canManageItTiket(session.user)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 

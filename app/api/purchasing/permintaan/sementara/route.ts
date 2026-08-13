@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
     }
 
     // If user, only show their own
-    if (isClientUser(session.user.level)) {
+    if (isClientUser(session.user)) {
       where.unit = session.user.username
     }
 
@@ -73,7 +73,7 @@ export async function POST(request: NextRequest) {
   try {
     const session = await getSessionFromRequest(request)
 
-    if (!session || !isClientUser(session.user.level)) {
+    if (!session || !isClientUser(session.user)) {
       return NextResponse.json(
         { error: "Unauthorized" },
         { status: 401 }
@@ -154,7 +154,7 @@ export async function DELETE(request: NextRequest) {
   try {
     const session = await getSessionFromRequest(request)
 
-    if (!session || !isClientUser(session.user.level)) {
+    if (!session || !isClientUser(session.user)) {
       return NextResponse.json(
         { error: "Unauthorized" },
         { status: 401 }

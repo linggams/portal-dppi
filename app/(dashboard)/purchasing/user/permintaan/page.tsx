@@ -287,7 +287,6 @@ export default function PermintaanPage() {
           <Button
             onClick={handleSubmitClick}
             disabled={submitting || formDisabled}
-            size="sm"
           >
             {submitting ? "Mengirim..." : "Kirim Permintaan"}
           </Button>

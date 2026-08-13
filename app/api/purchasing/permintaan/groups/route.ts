@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    if (!canReadPurchasingTransactions(session.user.level)) {
+    if (!canReadPurchasingTransactions(session.user)) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 
@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
         page: Number.isNaN(page) ? 1 : page,
         limit: Number.isNaN(limit) ? 20 : limit,
       },
-      isClientUser(session.user.level)
+      isClientUser(session.user)
         ? { unitOverride: session.user.username }
         : undefined
     )

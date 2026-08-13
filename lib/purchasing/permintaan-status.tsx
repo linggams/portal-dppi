@@ -1,5 +1,4 @@
 import { Badge } from "@/components/ui/badge"
-import type { PermintaanGroupRow } from "./permintaan-group-types"
 
 export type GroupStatusFields = {
   hasPending: boolean
@@ -34,8 +33,4 @@ export function getPermintaanItemStatusBadge(status: number) {
     default:
       return <Badge>{status}</Badge>
   }
-}
-
-export function getPermintaanGroupStatusBadge(group: PermintaanGroupRow) {
-  return getGroupStatusBadge(group)
 }

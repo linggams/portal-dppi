@@ -13,7 +13,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { TableContainer } from "@/components/ui/table-container"
-import { getPermintaanGroupStatusBadge } from "@/lib/purchasing/permintaan-status"
+import { getGroupStatusBadge } from "@/lib/purchasing/permintaan-status"
 import type { PermintaanGroupRow } from "../types"
 
 interface Props {
@@ -65,7 +65,7 @@ export function PermintaanGroupTable({ groups, page, pageSize }: Props) {
                 <TableCell className="text-right tabular-nums">
                   {group.totalQty}
                 </TableCell>
-                <TableCell>{getPermintaanGroupStatusBadge(group)}</TableCell>
+                <TableCell>{getGroupStatusBadge(group)}</TableCell>
                 <TableCell className="text-right">
                   <TableActionLink
                     label={group.hasPending ? "Detail & Approve" : "Detail"}

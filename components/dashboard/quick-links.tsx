@@ -54,15 +54,3 @@ export const PLATFORM_QUICK_LINKS = [
     ],
   },
 ] as const
-
-export const PURCHASING_STAFF_QUICK_LINKS = [
-  {
-    title: "Operasional",
-    links: [
-      { label: "Data Permintaan", href: "/purchasing/admin/permintaan/data" },
-      { label: "Data Pengajuan", href: "/purchasing/admin/pengajuan/data" },
-      { label: "Form Permintaan", href: "/purchasing/admin/permintaan" },
-      { label: "Form Pengajuan", href: "/purchasing/admin/pengajuan" },
-    ],
-  },
-] as const

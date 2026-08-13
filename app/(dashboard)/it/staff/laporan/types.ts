@@ -17,7 +17,6 @@ export interface TiketLaporanItem {
   nomorTiket: string
   judul: string
   username: string
-  jabatan: string
   status: number
   ditugaskanKe: string | null
   tglDibuat: string

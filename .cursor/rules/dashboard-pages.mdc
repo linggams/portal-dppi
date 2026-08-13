@@ -56,14 +56,14 @@ Semua aksi utama dan filter global → `<PageActions>` (bukan di `PageSection ac
 
 ```tsx
 <PageActions>
-  <Button size="sm" onClick={handleAdd}>Tambah</Button>
+  <Button onClick={handleAdd}>Tambah</Button>
   <Select>...</Select>           {/* filter status, dll. */}
   <AddKategoriDialog />          {/* dialog trigger boleh di sini */}
 </PageActions>
 ```
 
 - `PageActions` me-render `null`; konten tampil di `PageActionsBar` di bawah header.
-- Tombol pakai `size="sm"` agar selaras dengan filter bar.
+- Ukuran kontrol: default shadcn (`Button` tanpa `size`, `Input`/`SelectTrigger` tanpa `h-8`).
 - Urutan: aksi sekunder (outline) → aksi utama (default).
 
 ## Pola per jenis halaman
@@ -102,7 +102,7 @@ Referensi: `purchasing/admin/permintaan/data`, `purchasing/admin/pengajuan/data`
 
 ### C. Halaman dashboard (statistik)
 
-Referensi: `platform/dashboard`, `it/staff/dashboard`, `purchasing/admin/dashboard`
+Referensi: `platform/dashboard`
 
 - `StatCard` untuk angka ringkas.
 - `SectionCard` untuk blok "Perlu perhatian" / daftar pending.
@@ -206,7 +206,5 @@ import {
 
 | Role | Dashboard |
 |------|-----------|
-| `administrator` | `/platform/dashboard` |
-| `purchasing` | `/purchasing/admin/dashboard` |
-| `it_support` | `/it/staff/dashboard` |
-| `user` | `/purchasing/user/dashboard` |
+| Pengelola (`administrator`) | `/platform/dashboard` |
+| Pemohon (`user`) | `/purchasing/user/dashboard` |

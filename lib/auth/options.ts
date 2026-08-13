@@ -3,7 +3,10 @@ import CredentialsProvider from "next-auth/providers/credentials"
 import { prisma } from "@/lib/db/prisma"
 import bcrypt from "bcryptjs"
 import crypto from "crypto"
-import { normalizeUserLevel } from "@/lib/user-level"
+import {
+  buildSessionAuthUser,
+  sessionUserFromToken,
+} from "@/lib/auth/session-user"
 
 export const authOptions: NextAuthConfig = {
   providers: [
@@ -12,44 +15,40 @@ export const authOptions: NextAuthConfig = {
       credentials: {
         username: { label: "Username", type: "text" },
         password: { label: "Password", type: "password" },
-        level: { label: "Level", type: "text" }
       },
       async authorize(credentials) {
-        if (!credentials?.username || !credentials?.password || !credentials?.level) {
+        if (!credentials?.username || !credentials?.password) {
           console.error("Missing credentials")
           return null
         }
 
         try {
-          console.log("Attempting to find user:", credentials.username)
-          
           const user = await prisma.user.findUnique({
-            where: { username: credentials.username as string }
+            where: { username: credentials.username as string },
+            include: { role: true },
           })
-          
-          console.log("User found:", user ? "Yes" : "No")
 
           if (!user) {
             console.error("User not found:", credentials.username)
             return null
           }
 
-          // Check password - support both MD5 (legacy) and bcrypt
           let isValidPassword = false
           const passwordStr = credentials.password as string
           const userPasswordStr = user.password
-          
-          // Try bcrypt first (check if password looks like bcrypt hash)
-          if (userPasswordStr.startsWith('$2a$') || userPasswordStr.startsWith('$2b$') || userPasswordStr.startsWith('$2y$')) {
+
+          if (
+            userPasswordStr.startsWith("$2a$") ||
+            userPasswordStr.startsWith("$2b$") ||
+            userPasswordStr.startsWith("$2y$")
+          ) {
             try {
               isValidPassword = await bcrypt.compare(passwordStr, userPasswordStr)
             } catch {
-              // If bcrypt fails, password is invalid
               isValidPassword = false
             }
           } else {
-            // If not bcrypt, try MD5 (for legacy passwords)
-            const md5Hash = crypto.createHash('md5').update(passwordStr).digest('hex')
+            const md5Hash = crypto.createHash("md5").update(passwordStr).digest("hex")
             isValidPassword = md5Hash === userPasswordStr
           }
 
@@ -58,31 +57,17 @@ export const authOptions: NextAuthConfig = {
             return null
           }
 
-          // Check level
-          if (user.level !== credentials.level) {
-            console.error("Level mismatch:", user.level, "vs", credentials.level)
-            return null
-          }
-
-          return {
-            id: user.idUser.toString(),
-            username: user.username,
-            level: user.level,
-            jabatan: user.jabatan
-          }
+          return buildSessionAuthUser(user)
         } catch (error) {
           console.error("Auth error:", error)
-          // Log full error details for debugging
           if (error instanceof Error) {
             console.error("Error message:", error.message)
             console.error("Error stack:", error.stack)
           }
-          // Return null instead of throwing to prevent JSON parsing errors
-          // This ensures NextAuth returns a valid JSON response
           return null
         }
-      }
-    })
+      },
+    }),
   ],
   callbacks: {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -91,24 +76,39 @@ export const authOptions: NextAuthConfig = {
         token.username = user.username
         token.level = user.level
         token.jabatan = user.jabatan
+        token.roleName = user.roleName
+        token.homePath = user.homePath
+        token.capabilities = user.capabilities
       }
       return token
     },
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     async session({ session, token }: { session: any; token: any }) {
       if (session.user) {
-        session.user.id = token.sub || ""
-        session.user.username = token.username as string
-        session.user.level = normalizeUserLevel(token.level as string)
-        session.user.jabatan = token.jabatan as string
+        const authUser = sessionUserFromToken({
+          sub: token.sub,
+          username: token.username,
+          jabatan: token.jabatan,
+          level: token.level,
+          roleName: token.roleName,
+          homePath: token.homePath,
+          capabilities: token.capabilities,
+        })
+        session.user.id = authUser.id
+        session.user.username = authUser.username
+        session.user.level = authUser.level
+        session.user.jabatan = authUser.jabatan
+        session.user.roleName = authUser.roleName
+        session.user.homePath = authUser.homePath
+        session.user.capabilities = authUser.capabilities
       }
       return session
-    }
+    },
   },
   pages: {
-    signIn: '/login',
+    signIn: "/login",
   },
   session: {
-    strategy: "jwt"
+    strategy: "jwt",
   },
 }

@@ -65,7 +65,7 @@ export default function ItAntrianPage() {
     <DashboardLayout title="Antrian Tiket">
       <PageActions>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="h-8 w-[180px]">
+          <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="Filter status" />
           </SelectTrigger>
           <SelectContent>

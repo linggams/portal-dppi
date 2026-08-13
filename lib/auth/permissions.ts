@@ -1,124 +1,109 @@
+import type { AppUserLevel } from "@/lib/auth/user-level"
 import {
-  normalizeUserLevel,
-  type AppUserLevel,
-} from "@/lib/auth/user-level"
+  resolveCapabilities,
+  SYSTEM_ROLE_HOME_PATH,
+  type AccessPrincipal,
+} from "@/lib/auth/capabilities"
 
-/** Halaman admin Purchasing untuk role `purchasing` (operasional, bukan master data). */
-export const PURCHASING_STAFF_PATH_PREFIXES = [
-  "/purchasing/admin/dashboard",
-  "/purchasing/admin/permintaan",
-  "/purchasing/admin/pengajuan",
-] as const
+export type { AccessPrincipal, RoleCapabilities } from "@/lib/auth/capabilities"
 
-export function isAdministrator(level: string): boolean {
-  return normalizeUserLevel(level) === "administrator"
+type AccessInput = string | AccessPrincipal
+
+export function isAdministrator(input: AccessInput): boolean {
+  return resolveCapabilities(input).platform
 }
 
-export function isPurchasingStaff(level: string): boolean {
-  return normalizeUserLevel(level) === "purchasing"
-}
-
-export function isClientUser(level: string): boolean {
-  return normalizeUserLevel(level) === "user"
-}
-
-export function isItSupport(level: string): boolean {
-  return normalizeUserLevel(level) === "it_support"
-}
-
-export function canAccessPlatform(level: string): boolean {
-  return isAdministrator(level)
-}
-
-export function canAccessItStaff(level: string): boolean {
-  const l = normalizeUserLevel(level)
-  return l === "it_support" || l === "administrator"
-}
-
-export function canAccessPurchasingUser(level: string): boolean {
-  return isClientUser(level)
-}
-
-/** Portal tiket gangguan (buat & lihat tiket sendiri). */
-export function canAccessItUser(level: string): boolean {
-  const l = normalizeUserLevel(level)
-  return l === "user" || l === "administrator"
-}
-
-/** Master data: stok CRUD, kategori, laporan. */
-export function canManagePurchasingMaster(level: string): boolean {
-  return isAdministrator(level)
-}
-
-/** Approve/tolak permintaan & pengajuan, lihat antrian operasional. */
-export function canHandlePurchasingWorkflow(level: string): boolean {
-  const l = normalizeUserLevel(level)
-  return l === "administrator" || l === "purchasing"
-}
-
-/** GET daftar permintaan/pengajuan (client = milik sendiri, staff = semua). */
-export function canReadPurchasingTransactions(level: string): boolean {
+export function isClientUser(input: AccessInput): boolean {
+  const caps = resolveCapabilities(input)
   return (
-    isClientUser(level) || canHandlePurchasingWorkflow(level)
+    caps.purchasingUser &&
+    !caps.purchasingWorkflow &&
+    !caps.purchasingMaster &&
+    !caps.platform
   )
 }
 
-export function canAccessPurchasingAdminPath(
-  level: string,
-  pathname: string
-): boolean {
-  const l = normalizeUserLevel(level)
-  if (l === "administrator") return true
-  if (l !== "purchasing") return false
-
-  return PURCHASING_STAFF_PATH_PREFIXES.some(
-    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)
-  )
+export function isItSupport(input: AccessInput): boolean {
+  const caps = resolveCapabilities(input)
+  return caps.itStaff && !caps.platform
 }
 
-export function getDefaultHomePath(level: string): string {
-  const l = normalizeUserLevel(level)
-  switch (l) {
-    case "administrator":
-      return "/platform/dashboard"
-    case "purchasing":
-      return "/purchasing/admin/dashboard"
-    case "it_support":
-      return "/it/staff/dashboard"
-    case "user":
-      return "/purchasing/user/dashboard"
-    default:
-      return "/unauthorized"
+export function canAccessPlatform(input: AccessInput): boolean {
+  return resolveCapabilities(input).platform
+}
+
+export function canAccessItStaff(input: AccessInput): boolean {
+  return resolveCapabilities(input).itStaff
+}
+
+export function canAccessPurchasingUser(input: AccessInput): boolean {
+  return resolveCapabilities(input).purchasingUser
+}
+
+export function canAccessItUser(input: AccessInput): boolean {
+  return resolveCapabilities(input).itUser
+}
+
+export function canManagePurchasingMaster(input: AccessInput): boolean {
+  return resolveCapabilities(input).purchasingMaster
+}
+
+export function canHandlePurchasingWorkflow(input: AccessInput): boolean {
+  const caps = resolveCapabilities(input)
+  return caps.purchasingWorkflow || caps.purchasingMaster
+}
+
+export function canReadPurchasingTransactions(input: AccessInput): boolean {
+  return canAccessPurchasingUser(input) || canHandlePurchasingWorkflow(input)
+}
+
+export function getDefaultHomePath(input: AccessInput): string {
+  if (typeof input !== "string" && input.homePath) {
+    return input.homePath
   }
+
+  if (canAccessPlatform(input)) {
+    return SYSTEM_ROLE_HOME_PATH.administrator
+  }
+
+  return SYSTEM_ROLE_HOME_PATH.user
 }
 
-export function canAccessUiPath(level: string, pathname: string): boolean {
-  const l = normalizeUserLevel(level)
+export function canAccessDanaUser(input: AccessInput): boolean {
+  return resolveCapabilities(input).purchasingUser
+}
 
-  if (l === "administrator") return true
+export function canHandleDanaWorkflow(input: AccessInput): boolean {
+  return resolveCapabilities(input).danaWorkflow
+}
+
+export function canAccessUiPath(input: AccessInput, pathname: string): boolean {
+  if (pathname.startsWith("/platform")) {
+    return canAccessPlatform(input)
+  }
 
   if (pathname.startsWith("/purchasing/user")) {
-    return l === "user"
+    return canAccessPurchasingUser(input)
   }
 
   if (pathname.startsWith("/purchasing/admin")) {
-    if (l === "user" || l === "it_support") return false
-    if (l === "purchasing") {
-      return canAccessPurchasingAdminPath(l, pathname)
-    }
-    return false
+    return canHandlePurchasingWorkflow(input)
   }
 
   if (pathname.startsWith("/it/staff")) {
-    return l === "it_support"
+    return canAccessItStaff(input)
   }
 
   if (pathname.startsWith("/it/user")) {
-    return canAccessItUser(l)
+    return canAccessItUser(input)
   }
 
-  if (pathname.startsWith("/platform")) {
-    return false
+  if (pathname.startsWith("/dana/user")) {
+    return canAccessDanaUser(input)
+  }
+
+  if (pathname.startsWith("/dana/admin")) {
+    return canHandleDanaWorkflow(input)
   }
 
   if (pathname === "/unauthorized") return true
@@ -126,6 +111,10 @@ export function canAccessUiPath(level: string, pathname: string): boolean {
   return false
 }
 
-export function shouldFetchPurchasingKategori(level: AppUserLevel): boolean {
-  return level === "administrator" || level === "user"
+export function shouldFetchPurchasingKategori(input: AccessInput): boolean {
+  const caps = resolveCapabilities(input)
+  return caps.purchasingUser || caps.purchasingMaster
 }
+
+/** @deprecated Gunakan AccessPrincipal; tetap ada untuk kompatibilitas level. */
+export type { AppUserLevel }

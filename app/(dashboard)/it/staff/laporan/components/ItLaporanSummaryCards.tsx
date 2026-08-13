@@ -1,7 +1,7 @@
 "use client"
 
 import { CompactSummaryGrid, SummaryMetric } from "@/components/layout"
-import { formatJamAtauHari } from "../utils"
+import { formatJamAtauHari } from "@/lib/it/laporan"
 import type { ItLaporanSummary } from "../types"
 
 interface Props {

@@ -35,7 +35,7 @@ export default function PlatformDashboardPage() {
   return (
     <DashboardLayout title="Dashboard">
       <PageActions>
-        <Button asChild variant="outline" size="sm">
+        <Button asChild variant="outline">
           <Link href="/platform/users">Kelola User</Link>
         </Button>
       </PageActions>
@@ -55,9 +55,7 @@ export default function PlatformDashboardPage() {
                 <span>
                   {stats?.users.total ?? 0}
                   <span className="mt-1 block text-xs font-normal text-muted-foreground">
-                    {stats
-                      ? `${Object.values(stats.users.byLevel).filter((n) => n > 0).length} role aktif`
-                      : "-"}
+                    {stats ? `${stats.users.roleCount} role aktif` : "-"}
                   </span>
                 </span>
               }

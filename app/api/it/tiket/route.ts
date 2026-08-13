@@ -1,10 +1,7 @@
 ﻿import { NextRequest, NextResponse } from "next/server"
 import { getSessionFromRequest } from "@/lib/get-session"
 import { prisma } from "@/lib/db/prisma"
-import {
-  canAccessItUser,
-  isClientUser,
-} from "@/lib/auth/permissions"
+import { canAccessItUser } from "@/lib/auth/permissions"
 import { canManageItTiket } from "@/lib/it/constants"
 import { generateNomorTiket } from "@/lib/it/nomor"
 import { z } from "zod"
@@ -25,12 +22,10 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams
     const status = searchParams.get("status")
     const mine = searchParams.get("mine") === "true"
-    const assigned = searchParams.get("assigned")
 
     const where: {
       status?: number
       username?: string
-      ditugaskanKe?: string
     } = {}
 
     if (status !== null && status !== "" && status !== "all") {
@@ -38,18 +33,14 @@ export async function GET(request: NextRequest) {
     }
 
     if (
-      !canAccessItUser(session.user.level) &&
-      !canManageItTiket(session.user.level)
+      !canAccessItUser(session.user) &&
+      !canManageItTiket(session.user)
     ) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 
-    if (isClientUser(session.user.level) || mine) {
+    if (!canManageItTiket(session.user) || mine) {
       where.username = session.user.username
-    }
-
-    if (assigned) {
-      where.ditugaskanKe = assigned
     }
 
     const tiket = await prisma.itTiket.findMany({
@@ -68,7 +59,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const session = await getSessionFromRequest(request)
-    if (!session || !isClientUser(session.user.level)) {
+    if (!session || !canAccessItUser(session.user)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 

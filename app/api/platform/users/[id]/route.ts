@@ -1,16 +1,32 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getSessionFromRequest } from "@/lib/get-session"
 import { canAccessPlatform } from "@/lib/auth/permissions"
+import { legacyLevelFromRole } from "@/lib/auth/capabilities"
+import { managerModulesForRole } from "@/lib/auth/manager-modules"
 import { prisma } from "@/lib/db/prisma"
+import type { Prisma } from "@prisma/client"
 import bcrypt from "bcryptjs"
 import { z } from "zod"
+
+const modulesSchema = z.object({
+  managePurchasing: z.boolean(),
+  manageIt: z.boolean(),
+  manageDana: z.boolean(),
+})
 
 const updateUserSchema = z.object({
   username: z.string().min(3).max(20).optional(),
   password: z.string().min(3).optional(),
-  level: z.enum(["user", "administrator", "it_support", "purchasing"]).optional(),
+  roleId: z.number().int().positive().optional(),
   jabatan: z.string().min(1).max(50).optional(),
+  modules: modulesSchema.optional(),
 })
+
+const userRoleSelect = {
+  role: {
+    select: { idRole: true, code: true, name: true },
+  },
+} as const
 
 // GET - Get single user
 export async function GET(
@@ -21,7 +37,7 @@ export async function GET(
     const session = await getSessionFromRequest(request)
     const { id } = await params
 
-    if (!session || !canAccessPlatform(session.user.level)) {
+    if (!session || !canAccessPlatform(session.user)) {
       return NextResponse.json(
         { error: "Unauthorized" },
         { status: 401 }
@@ -30,6 +46,7 @@ export async function GET(
 
     const user = await prisma.user.findUnique({
       where: { idUser: parseInt(id) },
+      include: userRoleSelect,
     })
 
     if (!user) {
@@ -60,7 +77,7 @@ export async function PUT(
     const session = await getSessionFromRequest(request)
     const { id } = await params
 
-    if (!session || !canAccessPlatform(session.user.level)) {
+    if (!session || !canAccessPlatform(session.user)) {
       return NextResponse.json(
         { error: "Unauthorized" },
         { status: 401 }
@@ -96,18 +113,45 @@ export async function PUT(
       }
     }
 
-    // Prepare update data
-    const updateData: any = {}
+    const updateData: Prisma.UserUpdateInput = {}
     if (validatedData.username) updateData.username = validatedData.username
-    if (validatedData.level) updateData.level = validatedData.level
     if (validatedData.jabatan) updateData.jabatan = validatedData.jabatan
     if (validatedData.password) {
       updateData.password = await bcrypt.hash(validatedData.password, 10)
+    }
+    const nextRoleId = validatedData.roleId ?? existingUser.roleId
+    const role = await prisma.role.findUnique({
+      where: { idRole: nextRoleId },
+    })
+    if (!role) {
+      return NextResponse.json(
+        { error: "Role tidak ditemukan" },
+        { status: 400 }
+      )
+    }
+
+    if (validatedData.roleId) {
+      updateData.role = { connect: { idRole: role.idRole } }
+      updateData.level = legacyLevelFromRole(role)
+    }
+
+    if (validatedData.modules || validatedData.roleId) {
+      const modulesResult = managerModulesForRole(
+        role.canAccessPlatform,
+        validatedData.modules
+      )
+      if (!modulesResult.ok) {
+        return NextResponse.json({ error: modulesResult.error }, { status: 400 })
+      }
+      updateData.managePurchasing = modulesResult.modules.managePurchasing
+      updateData.manageIt = modulesResult.modules.manageIt
+      updateData.manageDana = modulesResult.modules.manageDana
     }
 
     const user = await prisma.user.update({
       where: { idUser: parseInt(id) },
       data: updateData,
+      include: userRoleSelect,
     })
 
     const { password, ...userWithoutPassword } = user
@@ -138,7 +182,7 @@ export async function DELETE(
     const session = await getSessionFromRequest(request)
     const { id } = await params
 
-    if (!session || !canAccessPlatform(session.user.level)) {
+    if (!session || !canAccessPlatform(session.user)) {
       return NextResponse.json(
         { error: "Unauthorized" },
         { status: 401 }

@@ -11,12 +11,3 @@ export interface PermintaanGroupFilters {
   status: string
   unit: string
 }
-
-export interface PermintaanGroupsResponse {
-  data: PermintaanGroupRow[]
-  summary: PermintaanGroupsSummary
-  page: number
-  pageSize: number
-  total: number
-  totalPages: number
-}

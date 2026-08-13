@@ -12,7 +12,7 @@ export async function POST(
     const session = await getSessionFromRequest(request)
     const { id } = await params
 
-    if (!session || !canHandlePurchasingWorkflow(session.user.level)) {
+    if (!session || !canHandlePurchasingWorkflow(session.user)) {
       return NextResponse.json(
         { error: "Unauthorized" },
         { status: 401 }

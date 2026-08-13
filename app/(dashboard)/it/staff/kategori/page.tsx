@@ -26,13 +26,11 @@ import {
   type ItKategoriItem,
 } from "./components"
 
-interface Kategori extends ItKategoriItem {}
-
 export default function ItKategoriPage() {
-  const [kategori, setKategori] = useState<Kategori[]>([])
+  const [kategori, setKategori] = useState<ItKategoriItem[]>([])
   const [loading, setLoading] = useState(true)
   const [editOpen, setEditOpen] = useState(false)
-  const [editItem, setEditItem] = useState<Kategori | null>(null)
+  const [editItem, setEditItem] = useState<ItKategoriItem | null>(null)
 
   const load = () => {
     fetch("/api/it/kategori?aktif=false")
@@ -74,7 +72,7 @@ export default function ItKategoriPage() {
     }
   }
 
-  const handleEditClick = (item: Kategori) => {
+  const handleEditClick = (item: ItKategoriItem) => {
     setEditItem(item)
     setEditOpen(true)
   }

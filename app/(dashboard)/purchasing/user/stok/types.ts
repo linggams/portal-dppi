@@ -11,8 +11,3 @@ export interface StokBarang {
   keterangan: string
 }
 
-export interface JenisBarang {
-  idJenis: number
-  jenisBrg: string
-}
-

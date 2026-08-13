@@ -32,13 +32,16 @@ export function useUsers() {
     formData: UserFormData,
     editingUser: User | null
   ): Promise<boolean> => {
-    const url = editingUser ? `/api/platform/users/${editingUser.idUser}` : "/api/platform/users"
+    const url = editingUser
+      ? `/api/platform/users/${editingUser.idUser}`
+      : "/api/platform/users"
     const method = editingUser ? "PUT" : "POST"
 
-    const body: Record<string, string | "user" | "administrator" | "it_support"> = {
+    const body: Record<string, string | number | boolean | object> = {
       username: formData.username,
-      level: formData.level as "user" | "administrator" | "it_support",
+      roleId: Number(formData.roleId),
       jabatan: formData.jabatan,
+      modules: formData.modules,
     }
     if (formData.password) {
       body.password = formData.password

@@ -288,7 +288,6 @@ export default function PengajuanPage() {
           <Button
             onClick={handleSubmitClick}
             disabled={submitting}
-            size="sm"
           >
             {submitting ? "Mengirim..." : "Kirim Pengajuan"}
           </Button>

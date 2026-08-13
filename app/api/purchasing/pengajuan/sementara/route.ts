@@ -41,7 +41,7 @@ export async function GET(request: NextRequest) {
     }
 
     // If user, only show their own
-    if (isClientUser(session.user.level)) {
+    if (isClientUser(session.user)) {
       where.unit = session.user.username
     }
 

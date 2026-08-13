@@ -12,6 +12,7 @@ import {
 import { TableContainer } from "@/components/ui/table-container"
 import { TableEmptyState } from "@/components/ui/table-empty-state"
 import { Badge } from "@/components/ui/badge"
+import { MANAGER_MODULE_OPTIONS } from "@/lib/auth/manager-modules"
 import type { User } from "../types"
 import {
   TableActionButton,
@@ -24,22 +25,6 @@ interface UsersTableProps {
   onDelete: (user: User) => void
 }
 
-function getLevelLabel(level: string) {
-  switch (level) {
-    case "administrator":
-    case "admin":
-      return "Administrator"
-    case "it_support":
-      return "IT Support"
-    case "purchasing":
-      return "Purchasing"
-    case "user":
-      return "User"
-    default:
-      return level
-  }
-}
-
 export function UsersTable({ data, onEdit, onDelete }: UsersTableProps) {
   return (
     <TableContainer>
@@ -48,14 +33,15 @@ export function UsersTable({ data, onEdit, onDelete }: UsersTableProps) {
           <TableRow>
             <TableHead>No</TableHead>
             <TableHead>Username</TableHead>
-            <TableHead>Level</TableHead>
+            <TableHead>Role</TableHead>
+            <TableHead>Modul</TableHead>
             <TableHead>Jabatan</TableHead>
             <TableHead className="text-right">Aksi</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {data.length === 0 ? (
-            <TableEmptyState colSpan={5} title="Tidak ada data user" />
+            <TableEmptyState colSpan={6} title="Tidak ada data user" />
           ) : (
             data.map((user, index) => (
               <TableRow key={user.idUser}>
@@ -64,23 +50,41 @@ export function UsersTable({ data, onEdit, onDelete }: UsersTableProps) {
                 <TableCell>
                   <Badge
                     variant={
-                      user.level === "administrator"
-                        ? "default"
-                        : user.level === "it_support"
-                          ? "outline"
-                          : user.level === "purchasing"
-                            ? "secondary"
-                            : "secondary"
+                      user.role?.code === "administrator" ? "default" : "secondary"
                     }
                   >
-                    {getLevelLabel(user.level)}
+                    {user.role?.name ?? user.level ?? "—"}
                   </Badge>
+                </TableCell>
+                <TableCell>
+                  {user.role?.code === "administrator" ? (
+                    <div className="flex flex-wrap gap-1">
+                      {MANAGER_MODULE_OPTIONS.filter(
+                        (option) => user[option.key]
+                      ).map((option) => (
+                        <Badge key={option.key} variant="outline">
+                          {option.label}
+                        </Badge>
+                      ))}
+                    </div>
+                  ) : (
+                    <span className="text-muted-foreground">—</span>
+                  )}
                 </TableCell>
                 <TableCell>{user.jabatan}</TableCell>
                 <TableCell className="text-right">
                   <TableActions>
-                    <TableActionButton label="Edit" icon={Pencil} onClick={() => onEdit(user)} />
-                    <TableActionButton label="Hapus" icon={Trash2} className="text-destructive hover:text-destructive" onClick={() => onDelete(user)} />
+                    <TableActionButton
+                      label="Edit"
+                      icon={Pencil}
+                      onClick={() => onEdit(user)}
+                    />
+                    <TableActionButton
+                      label="Hapus"
+                      icon={Trash2}
+                      className="text-destructive hover:text-destructive"
+                      onClick={() => onDelete(user)}
+                    />
                   </TableActions>
                 </TableCell>
               </TableRow>

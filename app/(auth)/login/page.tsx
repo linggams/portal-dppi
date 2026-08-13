@@ -14,13 +14,6 @@ import {
 } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { ThemeToggle } from "@/components/ui/theme-toggle"
 import {
@@ -35,7 +28,6 @@ export default function LoginPage() {
   const router = useRouter()
   const [username, setUsername] = useState("")
   const [password, setPassword] = useState("")
-  const [level, setLevel] = useState<string>("")
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
 
@@ -48,28 +40,17 @@ export default function LoginPage() {
       const result = await signIn("credentials", {
         username,
         password,
-        level,
         redirect: false,
       })
 
       if (result?.error) {
         const errorMessage =
           result.error === "CredentialsSignin"
-            ? "Username, password, atau level yang Anda masukkan salah."
+            ? "Username atau password yang Anda masukkan salah."
             : result.error
         setError(errorMessage)
       } else if (result?.ok) {
-        if (level === "administrator") {
-          router.push("/platform/dashboard")
-        } else if (level === "purchasing") {
-          router.push("/purchasing/admin/dashboard")
-        } else if (level === "it_support") {
-          router.push("/it/staff/dashboard")
-        } else if (level === "user") {
-          router.push("/purchasing/user/dashboard")
-        } else {
-          router.push("/")
-        }
+        router.push("/")
         router.refresh()
       }
     } catch (error) {
@@ -151,7 +132,7 @@ export default function LoginPage() {
             <CardHeader className="space-y-1">
               <CardTitle className="text-xl">Masuk ke akun Anda</CardTitle>
               <CardDescription>
-                Pilih level sesuai peran, lalu masukkan kredensial yang valid.
+                Masukkan username dan password yang valid.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -191,30 +172,10 @@ export default function LoginPage() {
                   />
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="level">Level akses</Label>
-                  <Select
-                    value={level}
-                    onValueChange={setLevel}
-                    required
-                    disabled={loading}
-                  >
-                    <SelectTrigger id="level" className="w-full">
-                      <SelectValue placeholder="Pilih level" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="user">User</SelectItem>
-                      <SelectItem value="purchasing">Purchasing</SelectItem>
-                      <SelectItem value="administrator">Administrator</SelectItem>
-                      <SelectItem value="it_support">IT Support</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
                 <Button
                   type="submit"
                   className="w-full"
-                  disabled={loading || !username || !password || !level}
+                  disabled={loading || !username || !password}
                 >
                   {loading ? (
                     <>

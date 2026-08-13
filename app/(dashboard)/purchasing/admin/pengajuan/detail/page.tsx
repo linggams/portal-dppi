@@ -202,19 +202,18 @@ export default function DetailPengajuanPage() {  const searchParams = useSearch
   return (
     <DashboardLayout title="Detail Pengajuan Barang">
       <PageActions>
-        <Button variant="outline" size="sm" asChild>
+        <Button variant="outline" asChild>
           <Link href="/purchasing/admin/pengajuan/data">
-            <ArrowLeft className="mr-1.5 size-3.5" />
+            <ArrowLeft />
             Kembali
           </Link>
         </Button>
         {pendingItems.length > 0 ? (
           <Button
-            size="sm"
             onClick={handleApproveAllClick}
             disabled={processing !== null}
           >
-            <CheckCheck className="mr-1.5 size-3.5" />
+            <CheckCheck />
             {processing !== null ? "Memproses..." : "Setujui Semua"}
           </Button>
         ) : null}

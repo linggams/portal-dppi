@@ -11,12 +11,3 @@ export interface PengajuanGroupFilters {
   status: string
   unit: string
 }
-
-export interface PengajuanGroupsResponse {
-  data: PengajuanGroupRow[]
-  summary: PengajuanGroupsSummary
-  page: number
-  pageSize: number
-  total: number
-  totalPages: number
-}

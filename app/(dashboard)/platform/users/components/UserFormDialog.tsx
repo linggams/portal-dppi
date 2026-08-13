@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Checkbox } from "@/components/ui/checkbox"
 import {
   Dialog,
   DialogContent,
@@ -19,6 +20,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import type { RoleListItem } from "@/lib/platform/role-types"
+import {
+  ALL_MANAGER_MODULES,
+  EMPTY_MANAGER_MODULES,
+  MANAGER_MODULE_OPTIONS,
+  hasAnyManagerModule,
+  type ManagerModules,
+} from "@/lib/auth/manager-modules"
 import type { User, UserFormData } from "../types"
 
 interface UserFormDialogProps {
@@ -31,8 +40,17 @@ interface UserFormDialogProps {
 const initialFormData: UserFormData = {
   username: "",
   password: "",
-  level: "",
+  roleId: "",
   jabatan: "",
+  modules: EMPTY_MANAGER_MODULES,
+}
+
+function modulesFromUser(user: User): ManagerModules {
+  return {
+    managePurchasing: Boolean(user.managePurchasing),
+    manageIt: Boolean(user.manageIt),
+    manageDana: Boolean(user.manageDana),
+  }
 }
 
 export function UserFormDialog({
@@ -42,27 +60,58 @@ export function UserFormDialog({
   onSubmit,
 }: UserFormDialogProps) {
   const [formData, setFormData] = useState<UserFormData>(initialFormData)
+  const [roles, setRoles] = useState<RoleListItem[]>([])
   const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => {
-    if (open) {
-      if (editingUser) {
-        setFormData({
-          username: editingUser.username,
-          password: "",
-          level: editingUser.level,
-          jabatan: editingUser.jabatan,
-        })
-      } else {
-        setFormData(initialFormData)
-      }
+    if (!open) return
+
+    fetch("/api/platform/roles")
+      .then((response) => (response.ok ? response.json() : []))
+      .then((data: RoleListItem[]) => setRoles(Array.isArray(data) ? data : []))
+      .catch(() => setRoles([]))
+
+    if (editingUser) {
+      setFormData({
+        username: editingUser.username,
+        password: "",
+        roleId: editingUser.roleId,
+        jabatan: editingUser.jabatan,
+        modules: modulesFromUser(editingUser),
+      })
+    } else {
+      setFormData(initialFormData)
     }
   }, [open, editingUser])
 
+  const selectedRole = roles.find((role) => role.idRole === formData.roleId)
+  const isPengelola = Boolean(selectedRole?.capabilities.platform)
+  const canSubmit =
+    Boolean(formData.roleId) &&
+    (Boolean(editingUser) || Boolean(formData.password)) &&
+    (!isPengelola || hasAnyManagerModule(formData.modules))
+
+  const handleRoleChange = (value: string) => {
+    const roleId = Number(value)
+    const role = roles.find((item) => item.idRole === roleId)
+    const nextPengelola = Boolean(role?.capabilities.platform)
+    setFormData({
+      ...formData,
+      roleId,
+      modules: nextPengelola ? ALL_MANAGER_MODULES : EMPTY_MANAGER_MODULES,
+    })
+  }
+
+  const handleModuleChange = (key: keyof ManagerModules, checked: boolean) => {
+    setFormData({
+      ...formData,
+      modules: { ...formData.modules, [key]: checked },
+    })
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!formData.level) return
-    if (!editingUser && !formData.password) return
+    if (!canSubmit) return
 
     setSubmitting(true)
     const success = await onSubmit(formData, editingUser)
@@ -75,7 +124,7 @@ export function UserFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>
             {editingUser ? "Edit User" : "Tambah User"}
@@ -114,25 +163,65 @@ export function UserFormDialog({
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="level">Level</Label>
+              <Label htmlFor="role">Role</Label>
               <Select
-                value={formData.level}
-                onValueChange={(
-                  value: "user" | "administrator" | "it_support" | "purchasing"
-                ) => setFormData({ ...formData, level: value })}
+                value={formData.roleId ? String(formData.roleId) : ""}
+                onValueChange={handleRoleChange}
                 required
               >
-                <SelectTrigger id="level">
-                  <SelectValue placeholder="Pilih Level" />
+                <SelectTrigger id="role">
+                  <SelectValue placeholder="Pilih Role" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="user">User</SelectItem>
-                  <SelectItem value="purchasing">Purchasing</SelectItem>
-                  <SelectItem value="administrator">Administrator</SelectItem>
-                  <SelectItem value="it_support">IT Support</SelectItem>
+                  {roles.map((role) => (
+                    <SelectItem key={role.idRole} value={String(role.idRole)}>
+                      {role.name}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
+              {selectedRole?.description ? (
+                <p className="text-xs text-muted-foreground">
+                  {selectedRole.description}
+                </p>
+              ) : null}
             </div>
+            {isPengelola ? (
+              <div className="grid gap-2">
+                <Label>Modul yang dikelola</Label>
+                <div className="rounded-md border p-3 space-y-3">
+                  {MANAGER_MODULE_OPTIONS.map((option) => (
+                    <label
+                      key={option.key}
+                      htmlFor={option.key}
+                      className="flex items-start gap-3 cursor-pointer"
+                    >
+                      <Checkbox
+                        id={option.key}
+                        checked={Boolean(formData.modules[option.key])}
+                        onCheckedChange={(checked) =>
+                          handleModuleChange(option.key, checked === true)
+                        }
+                        className="mt-0.5"
+                      />
+                      <span className="grid gap-0.5">
+                        <span className="text-sm font-medium leading-none">
+                          {option.label}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          {option.description}
+                        </span>
+                      </span>
+                    </label>
+                  ))}
+                </div>
+                {!hasAnyManagerModule(formData.modules) ? (
+                  <p className="text-xs text-destructive">
+                    Pilih minimal satu modul.
+                  </p>
+                ) : null}
+              </div>
+            ) : null}
             <div className="grid gap-2">
               <Label htmlFor="jabatan">Jabatan</Label>
               <Input
@@ -153,7 +242,7 @@ export function UserFormDialog({
             >
               Batal
             </Button>
-            <Button type="submit" disabled={submitting}>
+            <Button type="submit" disabled={submitting || !canSubmit}>
               {submitting
                 ? "Menyimpan..."
                 : editingUser

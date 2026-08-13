@@ -14,7 +14,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { TableContainer } from "@/components/ui/table-container"
-import { getPermintaanGroupStatusBadge } from "@/lib/purchasing/permintaan-status"
+import { getGroupStatusBadge } from "@/lib/purchasing/permintaan-status"
 import type { DashboardPermintaanItem } from "@/lib/platform/dashboard-types"
 
 interface Props {
@@ -71,7 +71,7 @@ export function DashboardPendingPermintaanList({
                     {item.jumlahItem}
                   </TableCell>
                   <TableCell>
-                    {getPermintaanGroupStatusBadge(item)}
+                    {getGroupStatusBadge(item)}
                   </TableCell>
                   <TableCell className="text-right">
                     <TableActionLink

@@ -9,5 +9,5 @@ export default async function HomePage() {
     redirect("/login")
   }
 
-  redirect(getDefaultHomePath(session.user.level))
+  redirect(getDefaultHomePath(session.user))
 }

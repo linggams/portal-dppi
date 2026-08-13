@@ -3,15 +3,14 @@
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { Badge } from "@/components/ui/badge"
 import { ThemeToggle } from "@/components/ui/theme-toggle"
-import { USER_LEVEL_LABEL, type AppUserLevel } from "@/lib/user-level"
 import { usePageTitleValue } from "@/components/layout/page-title-context"
 import { cn } from "@/lib/utils"
 
 interface HeaderProps {
-  userLevel: AppUserLevel
+  roleName: string
 }
 
-export function Header({ userLevel }: HeaderProps) {
+export function Header({ roleName }: HeaderProps) {
   const pageTitle = usePageTitleValue()
 
   return (
@@ -27,7 +26,7 @@ export function Header({ userLevel }: HeaderProps) {
         </h1>
       ) : null}
       <Badge variant="secondary" className="hidden sm:inline-flex">
-        {USER_LEVEL_LABEL[userLevel] ?? userLevel}
+        {roleName}
       </Badge>
       <div className="flex-1" />
       <ThemeToggle />

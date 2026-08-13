@@ -11,11 +11,13 @@ Next.js App Router + PostgreSQL + Prisma + NextAuth + shadcn/ui.
 
 | Modul | UI | API | Tabel DB |
 |-------|-----|-----|----------|
-| Platform | `/platform/*` (dashboard admin: `/platform/dashboard`) | `/api/platform/*` | `user` |
+| Platform | `/platform/*` (dashboard admin: `/platform/dashboard`) | `/api/platform/*` | `user`, `role` |
 | Purchasing admin | `/purchasing/admin/*` | `/api/purchasing/*` | `atk_*` |
 | Purchasing user | `/purchasing/user/*` | `/api/purchasing/*` | `atk_*` |
 | IT staff | `/it/staff/*` | `/api/it/*` | `it_*` |
 | IT user | `/it/user/*` | `/api/it/*` | `it_*` |
+| Pengajuan Dana admin | `/dana/admin/*` | `/api/dana/*` | `dana_*` |
+| Pengajuan Dana user | `/dana/user/*` | `/api/dana/*` | `dana_*` |
 
 Permission: `lib/auth/permissions.ts`. Arsitektur: `docs/architecture.md`.
 

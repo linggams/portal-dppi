@@ -11,7 +11,7 @@ export async function DELETE(
   try {
     const session = await getSessionFromRequest(request)
 
-    if (!session || !canManagePurchasingMaster(session.user.level)) {
+    if (!session || !canManagePurchasingMaster(session.user)) {
       return NextResponse.json(
         { error: "Unauthorized" },
         { status: 401 }

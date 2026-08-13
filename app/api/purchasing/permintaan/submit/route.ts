@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
   try {
     const session = await getSessionFromRequest(request)
 
-    if (!session || !isClientUser(session.user.level)) {
+    if (!session || !isClientUser(session.user)) {
       return NextResponse.json(
         { error: "Unauthorized" },
         { status: 401 }

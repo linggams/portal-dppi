@@ -1,3 +1,8 @@
+import {
+  resolveCapabilities,
+  type AccessPrincipal,
+} from "@/lib/auth/capabilities"
+
 export const IT_TIKET_STATUS = {
   BARU: 0,
   DITUGASKAN: 1,
@@ -7,9 +12,6 @@ export const IT_TIKET_STATUS = {
   DITUTUP: 5,
   DIBATALKAN: 6,
 } as const
-
-export type ItTiketStatusCode =
-  (typeof IT_TIKET_STATUS)[keyof typeof IT_TIKET_STATUS]
 
 export const IT_TIKET_STATUS_LABEL: Record<number, string> = {
   0: "Baru",
@@ -21,12 +23,8 @@ export const IT_TIKET_STATUS_LABEL: Record<number, string> = {
   6: "Dibatalkan",
 }
 
-export function isItStaff(level: string) {
-  return level === "it_support" || level === "administrator"
-}
-
-export function canManageItTiket(level: string) {
-  return isItStaff(level)
+export function canManageItTiket(input: string | AccessPrincipal) {
+  return resolveCapabilities(input).itStaff
 }
 
 /** User boleh membatalkan tiket sendiri jika belum ditangani tim IT. */

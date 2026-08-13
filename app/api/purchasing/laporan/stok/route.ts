@@ -8,36 +8,14 @@ export async function GET(request: NextRequest) {
   try {
     const session = await getSessionFromRequest(request)
 
-    if (!session || !canManagePurchasingMaster(session.user.level)) {
+    if (!session || !canManagePurchasingMaster(session.user)) {
       return NextResponse.json(
         { error: "Unauthorized" },
         { status: 401 }
       )
     }
 
-    const searchParams = request.nextUrl.searchParams
-    const idJenis = searchParams.get("id_jenis")
-    const minStok = searchParams.get("min_stok")
-
-    const where: {
-      idJenis?: number
-      sisa?: {
-        lte?: number
-      }
-    } = {}
-
-    if (idJenis) {
-      where.idJenis = parseInt(idJenis)
-    }
-
-    if (minStok) {
-      where.sisa = {
-        lte: parseInt(minStok),
-      }
-    }
-
     const stok = await prisma.stokbarang.findMany({
-      where,
       orderBy: {
         namaBrg: "asc",
       },

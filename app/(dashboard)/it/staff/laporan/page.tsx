@@ -19,11 +19,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { TableActionLink } from "@/components/ui/table-actions"
 import { useItLaporan } from "./hooks/useItLaporan"
 import { ItLaporanFilters, ItLaporanSummaryCards } from "./components"
-import {
-  formatJamAtauHari,
-  formatTiketDate,
-  getStatusBadge,
-} from "./utils"
+import { formatJamAtauHari } from "@/lib/it/laporan"
+import { formatTiketDate, getStatusBadge } from "@/lib/it/utils"
 
 interface KategoriOption {
   idKategori: number

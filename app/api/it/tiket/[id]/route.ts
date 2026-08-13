@@ -7,6 +7,7 @@ import {
   IT_TIKET_STATUS,
   IT_TIKET_STATUS_LABEL,
 } from "@/lib/it/constants"
+import type { AccessPrincipal } from "@/lib/auth/capabilities"
 import { z } from "zod"
 
 const updateSchema = z.object({
@@ -26,11 +27,11 @@ async function getTiketOr404(id: number) {
 }
 
 function canAccessTiket(
-  level: string,
+  principal: AccessPrincipal,
   username: string,
   tiket: { username: string }
 ) {
-  if (canManageItTiket(level)) return true
+  if (canManageItTiket(principal)) return true
   return tiket.username === username
 }
 
@@ -51,7 +52,7 @@ export async function GET(
       return NextResponse.json({ error: "Not found" }, { status: 404 })
     }
 
-    if (!canAccessTiket(session.user.level, session.user.username, tiket)) {
+    if (!canAccessTiket(session.user, session.user.username, tiket)) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 
@@ -153,7 +154,7 @@ export async function PATCH(
       return NextResponse.json(updated)
     }
 
-    if (!canManageItTiket(session.user.level)) {
+    if (!canManageItTiket(session.user)) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 

@@ -13,7 +13,7 @@ import type {
   TeknisiLaporanItem,
   TiketLaporanItem,
 } from "../types"
-import { formatTiketDate } from "../utils"
+import { formatTiketDate } from "@/lib/it/utils"
 
 export function useItLaporan() {
   const [loading, setLoading] = useState(false)

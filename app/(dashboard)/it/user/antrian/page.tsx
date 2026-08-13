@@ -48,7 +48,6 @@ interface AntrianResponse {
   totalAntrian: number
   antrianGlobal: AntrianItem[]
   antrianSaya: AntrianItem[]
-  tiketSelesai: number
 }
 
 export default function UserAntrianPage() {
@@ -84,9 +83,6 @@ export default function UserAntrianPage() {
   return (
     <DashboardLayout title="Antrian Tiket">
       <PageActions>
-        <Button asChild variant="outline">
-          <Link href="/it/user/tiket">Tiket Saya</Link>
-        </Button>
         <Button asChild>
           <Link href="/it/user/tiket/buat">Ajukan Tiket</Link>
         </Button>

@@ -29,22 +29,18 @@ export default function CetakBPPPage() {
   return (
     <DashboardLayout title="Cetak BPP">
       <PageActions>
-        <Button size="sm" onClick={fetchPermintaan} disabled={loading}>
-          <Search className="mr-1.5 size-3.5" />
+        <Button onClick={fetchPermintaan} disabled={loading}>
+          <Search />
           Tampilkan
         </Button>
         {hasData ? (
           <>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={handleExportAllPDF}
-            >
-              <Download className="mr-1.5 size-3.5" />
+            <Button variant="outline" onClick={handleExportAllPDF}>
+              <Download />
               Export
             </Button>
-            <Button size="sm" variant="outline" onClick={handlePrint}>
-              <Printer className="mr-1.5 size-3.5" />
+            <Button variant="outline" onClick={handlePrint}>
+              <Printer />
               Cetak
             </Button>
           </>

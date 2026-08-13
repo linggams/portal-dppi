@@ -8,7 +8,7 @@ export async function GET(request: NextRequest) {
   try {
     const session = await getSessionFromRequest(request)
 
-    if (!session || !canManagePurchasingMaster(session.user.level)) {
+    if (!session || !canManagePurchasingMaster(session.user)) {
       return NextResponse.json(
         { error: "Unauthorized" },
         { status: 401 }

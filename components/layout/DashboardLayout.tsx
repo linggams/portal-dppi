@@ -1,5 +1,6 @@
 "use client"
 
+import { Suspense } from "react"
 import { usePathname } from "next/navigation"
 import { useSession } from "next-auth/react"
 import { ItSupportAnnouncementDialog } from "@/components/it/ItSupportAnnouncementDialog"
@@ -12,6 +13,10 @@ import {
 } from "./page-actions-context"
 import { PageContentTitle } from "./page-content-title"
 import { PageTitleProvider, SetPageTitle } from "./page-title-context"
+import {
+  canAccessItStaff,
+  canAccessItUser,
+} from "@/lib/auth/permissions"
 
 interface DashboardLayoutProps {
   children: React.ReactNode
@@ -29,29 +34,28 @@ export function DashboardLayout({
 }: DashboardLayoutProps) {
   const pathname = usePathname()
   const { data: session } = useSession()
-  const userLevel = session?.user?.level
-  const username = session?.user?.username ?? ""
-  const showItSupportAnnouncement =
-    userLevel === "user" && pathname === USER_DASHBOARD_PATH
+  const user = session?.user
+  const username = user?.username ?? ""
+  const showItSupportAnnouncement = user
+    ? canAccessItUser(user) &&
+      !canAccessItStaff(user) &&
+      pathname === USER_DASHBOARD_PATH
+    : false
 
-  if (
-    !userLevel ||
-    (userLevel !== "administrator" &&
-      userLevel !== "user" &&
-      userLevel !== "it_support" &&
-      userLevel !== "purchasing")
-  ) {
+  if (!user?.username) {
     return null
   }
 
   return (
     <SidebarProvider>
-      <AppSidebar userLevel={userLevel} />
+      <Suspense fallback={null}>
+        <AppSidebar />
+      </Suspense>
       <SidebarInset>
         <PageTitleProvider>
           <PageActionsProvider>
             {title ? <SetPageTitle title={title} /> : null}
-            <Header userLevel={userLevel} />
+            <Header roleName={user.roleName || user.level} />
             <PageActionsBar />
             <main className="relative flex-1 overflow-y-auto focus:outline-none">
               <div className="w-full space-y-6 px-4 py-6 sm:px-6 lg:px-8">

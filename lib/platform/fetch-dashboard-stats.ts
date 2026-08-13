@@ -13,7 +13,6 @@ import {
   type DashboardPurchasingStats,
   type DashboardUserStats,
   type PlatformDashboardStats,
-  type PurchasingDashboardStats,
 } from "./dashboard-types"
 
 function getDateDaysAgoWIB(days: number): string {
@@ -55,26 +54,26 @@ function mapPengajuanItem(
 
 async function fetchUserStats(): Promise<DashboardUserStats> {
   const grouped = await prisma.user.groupBy({
-    by: ["level"],
+    by: ["roleId"],
     _count: { _all: true },
   })
 
-  const byLevel = {
-    user: 0,
-    administrator: 0,
-    it_support: 0,
-    purchasing: 0,
-  }
+  const roles = await prisma.role.findMany({
+    select: { idRole: true, name: true },
+  })
+  const roleNameById = new Map(roles.map((role) => [role.idRole, role.name]))
 
-  for (const row of grouped) {
-    if (row.level in byLevel) {
-      byLevel[row.level as keyof typeof byLevel] = row._count._all
-    }
-  }
+  const byRole = grouped
+    .map((row) => ({
+      name: roleNameById.get(row.roleId) ?? "Tidak diketahui",
+      count: row._count._all,
+    }))
+    .sort((a, b) => b.count - a.count)
 
   return {
-    total: Object.values(byLevel).reduce((sum, count) => sum + count, 0),
-    byLevel,
+    total: byRole.reduce((sum, row) => sum + row.count, 0),
+    roleCount: byRole.filter((row) => row.count > 0).length,
+    byRole,
   }
 }
 
@@ -192,44 +191,4 @@ export async function fetchPlatformDashboardStats(): Promise<PlatformDashboardSt
   ])
 
   return { users, purchasing, it }
-}
-
-export async function fetchPurchasingDashboardStats(): Promise<PurchasingDashboardStats> {
-  const today = getTodayDateWIB()
-  const listStart = getDateDaysAgoWIB(DASHBOARD_LIST_DAYS)
-
-  const [permintaanToday, pengajuanToday, permintaanPending, pengajuanPending] =
-    await Promise.all([
-      fetchPermintaanGroups({
-        startDate: today,
-        endDate: today,
-        status: "0",
-        limit: 1,
-      }),
-      fetchPengajuanGroups({
-        startDate: today,
-        endDate: today,
-        status: "0",
-        limit: 1,
-      }),
-      fetchPermintaanGroups({
-        startDate: listStart,
-        endDate: today,
-        status: "0",
-        limit: DASHBOARD_LIST_LIMIT,
-      }),
-      fetchPengajuanGroups({
-        startDate: listStart,
-        endDate: today,
-        status: "0",
-        limit: DASHBOARD_LIST_LIMIT,
-      }),
-    ])
-
-  return {
-    permintaanPendingToday: permintaanToday.summary.pending,
-    pengajuanPendingToday: pengajuanToday.summary.pending,
-    pendingPermintaan: permintaanPending.data.map(mapPermintaanItem),
-    pendingPengajuan: pengajuanPending.data.map(mapPengajuanItem),
-  }
 }

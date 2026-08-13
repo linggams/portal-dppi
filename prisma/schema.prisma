@@ -9,13 +9,40 @@ datasource db {
   provider = "postgresql"
 }
 
-model User {
-  idUser   Int     @id @default(autoincrement()) @map("id_user")
-  username String  @unique @db.VarChar(20)
-  password String  @db.VarChar(255)
-  level    UserLevel
-  jabatan  String  @db.VarChar(50)
+model Role {
+  idRole      Int     @id @default(autoincrement()) @map("id_role")
+  code        String  @unique @db.VarChar(50)
+  name        String  @db.VarChar(100)
+  description String  @default("") @db.VarChar(255)
+  isSystem    Boolean @default(false) @map("is_system")
+  homePath    String  @map("home_path") @db.VarChar(100)
 
+  canAccessPlatform           Boolean @default(false) @map("can_access_platform")
+  canAccessPurchasingUser     Boolean @default(false) @map("can_access_purchasing_user")
+  canHandlePurchasingWorkflow Boolean @default(false) @map("can_handle_purchasing_workflow")
+  canManagePurchasingMaster   Boolean @default(false) @map("can_manage_purchasing_master")
+  canAccessItUser             Boolean @default(false) @map("can_access_it_user")
+  canAccessItStaff            Boolean @default(false) @map("can_access_it_staff")
+
+  users User[]
+
+  @@map("role")
+}
+
+model User {
+  idUser   Int       @id @default(autoincrement()) @map("id_user")
+  username String    @unique @db.VarChar(20)
+  password String    @db.VarChar(255)
+  level    UserLevel
+  jabatan  String    @db.VarChar(50)
+  roleId   Int       @map("id_role")
+  managePurchasing Boolean @default(false) @map("manage_purchasing")
+  manageIt         Boolean @default(false) @map("manage_it")
+  manageDana       Boolean @default(false) @map("manage_dana")
+
+  role Role @relation(fields: [roleId], references: [idRole], onDelete: Restrict)
+
+  @@index([roleId])
   @@map("user")
 }
 
@@ -227,4 +254,25 @@ model ItMaintenanceLog {
   @@index([username])
   @@index([tglKerja])
   @@index([idTiket])
+}
+
+model DanaPengajuan {
+  idPengajuan   Int       @id @default(autoincrement()) @map("id_pengajuan")
+  nomor         String    @unique @db.VarChar(20)
+  username      String    @db.VarChar(20)
+  jabatan       String    @db.VarChar(50)
+  nominal       Int
+  kembalian     Int       @default(0)
+  keperluan     String    @db.Text
+  status        Int       @default(0)
+  alasanTolak   String?   @map("alasan_tolak") @db.Text
+  disetujuiOleh String?   @map("disetujui_oleh") @db.VarChar(20)
+  tglDisetujui  DateTime? @map("tgl_disetujui")
+  tglDibuat     DateTime  @default(now()) @map("tgl_dibuat")
+  tglDiupdate   DateTime  @updatedAt @map("tgl_diupdate")
+
+  @@map("dana_pengajuan")
+  @@index([username])
+  @@index([status])
+  @@index([tglDibuat])
 }

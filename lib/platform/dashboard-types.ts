@@ -4,12 +4,8 @@ export const DASHBOARD_LIST_DAYS = 30
 
 export interface DashboardUserStats {
   total: number
-  byLevel: {
-    user: number
-    administrator: number
-    it_support: number
-    purchasing: number
-  }
+  roleCount: number
+  byRole: Array<{ name: string; count: number }>
 }
 
 export interface DashboardPermintaanItem {
@@ -68,11 +64,4 @@ export interface PlatformDashboardStats {
   users: DashboardUserStats
   purchasing: DashboardPurchasingStats
   it: DashboardItStats
-}
-
-export interface PurchasingDashboardStats {
-  permintaanPendingToday: number
-  pengajuanPendingToday: number
-  pendingPermintaan: DashboardPermintaanItem[]
-  pendingPengajuan: DashboardPengajuanItem[]
 }

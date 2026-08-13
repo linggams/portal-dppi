@@ -2,8 +2,11 @@ import { PrismaClient } from '@prisma/client'
 import { PrismaPg } from '@prisma/adapter-pg'
 import { Pool } from 'pg'
 
+const PRISMA_CLIENT_REV = 3
+
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined
+  prismaRev?: number
 }
 
 // Create PostgreSQL connection pool
@@ -35,6 +38,28 @@ function createPrismaClient() {
   }
 }
 
-export const prisma = globalForPrisma.prisma ?? createPrismaClient()
+function isStaleClient(client: PrismaClient) {
+  if (globalForPrisma.prismaRev !== PRISMA_CLIENT_REV) return true
+  return typeof (client as { danaPengajuan?: { findMany?: unknown } }).danaPengajuan
+    ?.findMany !== "function"
+}
 
-if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma
+function getPrismaClient() {
+  const existing = globalForPrisma.prisma
+  if (existing && !isStaleClient(existing)) {
+    return existing
+  }
+
+  if (existing) {
+    existing.$disconnect().catch(() => {})
+  }
+
+  const client = createPrismaClient()
+  if (process.env.NODE_ENV !== "production") {
+    globalForPrisma.prisma = client
+    globalForPrisma.prismaRev = PRISMA_CLIENT_REV
+  }
+  return client
+}
+
+export const prisma = getPrismaClient()

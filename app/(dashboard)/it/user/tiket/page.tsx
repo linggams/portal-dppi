@@ -47,14 +47,12 @@ interface TiketRow {
   kategori: { nama: string }
   posisiAntrian?: number | null
   totalAntrian?: number
-  antrianDiDepan?: number | null
 }
 
 type AntrianQueueItem = {
   idTiket: number
   posisiAntrian: number | null
   totalAntrian: number
-  antrianDiDepan: number | null
 }
 
 export default function UserTiketPage() {
@@ -96,7 +94,6 @@ export default function UserTiketPage() {
                 ...t,
                 posisiAntrian: q.posisiAntrian,
                 totalAntrian: q.totalAntrian,
-                antrianDiDepan: q.antrianDiDepan,
               }
             })
           }
@@ -143,9 +140,6 @@ export default function UserTiketPage() {
   return (
     <DashboardLayout title="Tiket Saya">
       <PageActions>
-        <Button asChild variant="outline">
-          <Link href="/it/user/antrian">Antrian Tiket</Link>
-        </Button>
         <Button asChild>
           <Link href="/it/user/tiket/buat">Buat Tiket</Link>
         </Button>

@@ -3,27 +3,14 @@
 import { useState, useEffect, useCallback } from "react"
 import { useSearchParams } from "next/navigation"
 import { toast } from "sonner"
-import type { StokBarang, JenisBarang } from "../types"
+import type { StokBarang } from "../types"
 
 export function useStok() {
   const searchParams = useSearchParams()
   const jenisParam = searchParams.get("jenis") || "1"
 
   const [stokBarang, setStokBarang] = useState<StokBarang[]>([])
-  const [jenisBarang, setJenisBarang] = useState<JenisBarang[]>([])
   const [loading, setLoading] = useState(true)
-
-  const fetchJenisBarang = useCallback(async () => {
-    try {
-      const response = await fetch("/api/purchasing/jenis-barang")
-      if (response.ok) {
-        const data = await response.json()
-        setJenisBarang(data)
-      }
-    } catch (error) {
-      toast.error("Gagal memuat data jenis barang")
-    }
-  }, [])
 
   const fetchStokBarang = useCallback(async () => {
     setLoading(true)
@@ -33,7 +20,7 @@ export function useStok() {
         const data = await response.json()
         setStokBarang(data)
       }
-    } catch (error) {
+    } catch {
       toast.error("Gagal memuat data stok barang")
     } finally {
       setLoading(false)
@@ -41,17 +28,8 @@ export function useStok() {
   }, [jenisParam])
 
   useEffect(() => {
-    fetchJenisBarang()
     fetchStokBarang()
-  }, [fetchJenisBarang, fetchStokBarang])
-
-  const getJenisName = useCallback(
-    (idJenis: number) => {
-      const jenis = jenisBarang.find((j) => j.idJenis === idJenis)
-      return jenis?.jenisBrg || "-"
-    },
-    [jenisBarang]
-  )
+  }, [fetchStokBarang])
 
   const formatRupiah = useCallback((value: string) => {
     const num = parseFloat(value)
@@ -64,11 +42,8 @@ export function useStok() {
   }, [])
 
   return {
-    jenisParam,
     stokBarang,
-    jenisBarang,
     loading,
-    getJenisName,
     formatRupiah,
   }
 }

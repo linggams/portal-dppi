@@ -1,15 +1,13 @@
 import { getToken } from "next-auth/jwt"
 import { NextRequest } from "next/server"
 import { auth } from "@/app/api/auth/[...nextauth]/route"
-import { normalizeUserLevel } from "@/lib/user-level"
+import { sessionUserFromToken } from "@/lib/auth/session-user"
 
-// For server components and server actions
 export async function getServerSession() {
   const session = await auth()
   return session
 }
 
-// For API routes
 export async function getSessionFromRequest(request: NextRequest) {
   const token = await getToken({
     req: request,
@@ -21,11 +19,14 @@ export async function getSessionFromRequest(request: NextRequest) {
   }
 
   return {
-    user: {
-      id: token.sub || "",
-      username: token.username as string,
-      level: normalizeUserLevel(token.level as string),
-      jabatan: token.jabatan as string,
-    },
+    user: sessionUserFromToken({
+      sub: token.sub,
+      username: token.username as string | undefined,
+      jabatan: token.jabatan as string | undefined,
+      level: token.level as string | undefined,
+      roleName: token.roleName as string | undefined,
+      homePath: token.homePath as string | undefined,
+      capabilities: token.capabilities,
+    }),
   }
 }

@@ -14,44 +14,6 @@ const updateStokSchema = z.object({
   keterangan: z.string().max(50).optional(),
 })
 
-// GET - Get single stok barang
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const session = await getSessionFromRequest(request)
-    const { id } = await params
-
-    if (!session) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      )
-    }
-
-    const stokBarang = await prisma.stokbarang.findUnique({
-      where: { idKodeBrg: parseInt(id) },
-    })
-
-    if (!stokBarang) {
-      return NextResponse.json(
-        { error: "Stok barang not found" },
-        { status: 404 }
-      )
-    }
-
-    return NextResponse.json(stokBarang)
-  } catch (error) {
-    console.error("Error fetching stok barang:", error)
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    )
-  }
-}
-
-// PUT - Update stok barang (only for admin)
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -60,7 +22,7 @@ export async function PUT(
     const session = await getSessionFromRequest(request)
     const { id } = await params
 
-    if (!session || !canManagePurchasingMaster(session.user.level)) {
+    if (!session || !canManagePurchasingMaster(session.user)) {
       return NextResponse.json(
         { error: "Unauthorized" },
         { status: 401 }
@@ -141,7 +103,7 @@ export async function DELETE(
     const session = await getSessionFromRequest(request)
     const { id } = await params
 
-    if (!session || !canManagePurchasingMaster(session.user.level)) {
+    if (!session || !canManagePurchasingMaster(session.user)) {
       return NextResponse.json(
         { error: "Unauthorized" },
         { status: 401 }

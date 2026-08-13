@@ -5,7 +5,7 @@ import { useStok } from "./hooks/useStok"
 import { StokLoadingSkeleton, StokTable } from "./components"
 
 export default function UserStokPage() {
-  const { jenisParam, stokBarang, loading, getJenisName, formatRupiah } = useStok()
+  const { stokBarang, loading, formatRupiah } = useStok()
 
   return (
     <DashboardLayout title="Data Stok Barang">

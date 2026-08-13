@@ -1,33 +1,17 @@
-export type AppUserLevel =
-  | "user"
-  | "administrator"
-  | "it_support"
-  | "purchasing"
+export type AppUserLevel = "user" | "administrator"
 
 export function normalizeUserLevel(level: string): AppUserLevel {
-  if (level === "bendahara" || level === "admin") {
-    return "administrator"
-  }
-  if (level === "it") {
-    return "it_support"
-  }
-  if (level === "instansi") {
-    return "user"
-  }
   if (
     level === "user" ||
-    level === "administrator" ||
-    level === "it_support" ||
-    level === "purchasing"
+    level === "instansi" ||
+    level === "pemohon"
   ) {
-    return level
+    return "user"
   }
-  return "user"
+  return "administrator"
 }
 
 export const USER_LEVEL_LABEL: Record<AppUserLevel, string> = {
-  user: "User",
-  administrator: "Administrator",
-  it_support: "IT Support",
-  purchasing: "Purchasing",
+  user: "Pemohon",
+  administrator: "Pengelola",
 }
