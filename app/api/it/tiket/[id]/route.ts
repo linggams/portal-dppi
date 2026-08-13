@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
+import type { Prisma } from "@prisma/client"
 import { getSessionFromRequest } from "@/lib/get-session"
 import { prisma } from "@/lib/db/prisma"
 import {
@@ -97,7 +98,7 @@ export async function PATCH(
         )
       }
 
-      const updated = await prisma.$transaction(async (tx) => {
+      const updated = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
         const t = await tx.itTiket.update({
           where: { idTiket: tiketId },
           data: {
@@ -134,7 +135,7 @@ export async function PATCH(
         )
       }
 
-      const updated = await prisma.$transaction(async (tx) => {
+      const updated = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
         const t = await tx.itTiket.update({
           where: { idTiket: tiketId },
           data: { status: IT_TIKET_STATUS.DIBATALKAN },
@@ -193,7 +194,7 @@ export async function PATCH(
       }
     }
 
-    const updated = await prisma.$transaction(async (tx) => {
+    const updated = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       const t = await tx.itTiket.update({
         where: { idTiket: tiketId },
         data: updateData,

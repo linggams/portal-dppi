@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
+import type { Prisma } from "@prisma/client"
 import { getSessionFromRequest } from "@/lib/get-session"
 import { canHandlePurchasingWorkflow } from "@/lib/auth/permissions"
 import { prisma } from "@/lib/db/prisma"
@@ -50,7 +51,7 @@ export async function POST(
     }
 
     // Start transaction
-    await prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       // Update permintaan status to approved
       await tx.permintaan.update({
         where: { idPermintaan: parseInt(id) },

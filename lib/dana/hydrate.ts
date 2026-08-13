@@ -1,9 +1,12 @@
 import { Prisma } from "@prisma/client"
 import { prisma } from "@/lib/db/prisma"
+import type { DanaRow } from "./map"
 
-type WithId = { idPengajuan: number; kembalian?: number | null }
+type HydrateableRow = Omit<DanaRow, "kembalian"> & {
+  kembalian?: number | null
+}
 
-export async function attachKembalian<T extends WithId>(
+export async function attachKembalian<T extends HydrateableRow>(
   rows: T[]
 ): Promise<(T & { kembalian: number })[]> {
   if (rows.length === 0) return []

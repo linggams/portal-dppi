@@ -1,6 +1,6 @@
 import type { DanaPengajuan } from "./dana-types"
 
-type DanaRow = {
+export type DanaRow = {
   idPengajuan: number
   nomor: string
   username: string
