@@ -3,7 +3,6 @@
 import { use, useEffect, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { ArrowLeft, Pencil, Printer, XCircle } from "lucide-react"
 import { toast } from "sonner"
 import {
   DashboardLayout,
@@ -105,14 +104,10 @@ export default function UserPengajuanDanaDetailPage({
     <DashboardLayout title={item?.nomor ?? "Detail pengajuan"}>
       <PageActions>
         <Button asChild variant="outline">
-          <Link href="/dana/user/pengajuan">
-            <ArrowLeft />
-            Kembali
-          </Link>
+          <Link href="/dana/user/pengajuan">Kembali</Link>
         </Button>
         {item && isDanaEditable(item.status) ? (
           <Button variant="outline" onClick={() => setFormOpen(true)}>
-            <Pencil />
             Revisi
           </Button>
         ) : null}
@@ -122,13 +117,11 @@ export default function UserPengajuanDanaDetailPage({
             className="text-destructive hover:text-destructive"
             onClick={() => setCancelOpen(true)}
           >
-            <XCircle />
             Batalkan
           </Button>
         ) : null}
         {item && isDanaPrintable(item.status) ? (
           <Button onClick={() => downloadPengajuanDanaPdf(item)}>
-            <Printer />
             Cetak PDF
           </Button>
         ) : null}

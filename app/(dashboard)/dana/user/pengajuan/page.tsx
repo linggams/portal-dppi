@@ -1,7 +1,6 @@
 "use client"
 
 import { useState } from "react"
-import { Plus } from "lucide-react"
 import {
   ContentEmpty,
   DashboardLayout,
@@ -80,7 +79,6 @@ export default function UserPengajuanDanaPage() {
             setFormOpen(true)
           }}
         >
-          <Plus />
           Ajukan
         </Button>
       </PageActions>

@@ -48,7 +48,12 @@ export function PengajuanTable({
         <TableHeader>
           <TableRow>
             <TableHead>Nomor</TableHead>
-            {showPemohon ? <TableHead>Pemohon</TableHead> : null}
+            {showPemohon ? (
+              <>
+                <TableHead>Pemohon</TableHead>
+                <TableHead>Jabatan</TableHead>
+              </>
+            ) : null}
             <TableHead>Tanggal</TableHead>
             <TableHead className="text-right">Nominal</TableHead>
             <TableHead className="text-right">Kembalian</TableHead>
@@ -62,12 +67,10 @@ export function PengajuanTable({
             <TableRow key={row.idPengajuan}>
               <TableCell className="font-medium">{row.nomor}</TableCell>
               {showPemohon ? (
-                <TableCell>
-                  {row.username}
-                  <span className="block text-xs text-muted-foreground">
-                    {row.jabatan}
-                  </span>
-                </TableCell>
+                <>
+                  <TableCell>{row.username}</TableCell>
+                  <TableCell>{row.jabatan}</TableCell>
+                </>
               ) : null}
               <TableCell>{formatDanaDateOnly(row.tglDibuat)}</TableCell>
               <TableCell className="text-right whitespace-nowrap">

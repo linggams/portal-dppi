@@ -2,7 +2,6 @@
 
 import { use, useEffect, useState } from "react"
 import Link from "next/link"
-import { ArrowLeft, Check, Printer, Wallet, X } from "lucide-react"
 import { toast } from "sonner"
 import {
   DashboardLayout,
@@ -122,32 +121,23 @@ export default function AdminPengajuanDanaDetailPage({
     <DashboardLayout title={item?.nomor ?? "Detail pengajuan"}>
       <PageActions>
         <Button asChild variant="outline">
-          <Link href="/dana/admin/antrian">
-            <ArrowLeft />
-            Kembali
-          </Link>
+          <Link href="/dana/admin/antrian">Kembali</Link>
         </Button>
         {pending ? (
           <>
             <Button variant="outline" onClick={() => setRejectOpen(true)}>
-              <X />
               Tolak
             </Button>
-            <Button onClick={() => setApproveOpen(true)}>
-              <Check />
-              Setujui
-            </Button>
+            <Button onClick={() => setApproveOpen(true)}>Setujui</Button>
           </>
         ) : null}
         {item && isDanaKembalianEditable(item.status) ? (
           <Button variant="outline" onClick={() => setKembalianOpen(true)}>
-            <Wallet />
             Kembalian
           </Button>
         ) : null}
         {item && isDanaPrintable(item.status) ? (
           <Button onClick={() => downloadPengajuanDanaPdf(item)}>
-            <Printer />
             Cetak PDF
           </Button>
         ) : null}

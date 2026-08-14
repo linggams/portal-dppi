@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Check, X, ArrowLeft, CheckCheck } from "lucide-react"
+import { Check, X } from "lucide-react"
 import { useSearchParams } from "next/navigation"
 import { PageActions } from "@/components/layout"
 import { DashboardLayout } from "@/components/layout/DashboardLayout"
@@ -203,17 +203,13 @@ export default function DetailPengajuanPage() {  const searchParams = useSearch
     <DashboardLayout title="Detail Pengajuan Barang">
       <PageActions>
         <Button variant="outline" asChild>
-          <Link href="/purchasing/admin/pengajuan/data">
-            <ArrowLeft />
-            Kembali
-          </Link>
+          <Link href="/purchasing/admin/pengajuan/data">Kembali</Link>
         </Button>
         {pendingItems.length > 0 ? (
           <Button
             onClick={handleApproveAllClick}
             disabled={processing !== null}
           >
-            <CheckCheck />
             {processing !== null ? "Memproses..." : "Setujui Semua"}
           </Button>
         ) : null}

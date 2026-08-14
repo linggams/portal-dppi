@@ -6,7 +6,6 @@ import {
   PageActions,
 } from "@/components/layout"
 import { Button } from "@/components/ui/button"
-import { Download } from "lucide-react"
 import {
   Table,
   TableBody,
@@ -46,7 +45,6 @@ export default function LaporanPage() {
             onClick={handleExport}
             disabled={loading}
           >
-            <Download />
             Ekspor PDF
           </Button>
         </PageActions>
