@@ -24,6 +24,7 @@ export {
   canReadPurchasingTransactions,
   canAccessDanaUser,
   canHandleDanaWorkflow,
+  canAccessDana,
   canAccessUiPath,
   getDefaultHomePath,
   shouldFetchPurchasingKategori,

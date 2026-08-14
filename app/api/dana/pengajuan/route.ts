@@ -3,6 +3,7 @@ import { z } from "zod"
 import { getSessionFromRequest } from "@/lib/get-session"
 import { prisma } from "@/lib/db/prisma"
 import {
+  canAccessDana,
   canAccessDanaUser,
   canHandleDanaWorkflow,
 } from "@/lib/auth/permissions"
@@ -23,7 +24,7 @@ const createSchema = z.object({
 export async function GET(request: NextRequest) {
   try {
     const session = await getSessionFromRequest(request)
-    if (!session || !canAccessDanaUser(session.user)) {
+    if (!session || !canAccessDana(session.user)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 

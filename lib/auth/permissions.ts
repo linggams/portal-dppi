@@ -77,6 +77,11 @@ export function canHandleDanaWorkflow(input: AccessInput): boolean {
   return resolveCapabilities(input).danaWorkflow
 }
 
+/** Baca pengajuan dana: pemohon (user) atau pengelola modul dana. */
+export function canAccessDana(input: AccessInput): boolean {
+  return canAccessDanaUser(input) || canHandleDanaWorkflow(input)
+}
+
 export function canAccessUiPath(input: AccessInput, pathname: string): boolean {
   if (pathname.startsWith("/platform")) {
     return canAccessPlatform(input)
