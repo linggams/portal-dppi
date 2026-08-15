@@ -1,11 +1,25 @@
 "use client"
 
-import type { ReactNode } from "react"
+import {
+  Children,
+  isValidElement,
+  type ReactElement,
+  type ReactNode,
+} from "react"
 import {
   Card,
   CardContent,
 } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import { TableContainer } from "@/components/ui/table-container"
 import { cn } from "@/lib/utils"
 
 /** Baris field filter — horizontal, wrap di layar sempit */
@@ -119,15 +133,19 @@ interface SummaryMetricProps {
   className?: string
 }
 
-export function SummaryMetric({ label, value, className }: SummaryMetricProps) {
-  return (
-    <div className={cn("min-w-[72px]", className)}>
-      <p className="text-[11px] leading-none text-muted-foreground">{label}</p>
-      <p className="mt-1 text-base font-semibold tabular-nums leading-none">
-        {value}
-      </p>
-    </div>
-  )
+/** Descriptor metrik untuk CompactSummaryGrid (tidak dirender sendiri). */
+export function SummaryMetric(_props: SummaryMetricProps) {
+  return null
+}
+
+function collectSummaryMetrics(children: ReactNode): SummaryMetricProps[] {
+  return Children.toArray(children)
+    .filter((child): child is ReactElement<SummaryMetricProps> => {
+      if (!isValidElement(child)) return false
+      const props = child.props as Partial<SummaryMetricProps>
+      return typeof props.label === "string" && "value" in props
+    })
+    .map((child) => child.props)
 }
 
 interface CompactSummaryGridProps {
@@ -141,18 +159,37 @@ export function CompactSummaryGrid({
   className,
   title = "Ringkasan",
 }: CompactSummaryGridProps) {
+  const metrics = collectSummaryMetrics(children)
+  if (metrics.length === 0) return null
+
   return (
-    <Card className={cn("h-full gap-0 py-0 shadow-sm", className)}>
-      <CardContent className="flex h-full flex-col justify-center gap-2 px-3 py-3">
-        {title ? (
-          <p className="text-xs font-semibold leading-none text-foreground">
-            {title}
-          </p>
-        ) : null}
-        <div className="flex flex-wrap items-baseline gap-x-4 gap-y-2">
-          {children}
-        </div>
-      </CardContent>
-    </Card>
+    <div className={cn("space-y-2", className)}>
+      {title ? <Label className="text-foreground">{title}</Label> : null}
+      <TableContainer>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              {metrics.map((metric) => (
+                <TableHead key={metric.label} className={metric.className}>
+                  {metric.label}
+                </TableHead>
+              ))}
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            <TableRow>
+              {metrics.map((metric) => (
+                <TableCell
+                  key={metric.label}
+                  className={cn("font-semibold tabular-nums", metric.className)}
+                >
+                  {metric.value}
+                </TableCell>
+              ))}
+            </TableRow>
+          </TableBody>
+        </Table>
+      </TableContainer>
+    </div>
   )
 }

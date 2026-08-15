@@ -43,27 +43,29 @@ export function DashboardLayout({
   }
 
   return (
-    <SidebarProvider>
-      <Suspense fallback={null}>
-        <AppSidebar />
-      </Suspense>
-      <SidebarInset>
-        <PageTitleProvider>
-          <PageActionsProvider>
-            {title ? <SetPageTitle title={title} /> : null}
-            <Header roleName={user.roleName || user.level} />
-            <PageActionsBar />
-            <main className="relative flex-1 overflow-y-auto focus:outline-none">
-              <div className="w-full space-y-6 px-4 py-6 sm:px-6 lg:px-8">
-                {children}
+    <SidebarProvider className="flex-col">
+      <PageTitleProvider>
+        <PageActionsProvider>
+          {title ? <SetPageTitle title={title} /> : null}
+          <Header roleName={user.roleName || user.level} />
+          <div className="flex min-h-0 w-full flex-1">
+            <Suspense fallback={null}>
+              <AppSidebar />
+            </Suspense>
+            <SidebarInset>
+              <PageActionsBar />
+              <div className="relative flex-1 overflow-y-auto focus:outline-none">
+                <div className="w-full space-y-6 px-4 py-6 sm:px-6 lg:px-8">
+                  {children}
+                </div>
               </div>
-            </main>
-          </PageActionsProvider>
-          {showItSupportAnnouncement && username ? (
-            <ItSupportAnnouncementDialog username={username} />
-          ) : null}
-        </PageTitleProvider>
-      </SidebarInset>
+              {showItSupportAnnouncement && username ? (
+                <ItSupportAnnouncementDialog username={username} />
+              ) : null}
+            </SidebarInset>
+          </div>
+        </PageActionsProvider>
+      </PageTitleProvider>
     </SidebarProvider>
   )
 }

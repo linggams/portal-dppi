@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { useEffect, useState } from "react"
 import { Eye } from "lucide-react"
@@ -6,6 +6,7 @@ import {
   DashboardLayout,
   PageActions,
 } from "@/components/layout"
+import { Button } from "@/components/ui/button"
 import { LaporanTabCard } from "@/app/(dashboard)/purchasing/admin/laporan/components/LaporanTabCard"
 import {
   Table,
@@ -61,6 +62,14 @@ export default function ItLaporanPage() {
           onFiltersChange={setFilters}
           onFetch={fetchData}
         />
+        <Button
+          type="button"
+          variant="outline"
+          disabled={loading || !hasData}
+          onClick={handleExport}
+        >
+          Export
+        </Button>
       </PageActions>
 
       <div className="space-y-4">
@@ -82,7 +91,6 @@ export default function ItLaporanPage() {
               title="Laporan Daftar Tiket"
               loading={loading}
               hasData={hasData}
-              onExport={handleExport}
             >
               <Table>
                 <TableHeader>
@@ -138,7 +146,6 @@ export default function ItLaporanPage() {
               title="Laporan per Kategori"
               loading={loading}
               hasData={hasData}
-              onExport={handleExport}
             >
               <Table>
                 <TableHeader>
@@ -174,7 +181,6 @@ export default function ItLaporanPage() {
               title="Laporan per Teknisi"
               loading={loading}
               hasData={hasData}
-              onExport={handleExport}
             >
               <Table>
                 <TableHeader>

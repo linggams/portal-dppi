@@ -43,15 +43,13 @@ export default function LaporanPage() {
           onFiltersChange={setFilters}
           onFetch={fetchData}
         />
-        {data.length > 0 ? (
-          <Button
-            variant="outline"
-            onClick={handleExport}
-            disabled={loading}
-          >
-            Export
-          </Button>
-        ) : null}
+        <Button
+          variant="outline"
+          onClick={handleExport}
+          disabled={loading || data.length === 0}
+        >
+          Export
+        </Button>
       </PageActions>
 
       <div className="space-y-4">

@@ -11,12 +11,30 @@ alwaysApply: false
 Setiap halaman dashboard memakai `DashboardLayout`. Urutan UI dari atas ke bawah:
 
 ```
-Sidebar
-└─ SidebarInset
-   ├─ Header          ← judul halaman (prop title), sidebar trigger, badge role, theme toggle
-   ├─ PageActionsBar  ← tombol/filter dari <PageActions> (full width, border-b)
-   └─ main            ← konten halaman (px-4 py-6 sm:px-6 lg:px-8, space-y-6)
+Header (full width)
+└─ Body row
+   ├─ Sidebar          ← nav + SidebarTrigger (hide/collapse)
+   └─ SidebarInset
+      ├─ PageActionsBar
+      └─ main
 ```
+
+```
+┌────────────────────────────────────────────┐
+│ Header (full width)                        │
+├──────────┬─────────────────────────────────┤
+│ Sidebar  │ PageActionsBar                  │
+│ [☰] DPPI │                                 │
+│ Nav…     ├─────────────────────────────────┤
+│          │ main                            │
+└──────────┴─────────────────────────────────┘
+```
+
+Setiap halaman dashboard memakai `DashboardLayout`. Urutan UI:
+
+- Header full width di atas (judul, role, theme; trigger mobile only)
+- Sidebar di bawah header (kiri); ikon hide/collapse di header sidebar
+- PageActionsBar + main di kanan
 
 ```tsx
 "use client"
@@ -91,14 +109,13 @@ Referensi: `purchasing/admin/permintaan/data`, `purchasing/admin/pengajuan/data`
 
 ```
 [Header: Judul]
-[FilterSummaryPanel]
-  ├─ CompactFilterCard (filter horizontal)
-  └─ CompactSummaryGrid (ringkasan — Card h-full, metric tanpa border dalam)
+[PageActionsBar: filter kiri (ukuran default shadcn) | aksi kanan]
+[CompactSummaryGrid — tabel ringkasan (Label judul + Table)]
 [Tabel + Pagination]
 ```
 
-- Filter: `CompactFilterCard` + `FilterField` + footer tombol Reset/Tampilkan.
-- Ringkasan: `CompactSummaryGrid` + `SummaryMetric` (bukan `StatCard` ber-card dalam).
+- Filter laporan: di `PageActions` kiri; kontrol default shadcn (`h-9`, tanpa `size="sm"` / `FILTER_CONTROL_CLASS`).
+- Ringkasan: `CompactSummaryGrid` + `SummaryMetric` sebagai **tabel** (header = label, satu baris nilai); judul opsional pakai `Label`.
 - Wrapper konten: `<div className="space-y-4">`.
 
 ### C. Halaman dashboard (statistik)
@@ -155,8 +172,8 @@ Referensi: `purchasing/user/permintaan`, `purchasing/admin/pengajuan`
 
 | Boleh | Jangan di konten list |
 |-------|----------------------|
-| `CompactFilterCard` (filter) | Card membungkus tabel master data |
-| `CompactSummaryGrid` (ringkasan filter) | Card per baris ringkasan (`SummaryMetric` tanpa border) |
+| `CompactFilterCard` (filter di konten data/grup) | Card membungkus tabel master data |
+| `CompactSummaryGrid` (ringkasan tabel) | Card per baris ringkasan |
 | `SectionCard` (blok dashboard/detail) | Duplikasi Card + Table |
 | `Card` di form input user/admin | |
 

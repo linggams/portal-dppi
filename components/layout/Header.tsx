@@ -14,8 +14,9 @@ export function Header({ roleName }: HeaderProps) {
   const pageTitle = usePageTitleValue()
 
   return (
-    <header className="sticky top-0 z-40 flex h-14 shrink-0 items-center gap-2 border-b bg-background/95 px-4 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <SidebarTrigger className="-ml-1" />
+    <header className="sticky top-0 z-40 flex h-14 w-full shrink-0 items-center gap-2 border-b bg-background/95 px-4 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      {/* Mobile: buka sheet sidebar (di desktop trigger ada di Sidebar) */}
+      <SidebarTrigger className="md:hidden" />
       {pageTitle ? (
         <h1
           className={cn(

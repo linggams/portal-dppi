@@ -37,6 +37,7 @@ import {
   SidebarMenuSubButton,
   SidebarMenuSubItem,
   SidebarRail,
+  SidebarTrigger,
 } from "@/components/ui/sidebar"
 import {
   Collapsible,
@@ -424,7 +425,7 @@ function ModuleNav({
           <SidebarMenuButton tooltip={title} className={`cursor-pointer ${ITEM_CLASS}`}>
             <Icon />
             <span>{title}</span>
-            <ChevronRight className="ml-auto size-4 shrink-0 transition-transform group-data-[state=open]/module:rotate-90" />
+            <ChevronRight className="ml-auto size-4 shrink-0 transition-transform group-data-[state=open]/module:rotate-90 group-data-[collapsible=icon]:hidden" />
           </SidebarMenuButton>
         </CollapsibleTrigger>
         <CollapsibleContent>
@@ -525,19 +526,23 @@ export function AppSidebar() {
   }
 
   return (
-    <Sidebar collapsible="icon">
-      <SidebarHeader className="border-b">
-        <div className="flex h-14 items-center px-2 group-data-[collapsible=icon]:hidden">
-          <p className="truncate text-sm font-semibold leading-tight">
+    <Sidebar
+      collapsible="icon"
+      className="top-14! h-[calc(100svh-3.5rem)]!"
+    >
+      <SidebarHeader className="group-data-[collapsible=icon]:items-center">
+        <div className="flex h-10 items-center gap-2 px-0 group-data-[collapsible=icon]:size-8 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-0">
+          <SidebarTrigger className="size-8" />
+          <p className="truncate text-sm font-semibold leading-tight group-data-[collapsible=icon]:hidden">
             {APP_NAME}
           </p>
         </div>
       </SidebarHeader>
-      <SidebarContent>
-        <SidebarGroup>
+      <SidebarContent className="group-data-[collapsible=icon]:items-center">
+        <SidebarGroup className="group-data-[collapsible=icon]:p-2">
           <SidebarGroupLabel>Utama</SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu>
+            <SidebarMenu className="group-data-[collapsible=icon]:items-center">
               <SidebarMenuItem>
                 <SidebarMenuButton
                   asChild
@@ -575,10 +580,10 @@ export function AppSidebar() {
         itItems.length > 0 ||
         danaItems.length > 0 ||
         mobilItems.length > 0 ? (
-          <SidebarGroup>
+          <SidebarGroup className="group-data-[collapsible=icon]:p-2">
             <SidebarGroupLabel>Modul</SidebarGroupLabel>
             <SidebarGroupContent>
-              <SidebarMenu>
+              <SidebarMenu className="group-data-[collapsible=icon]:items-center">
                 {purchasingItems.length > 0 ? (
                   <ModuleNav
                     title="Purchasing"
@@ -623,14 +628,14 @@ export function AppSidebar() {
           </SidebarGroup>
         ) : null}
       </SidebarContent>
-      <SidebarFooter className="border-t border-sidebar-border">
-        <div className="flex items-center gap-2 px-2 py-1.5">
+      <SidebarFooter className="border-t border-sidebar-border group-data-[collapsible=icon]:items-center">
+        <div className="flex items-center gap-2 px-0 py-1.5 group-data-[collapsible=icon]:hidden">
           <Avatar className="size-8">
             <AvatarFallback className="bg-sidebar-accent text-xs font-medium">
               {initials}
             </AvatarFallback>
           </Avatar>
-          <div className="min-w-0 flex-1 group-data-[collapsible=icon]:hidden">
+          <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-medium leading-tight">
               {username || "User"}
             </p>
@@ -640,7 +645,7 @@ export function AppSidebar() {
           </div>
           <button
             type="button"
-            className="text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground shrink-0 rounded-md p-2 group-data-[collapsible=icon]:hidden"
+            className="text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground shrink-0 rounded-md p-2"
             onClick={handleLogout}
             aria-label="Keluar"
             title="Keluar"
@@ -648,7 +653,7 @@ export function AppSidebar() {
             <LogOut className="size-4" />
           </button>
         </div>
-        <SidebarMenu className="hidden group-data-[collapsible=icon]:flex">
+        <SidebarMenu className="hidden group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:items-center">
           <SidebarMenuItem>
             <SidebarMenuButton tooltip="Keluar" onClick={handleLogout}>
               <LogOut />
