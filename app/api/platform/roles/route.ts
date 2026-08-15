@@ -13,7 +13,6 @@ export async function GET(request: NextRequest) {
 
     const roles = await prisma.role.findMany({
       where: { code: { in: ["user", "administrator"] } },
-      include: { _count: { select: { users: true } } },
       orderBy: { name: "asc" },
     })
 

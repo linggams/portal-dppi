@@ -33,9 +33,15 @@ type TripDraft = {
   error: string
 }
 
-function emptyTrip(): TripDraft {
+let tripKeySeq = 1
+function nextTripKey() {
+  tripKeySeq += 1
+  return `trip-${tripKeySeq}`
+}
+
+function emptyTrip(key = nextTripKey()): TripDraft {
   return {
-    key: crypto.randomUUID(),
+    key,
     dari: "",
     ke: "",
     km: "",
@@ -95,7 +101,7 @@ function MobilLaporanForm({
   const [idKendaraan, setIdKendaraan] = useState("")
   const [tanggal, setTanggal] = useState("")
   const [kmAwal, setKmAwal] = useState(0)
-  const [trips, setTrips] = useState<TripDraft[]>([emptyTrip()])
+  const [trips, setTrips] = useState<TripDraft[]>(() => [emptyTrip("trip-1")])
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {

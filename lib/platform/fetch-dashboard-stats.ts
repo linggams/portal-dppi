@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db/prisma"
+import { DANA_STATUS } from "@/lib/dana/constants"
 import { IT_TIKET_STATUS } from "@/lib/it/constants"
 import { fetchPermintaanGroups } from "@/lib/purchasing/permintaan-groups"
 import { fetchPengajuanGroups } from "@/lib/purchasing/pengajuan-groups"
@@ -7,7 +8,9 @@ import {
   DASHBOARD_LIST_DAYS,
   DASHBOARD_LIST_LIMIT,
   STOK_KRITIS_THRESHOLD,
+  type DashboardDanaStats,
   type DashboardItStats,
+  type DashboardMobilStats,
   type DashboardPermintaanItem,
   type DashboardPengajuanItem,
   type DashboardPurchasingStats,
@@ -23,15 +26,38 @@ function getDateDaysAgoWIB(days: number): string {
   }).format(date)
 }
 
+function wibDayBounds(dateStr: string): { start: Date; end: Date } {
+  return {
+    start: new Date(`${dateStr}T00:00:00+07:00`),
+    end: new Date(`${dateStr}T23:59:59.999+07:00`),
+  }
+}
+
+function currentMonthBoundsWIB(): { start: Date; end: Date } {
+  const today = getTodayDateWIB()
+  const [y, m] = today.split("-")
+  const startDate = `${y}-${m}-01`
+  const lastDay = new Date(Number(y), Number(m), 0).getDate()
+  const endDate = `${y}-${m}-${String(lastDay).padStart(2, "0")}`
+  return {
+    start: new Date(`${startDate}T00:00:00+07:00`),
+    end: new Date(`${endDate}T23:59:59.999+07:00`),
+  }
+}
+
+function formatDateOnly(d: Date): string {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Jakarta",
+  }).format(d)
+}
+
 function mapPermintaanItem(
   row: Awaited<ReturnType<typeof fetchPermintaanGroups>>["data"][number]
 ): DashboardPermintaanItem {
   return {
     unit: row.unit,
-    instansi: row.instansi,
     tglPermintaan: row.tglPermintaan,
     jumlahItem: row.jumlahItem,
-    totalQty: row.totalQty,
     hasPending: row.hasPending,
     statusMin: row.statusMin,
     statusMax: row.statusMax,
@@ -44,7 +70,6 @@ function mapPengajuanItem(
   return {
     unit: row.unit,
     tglPengajuan: row.tglPengajuan,
-    jumlahItem: row.jumlahItem,
     totalNominal: row.totalNominal,
     hasPending: row.hasPending,
     statusMin: row.statusMin,
@@ -53,27 +78,17 @@ function mapPengajuanItem(
 }
 
 async function fetchUserStats(): Promise<DashboardUserStats> {
-  const grouped = await prisma.user.groupBy({
-    by: ["roleId"],
-    _count: { _all: true },
-  })
-
-  const roles = await prisma.role.findMany({
-    select: { idRole: true, name: true },
-  })
-  const roleNameById = new Map(roles.map((role) => [role.idRole, role.name]))
-
-  const byRole = grouped
-    .map((row) => ({
-      name: roleNameById.get(row.roleId) ?? "Tidak diketahui",
-      count: row._count._all,
-    }))
-    .sort((a, b) => b.count - a.count)
+  const [total, grouped] = await Promise.all([
+    prisma.user.count(),
+    prisma.user.groupBy({
+      by: ["roleId"],
+      _count: { _all: true },
+    }),
+  ])
 
   return {
-    total: byRole.reduce((sum, row) => sum + row.count, 0),
-    roleCount: byRole.filter((row) => row.count > 0).length,
-    byRole,
+    total,
+    roleCount: grouped.filter((row) => row._count._all > 0).length,
   }
 }
 
@@ -183,12 +198,120 @@ async function fetchItStats(): Promise<DashboardItStats> {
   }
 }
 
+async function fetchDanaStats(): Promise<DashboardDanaStats> {
+  const today = getTodayDateWIB()
+  const { start: todayStart, end: todayEnd } = wibDayBounds(today)
+  const month = currentMonthBoundsWIB()
+
+  const [pending, approvedToday, rejectedToday, totalBulan, pendingList] =
+    await Promise.all([
+      prisma.danaPengajuan.count({
+        where: { status: DANA_STATUS.PENDING },
+      }),
+      prisma.danaPengajuan.count({
+        where: {
+          status: DANA_STATUS.APPROVED,
+          tglDisetujui: { gte: todayStart, lte: todayEnd },
+        },
+      }),
+      prisma.danaPengajuan.count({
+        where: {
+          status: DANA_STATUS.REJECTED,
+          tglDiupdate: { gte: todayStart, lte: todayEnd },
+        },
+      }),
+      prisma.danaPengajuan.count({
+        where: {
+          tglDibuat: { gte: month.start, lte: month.end },
+        },
+      }),
+      prisma.danaPengajuan.findMany({
+        where: { status: DANA_STATUS.PENDING },
+        orderBy: { tglDibuat: "desc" },
+        take: DASHBOARD_LIST_LIMIT,
+        select: {
+          idPengajuan: true,
+          nomor: true,
+          username: true,
+          jabatan: true,
+          nominal: true,
+          tglDibuat: true,
+        },
+      }),
+    ])
+
+  return {
+    pending,
+    approvedToday,
+    rejectedToday,
+    totalBulan,
+    pendingList: pendingList.map((row) => ({
+      idPengajuan: row.idPengajuan,
+      nomor: row.nomor,
+      username: row.username,
+      jabatan: row.jabatan,
+      nominal: row.nominal,
+      tglDibuat: row.tglDibuat.toISOString(),
+    })),
+  }
+}
+
+async function fetchMobilStats(): Promise<DashboardMobilStats> {
+  const today = getTodayDateWIB()
+  const { start: todayStart, end: todayEnd } = wibDayBounds(today)
+  const month = currentMonthBoundsWIB()
+
+  const [laporanHariIni, kendaraanAktif, laporanBulan, laporanTerbaru] =
+    await Promise.all([
+      prisma.mobilLaporanKm.count({
+        where: { tanggal: { gte: todayStart, lte: todayEnd } },
+      }),
+      prisma.mobilKendaraan.count({ where: { aktif: true } }),
+      prisma.mobilLaporanKm.findMany({
+        where: { tanggal: { gte: month.start, lte: month.end } },
+        select: { kmAwal: true, kmAkhir: true },
+      }),
+      prisma.mobilLaporanKm.findMany({
+        orderBy: [{ tanggal: "desc" }, { idLaporan: "desc" }],
+        take: DASHBOARD_LIST_LIMIT,
+        select: {
+          idLaporan: true,
+          tanggal: true,
+          username: true,
+          kmAwal: true,
+          kmAkhir: true,
+          kendaraan: { select: { nopol: true } },
+        },
+      }),
+    ])
+
+  const kmBulan = laporanBulan.reduce(
+    (sum, row) => sum + Math.max(0, row.kmAkhir - row.kmAwal),
+    0
+  )
+
+  return {
+    laporanHariIni,
+    kmBulan,
+    kendaraanAktif,
+    laporanTerbaru: laporanTerbaru.map((row) => ({
+      idLaporan: row.idLaporan,
+      tanggal: formatDateOnly(row.tanggal),
+      username: row.username,
+      nopol: row.kendaraan.nopol,
+      pemakaian: Math.max(0, row.kmAkhir - row.kmAwal),
+    })),
+  }
+}
+
 export async function fetchPlatformDashboardStats(): Promise<PlatformDashboardStats> {
-  const [users, purchasing, it] = await Promise.all([
+  const [users, purchasing, it, dana, mobil] = await Promise.all([
     fetchUserStats(),
     fetchPurchasingStats(),
     fetchItStats(),
+    fetchDanaStats(),
+    fetchMobilStats(),
   ])
 
-  return { users, purchasing, it }
+  return { users, purchasing, it, dana, mobil }
 }

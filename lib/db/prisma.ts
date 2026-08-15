@@ -40,16 +40,8 @@ function createPrismaClient() {
 
 function isStaleClient(client: PrismaClient) {
   if (globalForPrisma.prismaRev !== PRISMA_CLIENT_REV) return true
-  const c = client as {
-    danaPengajuan?: { findMany?: unknown }
-    mobilJenis?: { findMany?: unknown }
-    mobilLaporanPerjalanan?: { findMany?: unknown }
-  }
-  return (
-    typeof c.danaPengajuan?.findMany !== "function" ||
-    typeof c.mobilJenis?.findMany !== "function" ||
-    typeof c.mobilLaporanPerjalanan?.findMany !== "function"
-  )
+  const c = client as { mobilLaporanPerjalanan?: { findMany?: unknown } }
+  return typeof c.mobilLaporanPerjalanan?.findMany !== "function"
 }
 
 function getPrismaClient() {

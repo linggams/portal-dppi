@@ -19,7 +19,6 @@ import type { DashboardPermintaanItem } from "@/lib/platform/dashboard-types"
 
 interface Props {
   items: DashboardPermintaanItem[]
-  viewAllHref?: string
 }
 
 function formatDate(dateString: string) {
@@ -30,10 +29,7 @@ function formatDate(dateString: string) {
   }
 }
 
-export function DashboardPendingPermintaanList({
-  items,
-  viewAllHref = "/purchasing/admin/permintaan/data?status=0",
-}: Props) {
+export function DashboardPendingPermintaanList({ items }: Props) {
   if (items.length === 0) {
     return (
       <ContentEmpty
@@ -88,7 +84,9 @@ export function DashboardPendingPermintaanList({
       </TableContainer>
       <div className="flex justify-end">
         <Button asChild variant="link" size="sm" className="h-auto p-0">
-          <Link href={viewAllHref}>Lihat semua permintaan</Link>
+          <Link href="/purchasing/admin/permintaan/data?status=0">
+            Lihat semua permintaan
+          </Link>
         </Button>
       </div>
     </div>

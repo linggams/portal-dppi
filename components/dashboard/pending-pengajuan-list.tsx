@@ -15,11 +15,11 @@ import {
 } from "@/components/ui/table"
 import { TableContainer } from "@/components/ui/table-container"
 import { getGroupStatusBadge } from "@/lib/purchasing/permintaan-status"
+import { formatRupiah } from "@/lib/dana/format"
 import type { DashboardPengajuanItem } from "@/lib/platform/dashboard-types"
 
 interface Props {
   items: DashboardPengajuanItem[]
-  viewAllHref?: string
 }
 
 function formatDate(dateString: string) {
@@ -30,18 +30,7 @@ function formatDate(dateString: string) {
   }
 }
 
-function formatRupiah(value: number) {
-  return new Intl.NumberFormat("id-ID", {
-    style: "currency",
-    currency: "IDR",
-    minimumFractionDigits: 0,
-  }).format(value)
-}
-
-export function DashboardPendingPengajuanList({
-  items,
-  viewAllHref = "/purchasing/admin/pengajuan/data?status=0",
-}: Props) {
+export function DashboardPendingPengajuanList({ items }: Props) {
   if (items.length === 0) {
     return (
       <ContentEmpty
@@ -94,7 +83,9 @@ export function DashboardPendingPengajuanList({
       </TableContainer>
       <div className="flex justify-end">
         <Button asChild variant="link" size="sm" className="h-auto p-0">
-          <Link href={viewAllHref}>Lihat semua pengajuan</Link>
+          <Link href="/purchasing/admin/pengajuan/data?status=0">
+            Lihat semua pengajuan
+          </Link>
         </Button>
       </div>
     </div>

@@ -1,6 +1,6 @@
 "use client"
 
-import { MobilLaporanFormPage } from "../../../components/MobilLaporanFormPage"
+import { MobilLaporanFormPage } from "@/app/(dashboard)/mobil/components/MobilLaporanFormPage"
 
 export default function MobilUserLaporanBaruPage() {
   return (
