@@ -2,11 +2,11 @@
 
 import { MobilLaporanFormPage } from "../../../components/MobilLaporanFormPage"
 
-export default function MobilUserLaporanBaruPage() {
+export default function AdminMobilLaporanBaruPage() {
   return (
     <MobilLaporanFormPage
-      listHref="/mobil/user/laporan"
-      detailHrefBase="/mobil/user/laporan"
+      listHref="/mobil/admin/laporan"
+      detailHrefBase="/mobil/admin/laporan"
     />
   )
 }

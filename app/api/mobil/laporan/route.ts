@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getSessionFromRequest } from "@/lib/get-session"
-import {
-  canAccessMobil,
-  canHandleMobilWorkflow,
-} from "@/lib/auth/permissions"
+import { canAccessMobil } from "@/lib/auth/permissions"
 import { prisma } from "@/lib/db/prisma"
 import { parseDateOnly, toMobilLaporan } from "@/lib/mobil/map"
 import { deleteMobilBukti, saveMobilBuktiJpg } from "@/lib/mobil/upload"
@@ -72,7 +69,8 @@ export async function GET(request: NextRequest) {
       >
     } = {}
 
-    if (!canHandleMobilWorkflow(session.user) || mine) {
+    // Semua user modul mobil boleh lihat laporan semua pemohon
+    if (mine) {
       where.username = session.user.username
     }
 

@@ -300,11 +300,6 @@ function getAdminMobilMenu(): NavLink[] {
       href: "/mobil/admin/laporan",
       icon: BarChart3,
     },
-    {
-      title: "Input Laporan",
-      href: "/mobil/user/laporan",
-      icon: ClipboardList,
-    },
   ]
 }
 

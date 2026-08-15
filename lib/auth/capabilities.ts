@@ -154,7 +154,8 @@ export function applyUserModules(
       itStaff: manager.manageIt,
       danaUser: false,
       danaWorkflow: manager.manageDana,
-      mobilUser: false,
+      // Pengelola modul mobil juga boleh input laporan KM
+      mobilUser: manager.manageMobil,
       mobilWorkflow: manager.manageMobil,
     }
   }

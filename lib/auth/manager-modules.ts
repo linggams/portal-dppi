@@ -35,7 +35,7 @@ export const MANAGER_MODULE_OPTIONS = [
   {
     key: "manageMobil" as const,
     label: "Penggunaan Mobil",
-    description: "Jenis, kendaraan, laporan KM",
+    description: "Jenis, kendaraan, laporan KM, input laporan",
   },
 ] as const
 

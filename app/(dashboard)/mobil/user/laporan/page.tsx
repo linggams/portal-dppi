@@ -36,7 +36,7 @@ export default function MobilUserLaporanPage() {
   const fetchRows = useCallback(async () => {
     setLoading(true)
     try {
-      const params = new URLSearchParams({ mine: "true" })
+      const params = new URLSearchParams()
       if (filterKendaraan !== "all") {
         params.set("id_kendaraan", filterKendaraan)
       }
@@ -131,6 +131,7 @@ export default function MobilUserLaporanPage() {
               <TableRow>
                 <TableHead>Tanggal</TableHead>
                 <TableHead>Nopol</TableHead>
+                <TableHead>Pemohon</TableHead>
                 <TableHead className="text-right">KM awal</TableHead>
                 <TableHead className="text-right">KM akhir</TableHead>
                 <TableHead className="text-right">Pemakaian</TableHead>
@@ -140,7 +141,7 @@ export default function MobilUserLaporanPage() {
             </TableHeader>
             <TableBody>
               {rows.length === 0 ? (
-                <TableEmptyState colSpan={7} title="Belum ada laporan KM" />
+                <TableEmptyState colSpan={8} title="Belum ada laporan KM" />
               ) : (
                 rows.map((row) => (
                   <TableRow key={row.idLaporan}>
@@ -148,6 +149,7 @@ export default function MobilUserLaporanPage() {
                     <TableCell className="font-medium">
                       {row.kendaraan?.nopol ?? "—"}
                     </TableCell>
+                    <TableCell>{row.username}</TableCell>
                     <TableCell className="text-right">
                       {row.kmAwal.toLocaleString("id-ID")}
                     </TableCell>

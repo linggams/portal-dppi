@@ -1,6 +1,7 @@
 "use client"
 
 import { useCallback, useEffect, useMemo, useState } from "react"
+import Link from "next/link"
 import { Eye, Trash2 } from "lucide-react"
 import { toast } from "sonner"
 import {
@@ -9,6 +10,7 @@ import {
   FILTER_CONTROL_CLASS,
   FilterField,
   FilterSummaryPanel,
+  PageActions,
   SummaryMetric,
   CompactSummaryGrid,
 } from "@/components/layout"
@@ -110,8 +112,19 @@ export default function MobilAdminLaporanPage() {
     await fetchRows()
   }
 
+  const baruHref =
+    idKendaraan !== "all"
+      ? `/mobil/admin/laporan/baru?kendaraan=${idKendaraan}`
+      : "/mobil/admin/laporan/baru"
+
   return (
     <DashboardLayout title="Laporan Kilometer">
+      <PageActions>
+        <Button asChild>
+          <Link href={baruHref}>Input Laporan</Link>
+        </Button>
+      </PageActions>
+
       <div className="space-y-4">
         <FilterSummaryPanel
           filterCols={7}

@@ -45,13 +45,6 @@ export async function GET(
       return NextResponse.json({ error: "Laporan tidak ditemukan" }, { status: 404 })
     }
 
-    if (
-      !canHandleMobilWorkflow(session.user) &&
-      row.username !== session.user.username
-    ) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
-    }
-
     return NextResponse.json(toMobilLaporan(row))
   } catch (error) {
     console.error("Error fetching mobil laporan detail:", error)
