@@ -1,3 +1,5 @@
+import { getMonthToDateRangeWIB } from "@/lib/purchasing/permintaan-daily-limit-types"
+
 export const PERMINTAAN_GROUP_PAGE_SIZE = 20
 
 export interface PermintaanGroupFilters {
@@ -37,10 +39,5 @@ export interface PermintaanGroupsResult {
 }
 
 export function getDefaultPermintaanGroupDateRange() {
-  const today = new Date()
-  const firstDay = new Date(today.getFullYear(), today.getMonth(), 1)
-  return {
-    startDate: firstDay.toISOString().split("T")[0],
-    endDate: today.toISOString().split("T")[0],
-  }
+  return getMonthToDateRangeWIB()
 }

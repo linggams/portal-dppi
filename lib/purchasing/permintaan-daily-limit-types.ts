@@ -11,6 +11,17 @@ export function getTodayDateWIB(): string {
   }).format(new Date())
 }
 
+/** Tanggal 1 bulan berjalan (WIB), format YYYY-MM-DD. */
+export function getMonthStartDateWIB(today = getTodayDateWIB()): string {
+  return `${today.slice(0, 7)}-01`
+}
+
+/** Default filter range: tanggal 1 s/d hari ini (bulan berjalan, WIB). */
+export function getMonthToDateRangeWIB() {
+  const endDate = getTodayDateWIB()
+  return { startDate: getMonthStartDateWIB(endDate), endDate }
+}
+
 /** Parse YYYY-MM-DD untuk kolom @db.Date di Prisma. */
 export function parseDateOnly(dateStr: string): Date {
   return new Date(`${dateStr}T00:00:00.000Z`)

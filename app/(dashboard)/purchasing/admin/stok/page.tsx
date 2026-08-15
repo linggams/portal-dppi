@@ -17,7 +17,6 @@ export default function StokPage() {  const {
     fetchNextKode,
     saveStok,
     deleteStok,
-    getJenisName,
     downloadPDF,
   } = useStok()
 
@@ -109,16 +108,6 @@ export default function StokPage() {  const {
         />
 
         <div id="pdf-stok-content" className="space-y-4 print:space-y-2">
-          <div className="hidden text-center print:block print:mb-2">
-            <h2 className="text-xl font-bold">PT DASAN PAN PACIFIC INDONESIA</h2>
-            <p className="text-sm">
-              Parakansalak, Bojonglongok, Kec. Parakansalak, Kabupaten Sukabumi, Jawa Barat 43355
-            </p>
-            <hr className="my-2" />
-            <h3 className="text-lg font-bold">
-              LAPORAN DATA STOK BARANG {getJenisName(parseInt(jenisParam)).toUpperCase()}
-            </h3>
-          </div>
           <StokTable
             data={stokBarang}
             onEdit={handleEditClick}

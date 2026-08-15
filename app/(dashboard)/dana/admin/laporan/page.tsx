@@ -3,7 +3,7 @@
 import { Eye } from "lucide-react"
 import {
   DashboardLayout,
-  FilterSummaryPanel,
+  PageActions,
 } from "@/components/layout"
 import { LaporanTabCard } from "@/app/(dashboard)/purchasing/admin/laporan/components/LaporanTabCard"
 import {
@@ -40,19 +40,17 @@ export default function DanaLaporanPage() {
 
   return (
     <DashboardLayout title="Laporan Pengajuan Dana">
-      <div className="space-y-4">
-        <FilterSummaryPanel
-          filterCols={7}
-          filter={
-            <DanaLaporanFilters
-              filters={filters}
-              onFiltersChange={setFilters}
-              onFetch={fetchData}
-              onReset={resetFilters}
-            />
-          }
-          summary={<DanaLaporanSummaryCards summary={summary} />}
+      <PageActions>
+        <DanaLaporanFilters
+          filters={filters}
+          onFiltersChange={setFilters}
+          onFetch={fetchData}
+          onReset={resetFilters}
         />
+      </PageActions>
+
+      <div className="space-y-4">
+        <DanaLaporanSummaryCards summary={summary} />
 
         <Tabs
           value={activeTab}

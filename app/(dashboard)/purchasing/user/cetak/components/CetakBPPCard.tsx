@@ -1,5 +1,6 @@
 "use client"
 
+import { FileDown, Printer } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   Table,
@@ -11,7 +12,6 @@ import {
 } from "@/components/ui/table"
 import { TableContainer } from "@/components/ui/table-container"
 import { TableActionButton, TableActions } from "@/components/ui/table-actions"
-import { Download, Printer } from "lucide-react"
 import type { Permintaan } from "../types"
 
 interface CetakBPPCardProps {
@@ -43,7 +43,7 @@ export function CetakBPPCard({
           <TableActions className="print:hidden">
             <TableActionButton
               label="Unduh PDF"
-              icon={Download}
+              icon={FileDown}
               onClick={() => onDownloadPDF(date, items)}
             />
             <TableActionButton
@@ -57,13 +57,7 @@ export function CetakBPPCard({
       <CardContent>
         <div id={`pdf-content-${date}`}>
           <div className="space-y-4">
-            <div className="text-center mb-4 print:mb-2">
-              <h2 className="text-xl font-bold">PT DASAN PAN PACIFIC INDONESIA</h2>
-              <p className="text-sm">
-                Parakansalak, Bojonglongok, Kec. Parakansalak, Kabupaten Sukabumi,
-                Jawa Barat 43355
-              </p>
-              <hr className="my-2" />
+            <div className="mb-4 text-center print:mb-2">
               <h3 className="text-lg font-bold">BUKTI PERMINTAAN BARANG (BPP)</h3>
             </div>
             <div className="grid grid-cols-2 gap-4 text-sm">

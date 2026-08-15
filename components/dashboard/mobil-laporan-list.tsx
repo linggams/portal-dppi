@@ -1,7 +1,7 @@
 import Link from "next/link"
+import { Eye } from "lucide-react"
 import { format } from "date-fns"
 import { id } from "date-fns/locale"
-import { Eye } from "lucide-react"
 import { ContentEmpty } from "@/components/layout/content-empty"
 import { Button } from "@/components/ui/button"
 import { TableActionLink } from "@/components/ui/table-actions"
@@ -47,7 +47,7 @@ export function DashboardMobilLaporanList({ items }: Props) {
             <TableRow>
               <TableHead>Tanggal</TableHead>
               <TableHead>Nopol</TableHead>
-              <TableHead>Pemohon</TableHead>
+              <TableHead>Pelapor</TableHead>
               <TableHead className="text-right">Pemakaian</TableHead>
               <TableHead className="text-right">Aksi</TableHead>
             </TableRow>

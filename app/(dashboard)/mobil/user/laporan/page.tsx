@@ -83,19 +83,21 @@ export default function MobilUserLaporanPage() {
   return (
     <DashboardLayout title="Input Laporan">
       <PageActions>
-        <Select value={filterKendaraan} onValueChange={setFilterKendaraan}>
-          <SelectTrigger className="w-[200px]">
-            <SelectValue placeholder="Kendaraan" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Semua kendaraan</SelectItem>
-            {kendaraan.map((k) => (
-              <SelectItem key={k.idKendaraan} value={String(k.idKendaraan)}>
-                {k.nopol}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div className="mr-auto">
+          <Select value={filterKendaraan} onValueChange={setFilterKendaraan}>
+            <SelectTrigger className="w-[200px]">
+              <SelectValue placeholder="Kendaraan" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Semua kendaraan</SelectItem>
+              {kendaraan.map((k) => (
+                <SelectItem key={k.idKendaraan} value={String(k.idKendaraan)}>
+                  {k.nopol}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
         <Button asChild>
           <Link href={baruHref}>Input Laporan</Link>
         </Button>
@@ -131,7 +133,7 @@ export default function MobilUserLaporanPage() {
               <TableRow>
                 <TableHead>Tanggal</TableHead>
                 <TableHead>Nopol</TableHead>
-                <TableHead>Pemohon</TableHead>
+                <TableHead>Pelapor</TableHead>
                 <TableHead className="text-right">KM awal</TableHead>
                 <TableHead className="text-right">KM akhir</TableHead>
                 <TableHead className="text-right">Pemakaian</TableHead>

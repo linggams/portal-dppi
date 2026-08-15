@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react"
 import { toast } from "sonner"
+import { getMonthToDateRangeWIB } from "@/lib/purchasing/permintaan-daily-limit-types"
 import type {
   KategoriAggItem,
   MaintenanceFilters,
@@ -14,29 +15,18 @@ import type {
 export function useItMaintenance() {
   const [loading, setLoading] = useState(false)
   const [activeTab, setActiveTab] = useState<MaintenanceTab>("daftar")
-  const [filters, setFilters] = useState<MaintenanceFilters>({
-    startDate: "",
-    endDate: "",
+  const [filters, setFilters] = useState<MaintenanceFilters>(() => ({
+    ...getMonthToDateRangeWIB(),
     kategoriId: "all",
     username: "",
     sumber: "all",
     hasil: "all",
     q: "",
-  })
+  }))
   const [listData, setListData] = useState<MaintenanceListItem[]>([])
   const [kategoriData, setKategoriData] = useState<KategoriAggItem[]>([])
   const [teknisiData, setTeknisiData] = useState<TeknisiAggItem[]>([])
   const [summary, setSummary] = useState<MaintenanceSummaryData | null>(null)
-
-  useEffect(() => {
-    const today = new Date()
-    const firstDay = new Date(today.getFullYear(), today.getMonth(), 1)
-    setFilters((prev) => ({
-      ...prev,
-      startDate: firstDay.toISOString().split("T")[0],
-      endDate: today.toISOString().split("T")[0],
-    }))
-  }, [])
 
   const buildParams = useCallback(
     (tab: MaintenanceTab) => {

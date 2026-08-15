@@ -5,6 +5,7 @@ import { toast } from "sonner"
 import { downloadPdf } from "@/lib/makepdf"
 import { IT_TIKET_STATUS_LABEL } from "@/lib/it/constants"
 import { formatJamAtauHari } from "@/lib/it/laporan"
+import { getMonthToDateRangeWIB } from "@/lib/purchasing/permintaan-daily-limit-types"
 import type {
   ItLaporanFilters,
   ItLaporanSummary,
@@ -18,29 +19,18 @@ import { formatTiketDate } from "@/lib/it/utils"
 export function useItLaporan() {
   const [loading, setLoading] = useState(false)
   const [activeTab, setActiveTab] = useState<ItLaporanTab>("tiket")
-  const [filters, setFilters] = useState<ItLaporanFilters>({
-    startDate: "",
-    endDate: "",
+  const [filters, setFilters] = useState<ItLaporanFilters>(() => ({
+    ...getMonthToDateRangeWIB(),
     status: "all",
     kategoriId: "all",
     username: "",
     ditugaskanKe: "",
     dateField: "dibuat",
-  })
+  }))
   const [tiketData, setTiketData] = useState<TiketLaporanItem[]>([])
   const [kategoriData, setKategoriData] = useState<KategoriLaporanItem[]>([])
   const [teknisiData, setTeknisiData] = useState<TeknisiLaporanItem[]>([])
   const [summary, setSummary] = useState<ItLaporanSummary | null>(null)
-
-  useEffect(() => {
-    const today = new Date()
-    const firstDay = new Date(today.getFullYear(), today.getMonth(), 1)
-    setFilters((prev) => ({
-      ...prev,
-      startDate: firstDay.toISOString().split("T")[0],
-      endDate: today.toISOString().split("T")[0],
-    }))
-  }, [])
 
   const buildParams = useCallback(
     (tab: ItLaporanTab) => {
@@ -88,10 +78,8 @@ export function useItLaporan() {
   }, [activeTab, buildParams])
 
   useEffect(() => {
-    if (filters.startDate || filters.endDate) {
-      fetchData()
-    }
-  }, [activeTab, filters, fetchData])
+    fetchData()
+  }, [fetchData])
 
   const getHeaders = (tab: ItLaporanTab): string[] => {
     switch (tab) {

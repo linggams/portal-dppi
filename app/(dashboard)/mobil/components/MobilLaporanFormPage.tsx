@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useState, Suspense } from "react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
-import { Plus, Trash2 } from "lucide-react"
 import { toast } from "sonner"
 import { DashboardLayout, PageActions, SectionCard } from "@/components/layout"
 import { Button } from "@/components/ui/button"
@@ -25,7 +24,9 @@ const MAX_MB = MOBIL_BUKTI_MAX_BYTES / (1024 * 1024)
 type TripDraft = {
   key: string
   dari: string
+  jamDari: string
   ke: string
+  jamKe: string
   km: string
   tol: number
   bukti: File | null
@@ -43,7 +44,9 @@ function emptyTrip(key = nextTripKey()): TripDraft {
   return {
     key,
     dari: "",
+    jamDari: "",
     ke: "",
+    jamKe: "",
     km: "",
     tol: 0,
     bukti: null,
@@ -193,7 +196,13 @@ function MobilLaporanForm({
   const canSubmit =
     Boolean(idKendaraan && tanggal) &&
     trips.every(
-      (t) => t.dari.trim() && t.ke.trim() && parseInt(t.km, 10) > 0 && !t.error
+      (t) =>
+        t.dari.trim() &&
+        t.ke.trim() &&
+        t.jamDari &&
+        t.jamKe &&
+        parseInt(t.km, 10) > 0 &&
+        !t.error
     ) &&
     totalKm > 0
 
@@ -210,7 +219,9 @@ function MobilLaporanForm({
         JSON.stringify(
           trips.map((t) => ({
             dari: t.dari.trim(),
+            jamDari: t.jamDari,
             ke: t.ke.trim(),
+            jamKe: t.jamKe,
             km: parseInt(t.km, 10),
             tol: t.tol,
           }))
@@ -309,10 +320,10 @@ function MobilLaporanForm({
                 </p>
               </div>
 
-              <div className="hidden gap-2 px-1 text-xs text-muted-foreground lg:grid lg:grid-cols-[2rem_minmax(0,1fr)_minmax(0,1fr)_5.5rem_minmax(7.5rem,9rem)_minmax(11rem,14rem)_2.5rem]">
+              <div className="hidden gap-2 px-1 text-xs text-muted-foreground lg:grid lg:grid-cols-[2rem_minmax(0,1.4fr)_minmax(0,1.4fr)_5.5rem_minmax(7.5rem,9rem)_minmax(11rem,14rem)_2.5rem]">
                 <span>#</span>
-                <span>Dari *</span>
-                <span>Ke *</span>
+                <span>Dari * / Jam *</span>
+                <span>Ke * / Jam *</span>
                 <span>KM *</span>
                 <span>Tol</span>
                 <span>Bukti (JPG, maks {MAX_MB} MB)</span>
@@ -322,31 +333,57 @@ function MobilLaporanForm({
               <div className="space-y-2">
                 {trips.map((trip, index) => (
                   <div key={trip.key} className="space-y-1">
-                    <div className="grid grid-cols-1 items-end gap-2 rounded-md border p-3 lg:grid-cols-[2rem_minmax(0,1fr)_minmax(0,1fr)_5.5rem_minmax(7.5rem,9rem)_minmax(11rem,14rem)_2.5rem] lg:items-center lg:gap-2 lg:p-2">
+                    <div className="grid grid-cols-1 items-end gap-2 rounded-md border p-3 lg:grid-cols-[2rem_minmax(0,1.4fr)_minmax(0,1.4fr)_5.5rem_minmax(7.5rem,9rem)_minmax(11rem,14rem)_2.5rem] lg:items-center lg:gap-2 lg:p-2">
                       <span className="text-sm font-medium text-muted-foreground lg:text-center">
                         {index + 1}
                       </span>
                       <div className="space-y-1">
-                        <Label className="lg:hidden">Dari *</Label>
-                        <Input
-                          value={trip.dari}
-                          onChange={(e) =>
-                            updateTrip(trip.key, { dari: e.target.value })
-                          }
-                          placeholder="Asal"
-                          required
-                        />
+                        <Label className="lg:hidden">Dari * / Jam *</Label>
+                        <div className="flex gap-2">
+                          <Input
+                            value={trip.dari}
+                            onChange={(e) =>
+                              updateTrip(trip.key, { dari: e.target.value })
+                            }
+                            placeholder="Asal"
+                            className="min-w-0 flex-1"
+                            required
+                          />
+                          <Input
+                            type="time"
+                            value={trip.jamDari}
+                            onChange={(e) =>
+                              updateTrip(trip.key, { jamDari: e.target.value })
+                            }
+                            className="w-[7.5rem] shrink-0"
+                            aria-label={`Jam dari perjalanan ${index + 1}`}
+                            required
+                          />
+                        </div>
                       </div>
                       <div className="space-y-1">
-                        <Label className="lg:hidden">Ke *</Label>
-                        <Input
-                          value={trip.ke}
-                          onChange={(e) =>
-                            updateTrip(trip.key, { ke: e.target.value })
-                          }
-                          placeholder="Tujuan"
-                          required
-                        />
+                        <Label className="lg:hidden">Ke * / Jam *</Label>
+                        <div className="flex gap-2">
+                          <Input
+                            value={trip.ke}
+                            onChange={(e) =>
+                              updateTrip(trip.key, { ke: e.target.value })
+                            }
+                            placeholder="Tujuan"
+                            className="min-w-0 flex-1"
+                            required
+                          />
+                          <Input
+                            type="time"
+                            value={trip.jamKe}
+                            onChange={(e) =>
+                              updateTrip(trip.key, { jamKe: e.target.value })
+                            }
+                            className="w-[7.5rem] shrink-0"
+                            aria-label={`Jam ke perjalanan ${index + 1}`}
+                            required
+                          />
+                        </div>
                       </div>
                       <div className="space-y-1">
                         <Label className="lg:hidden">KM *</Label>
@@ -402,12 +439,11 @@ function MobilLaporanForm({
                           <Button
                             type="button"
                             variant="ghost"
-                            size="icon-sm"
+                            size="sm"
                             className="text-destructive"
-                            aria-label={`Hapus perjalanan ${index + 1}`}
                             onClick={() => removeTrip(trip.key)}
                           >
-                            <Trash2 className="size-4" />
+                            Hapus
                           </Button>
                         ) : (
                           <span className="hidden size-8 lg:block" />
@@ -422,7 +458,6 @@ function MobilLaporanForm({
               </div>
 
               <Button type="button" variant="outline" onClick={addTrip}>
-                <Plus className="size-4" />
                 Tambah perjalanan
               </Button>
             </div>

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import { Eye } from "lucide-react"
 import {
   DashboardLayout,
-  FilterSummaryPanel,
+  PageActions,
 } from "@/components/layout"
 import { LaporanTabCard } from "@/app/(dashboard)/purchasing/admin/laporan/components/LaporanTabCard"
 import {
@@ -54,19 +54,17 @@ export default function ItLaporanPage() {
 
   return (
     <DashboardLayout title="Laporan Tiket IT">
-      <div className="space-y-4">
-        <FilterSummaryPanel
-          filterCols={7}
-          filter={
-            <ItLaporanFilters
-              filters={filters}
-              kategori={kategori}
-              onFiltersChange={setFilters}
-              onFetch={fetchData}
-            />
-          }
-          summary={<ItLaporanSummaryCards summary={summary} />}
+      <PageActions>
+        <ItLaporanFilters
+          filters={filters}
+          kategori={kategori}
+          onFiltersChange={setFilters}
+          onFetch={fetchData}
         />
+      </PageActions>
+
+      <div className="space-y-4">
+        <ItLaporanSummaryCards summary={summary} />
 
         <Tabs
           value={activeTab}

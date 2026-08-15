@@ -3,6 +3,7 @@ import { getSessionFromRequest } from "@/lib/get-session"
 import { canAccessMobil } from "@/lib/auth/permissions"
 import { prisma } from "@/lib/db/prisma"
 import { parseDateOnly, toMobilLaporan } from "@/lib/mobil/map"
+import { parseJamHm } from "@/lib/mobil/time"
 import { deleteMobilBukti, saveMobilBuktiJpg } from "@/lib/mobil/upload"
 
 const includeLaporan = {
@@ -18,7 +19,14 @@ const includeLaporan = {
   },
 }
 
-type TripInput = { dari: string; ke: string; km: number; tol: number }
+type TripInput = {
+  dari: string
+  jamDari: string
+  ke: string
+  jamKe: string
+  km: number
+  tol: number
+}
 
 function parsePerjalanan(raw: string): TripInput[] | null {
   try {
@@ -29,15 +37,18 @@ function parsePerjalanan(raw: string): TripInput[] | null {
       if (!item || typeof item !== "object") return null
       const dari = String((item as { dari?: unknown }).dari ?? "").trim()
       const ke = String((item as { ke?: unknown }).ke ?? "").trim()
+      const jamDari = parseJamHm((item as { jamDari?: unknown }).jamDari)
+      const jamKe = parseJamHm((item as { jamKe?: unknown }).jamKe)
       const km = Number((item as { km?: unknown }).km)
       const tolRaw = (item as { tol?: unknown }).tol
       const tol = tolRaw === undefined || tolRaw === null || tolRaw === ""
         ? 0
         : Number(tolRaw)
-      if (!dari || !ke || !Number.isInteger(km) || km <= 0) return null
+      if (!dari || !ke || !jamDari || !jamKe || !Number.isInteger(km) || km <= 0)
+        return null
       if (!Number.isInteger(tol) || tol < 0) return null
       if (dari.length > 100 || ke.length > 100) return null
-      trips.push({ dari, ke, km, tol })
+      trips.push({ dari, jamDari, ke, jamKe, km, tol })
     }
     return trips
   } catch {
@@ -69,7 +80,7 @@ export async function GET(request: NextRequest) {
       >
     } = {}
 
-    // Semua user modul mobil boleh lihat laporan semua pemohon
+    // Semua user modul mobil boleh lihat laporan semua pelapor
     if (mine) {
       where.username = session.user.username
     }
@@ -133,7 +144,7 @@ export async function POST(request: NextRequest) {
     }
     if (!trips) {
       return NextResponse.json(
-        { error: "Minimal satu perjalanan (dari, ke, km > 0)" },
+        { error: "Minimal satu perjalanan (dari, jam, ke, km > 0)" },
         { status: 400 }
       )
     }
@@ -204,7 +215,9 @@ export async function POST(request: NextRequest) {
             create: trips.map((trip, index) => ({
               urutan: index + 1,
               dari: trip.dari,
+              jamDari: trip.jamDari,
               ke: trip.ke,
+              jamKe: trip.jamKe,
               km: trip.km,
               tol: trip.tol,
               buktiPath: buktiPaths[index],

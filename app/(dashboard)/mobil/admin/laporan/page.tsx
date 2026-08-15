@@ -5,11 +5,7 @@ import Link from "next/link"
 import { Eye, Trash2 } from "lucide-react"
 import { toast } from "sonner"
 import {
-  CompactFilterCard,
   DashboardLayout,
-  FILTER_CONTROL_CLASS,
-  FilterField,
-  FilterSummaryPanel,
   PageActions,
   SummaryMetric,
   CompactSummaryGrid,
@@ -41,21 +37,20 @@ import {
   TableActions,
 } from "@/components/ui/table-actions"
 import type { MobilKendaraan, MobilLaporanKm } from "@/lib/mobil/mobil-types"
+import { downloadMobilLaporanListExcel } from "@/lib/mobil/export-laporan"
+import { getMonthToDateRangeWIB } from "@/lib/purchasing/permintaan-daily-limit-types"
 
 export default function MobilAdminLaporanPage() {
+  const defaultRange = useMemo(() => getMonthToDateRangeWIB(), [])
   const [rows, setRows] = useState<MobilLaporanKm[]>([])
   const [kendaraan, setKendaraan] = useState<MobilKendaraan[]>([])
   const [loading, setLoading] = useState(true)
-  const [startDate, setStartDate] = useState("")
-  const [endDate, setEndDate] = useState("")
+  const [startDate, setStartDate] = useState(defaultRange.startDate)
+  const [endDate, setEndDate] = useState(defaultRange.endDate)
   const [idKendaraan, setIdKendaraan] = useState("all")
   const [q, setQ] = useState("")
 
   useEffect(() => {
-    const today = new Date()
-    const first = new Date(today.getFullYear(), today.getMonth(), 1)
-    setStartDate(first.toISOString().split("T")[0])
-    setEndDate(today.toISOString().split("T")[0])
     fetch("/api/mobil/kendaraan")
       .then((r) => r.json())
       .then((data) => (Array.isArray(data) ? setKendaraan(data) : setKendaraan([])))
@@ -82,8 +77,8 @@ export default function MobilAdminLaporanPage() {
   }, [startDate, endDate, idKendaraan, q])
 
   useEffect(() => {
-    if (startDate || endDate) fetchRows()
-  }, [fetchRows, startDate, endDate])
+    fetchRows()
+  }, [fetchRows])
 
   const summary = useMemo(() => {
     const totalPemakaian = rows.reduce((sum, r) => sum + r.pemakaian, 0)
@@ -95,7 +90,7 @@ export default function MobilAdminLaporanPage() {
     const nopol = row.kendaraan?.nopol ?? `#${row.idKendaraan}`
     if (
       !confirm(
-        `Hapus laporan ${nopol} tanggal ${row.tanggal} (pemohon: ${row.username})?`
+        `Hapus laporan ${nopol} tanggal ${row.tanggal} (pelapor: ${row.username})?`
       )
     ) {
       return
@@ -117,80 +112,80 @@ export default function MobilAdminLaporanPage() {
       ? `/mobil/admin/laporan/baru?kendaraan=${idKendaraan}`
       : "/mobil/admin/laporan/baru"
 
+  const handleExport = async () => {
+    if (rows.length === 0) {
+      toast.error("Tidak ada data untuk diekspor")
+      return
+    }
+    try {
+      await downloadMobilLaporanListExcel(rows, { startDate, endDate })
+      toast.success("Excel diunduh")
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Gagal mengekspor")
+    }
+  }
+
   return (
     <DashboardLayout title="Laporan Kilometer">
       <PageActions>
+        <div className="mr-auto flex min-w-0 flex-wrap items-center gap-2">
+          <DatePicker
+            className="w-[160px]"
+            value={startDate}
+            onChange={setStartDate}
+            placeholder="Tanggal mulai"
+          />
+          <DatePicker
+            className="w-[160px]"
+            value={endDate}
+            onChange={setEndDate}
+            placeholder="Tanggal akhir"
+          />
+          <Select value={idKendaraan} onValueChange={setIdKendaraan}>
+            <SelectTrigger className="w-[160px]">
+              <SelectValue placeholder="Kendaraan" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Semua kendaraan</SelectItem>
+              {kendaraan.map((k) => (
+                <SelectItem key={k.idKendaraan} value={String(k.idKendaraan)}>
+                  {k.nopol}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Input
+            className="w-[180px]"
+            placeholder="Cari pelapor / nopol"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+          />
+          <Button type="button" variant="outline" onClick={fetchRows}>
+            Tampilkan
+          </Button>
+        </div>
+        <Button
+          type="button"
+          variant="outline"
+          disabled={loading || rows.length === 0}
+          onClick={handleExport}
+        >
+          Export
+        </Button>
         <Button asChild>
           <Link href={baruHref}>Input Laporan</Link>
         </Button>
       </PageActions>
 
       <div className="space-y-4">
-        <FilterSummaryPanel
-          filterCols={7}
-          filter={
-            <CompactFilterCard
-              footer={
-                <Button size="sm" onClick={fetchRows}>
-                  Tampilkan
-                </Button>
-              }
-            >
-              <FilterField>
-                <DatePicker
-                  className={FILTER_CONTROL_CLASS}
-                  value={startDate}
-                  onChange={setStartDate}
-                  placeholder="Tanggal mulai"
-                />
-              </FilterField>
-              <FilterField>
-                <DatePicker
-                  className={FILTER_CONTROL_CLASS}
-                  value={endDate}
-                  onChange={setEndDate}
-                  placeholder="Tanggal akhir"
-                />
-              </FilterField>
-              <FilterField>
-                <Select value={idKendaraan} onValueChange={setIdKendaraan}>
-                  <SelectTrigger className={FILTER_CONTROL_CLASS}>
-                    <SelectValue placeholder="Kendaraan" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Semua kendaraan</SelectItem>
-                    {kendaraan.map((k) => (
-                      <SelectItem key={k.idKendaraan} value={String(k.idKendaraan)}>
-                        {k.nopol}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </FilterField>
-              <FilterField>
-                <Input
-                  className={FILTER_CONTROL_CLASS}
-                  placeholder="Cari pemohon / nopol"
-                  value={q}
-                  onChange={(e) => setQ(e.target.value)}
-                />
-              </FilterField>
-            </CompactFilterCard>
-          }
-          summary={
-            <CompactSummaryGrid>
-              <SummaryMetric label="Total laporan" value={summary.total} />
-              <SummaryMetric
-                label="Total perjalanan"
-                value={summary.totalTrip}
-              />
-              <SummaryMetric
-                label="Total KM pemakaian"
-                value={summary.totalPemakaian.toLocaleString("id-ID")}
-              />
-            </CompactSummaryGrid>
-          }
-        />
+        <CompactSummaryGrid>
+          <SummaryMetric label="Total laporan" value={summary.total} />
+          <SummaryMetric label="Total perjalanan" value={summary.totalTrip} />
+          <SummaryMetric
+            label="Total KM pemakaian"
+            value={summary.totalPemakaian.toLocaleString("id-ID")}
+          />
+        </CompactSummaryGrid>
 
         {loading ? (
           <div className="space-y-3 rounded-md border p-4">
@@ -206,7 +201,7 @@ export default function MobilAdminLaporanPage() {
                 <TableRow>
                   <TableHead>Tanggal</TableHead>
                   <TableHead>Nopol</TableHead>
-                  <TableHead>Pemohon</TableHead>
+                  <TableHead>Pelapor</TableHead>
                   <TableHead className="text-right">KM awal</TableHead>
                   <TableHead className="text-right">KM akhir</TableHead>
                   <TableHead className="text-right">Pemakaian</TableHead>

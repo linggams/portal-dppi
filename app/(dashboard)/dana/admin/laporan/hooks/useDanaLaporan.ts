@@ -5,6 +5,7 @@ import { toast } from "sonner"
 import { downloadPdf } from "@/lib/makepdf"
 import { DANA_STATUS_LABEL } from "@/lib/dana/constants"
 import { formatDanaDateOnly, formatRupiah } from "@/lib/dana/format"
+import { getMonthToDateRangeWIB } from "@/lib/purchasing/permintaan-daily-limit-types"
 import type {
   DanaLaporanByJabatan,
   DanaLaporanFilterState,
@@ -14,11 +15,8 @@ import type {
 } from "../types"
 
 function defaultFilters(): DanaLaporanFilterState {
-  const today = new Date()
-  const firstDay = new Date(today.getFullYear(), today.getMonth(), 1)
   return {
-    startDate: firstDay.toISOString().split("T")[0],
-    endDate: today.toISOString().split("T")[0],
+    ...getMonthToDateRangeWIB(),
     status: "all",
     q: "",
     jabatan: "",

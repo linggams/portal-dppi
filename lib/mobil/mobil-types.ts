@@ -21,7 +21,9 @@ export type MobilLaporanPerjalanan = {
   idLaporan: number
   urutan: number
   dari: string
+  jamDari: string
   ke: string
+  jamKe: string
   km: number
   tol: number
   buktiPath: string | null

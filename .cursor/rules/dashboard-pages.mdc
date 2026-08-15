@@ -63,8 +63,9 @@ Semua aksi utama dan filter global → `<PageActions>` (bukan di `PageSection ac
 ```
 
 - `PageActions` me-render `null`; konten tampil di `PageActionsBar` di bawah header.
-- Ukuran kontrol: default shadcn (`Button` tanpa `size`, `Input`/`SelectTrigger` tanpa `h-8`).
-- Urutan: aksi sekunder (outline) → aksi utama (default).
+- Ukuran kontrol: default shadcn (`Button` tanpa `size`, `Input`/`SelectTrigger` tanpa `h-8` / `FILTER_CONTROL_CLASS`).
+- Urutan: filter global di kiri (`mr-auto`) → aksi sekunder (outline) → aksi utama (default).
+- Halaman **laporan** (purchasing / IT / dana / mobil): filter di `PageActions` kiri; ringkasan metrik tetap di konten di atas tabel.
 
 ## Pola per jenis halaman
 

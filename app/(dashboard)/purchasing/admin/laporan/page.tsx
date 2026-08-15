@@ -2,7 +2,6 @@
 
 import {
   DashboardLayout,
-  FilterSummaryPanel,
   PageActions,
 } from "@/components/layout"
 import { Button } from "@/components/ui/button"
@@ -38,33 +37,27 @@ export default function LaporanPage() {
 
   return (
     <DashboardLayout title="Laporan">
-      {data.length > 0 ? (
-        <PageActions>
+      <PageActions>
+        <LaporanFiltersComponent
+          filters={filters}
+          onFiltersChange={setFilters}
+          onFetch={fetchData}
+        />
+        {data.length > 0 ? (
           <Button
             variant="outline"
             onClick={handleExport}
             disabled={loading}
           >
-            Ekspor PDF
+            Export
           </Button>
-        </PageActions>
-      ) : null}
+        ) : null}
+      </PageActions>
 
       <div className="space-y-4">
-        <FilterSummaryPanel
-          filter={
-            <LaporanFiltersComponent
-              filters={filters}
-              onFiltersChange={setFilters}
-              onFetch={fetchData}
-            />
-          }
-          summary={
-            Object.keys(summary).length > 0 ? (
-              <LaporanSummaryCards summary={summary} />
-            ) : undefined
-          }
-        />
+        {Object.keys(summary).length > 0 ? (
+          <LaporanSummaryCards summary={summary} />
+        ) : null}
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-5 lg:w-auto lg:inline-grid">

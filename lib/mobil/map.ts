@@ -35,7 +35,9 @@ function toPerjalanan(row: {
   idLaporan: number
   urutan: number
   dari: string
+  jamDari: string
   ke: string
+  jamKe: string
   km: number
   tol: number
   buktiPath: string | null
@@ -45,7 +47,9 @@ function toPerjalanan(row: {
     idLaporan: row.idLaporan,
     urutan: row.urutan,
     dari: row.dari,
+    jamDari: row.jamDari,
     ke: row.ke,
+    jamKe: row.jamKe,
     km: row.km,
     tol: row.tol,
     buktiPath: row.buktiPath,
@@ -67,7 +71,9 @@ export function toMobilLaporan(row: {
     idLaporan: number
     urutan: number
     dari: string
+    jamDari: string
     ke: string
+    jamKe: string
     km: number
     tol: number
     buktiPath: string | null

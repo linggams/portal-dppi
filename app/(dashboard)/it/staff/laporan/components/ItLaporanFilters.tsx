@@ -10,11 +10,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import {
-  CompactFilterCard,
-  FILTER_CONTROL_CLASS,
-  FilterField,
-} from "@/components/layout"
 import { IT_TIKET_STATUS_LABEL } from "@/lib/it/constants"
 import type { ItLaporanFilters } from "../types"
 
@@ -37,101 +32,84 @@ export function ItLaporanFilters({
   onFetch,
 }: Props) {
   return (
-    <CompactFilterCard
-      footer={
-        <Button size="sm" onClick={onFetch}>
-          Tampilkan
-        </Button>
-      }
-    >
-      <FilterField>
-        <DatePicker
-          className={FILTER_CONTROL_CLASS}
-          value={filters.startDate}
-          onChange={(startDate) => onFiltersChange({ ...filters, startDate })}
-          placeholder="Tanggal mulai"
-        />
-      </FilterField>
-      <FilterField>
-        <DatePicker
-          className={FILTER_CONTROL_CLASS}
-          value={filters.endDate}
-          onChange={(endDate) => onFiltersChange({ ...filters, endDate })}
-          placeholder="Tanggal akhir"
-        />
-      </FilterField>
-      <FilterField>
-        <Select
-          value={filters.dateField}
-          onValueChange={(v: "dibuat" | "selesai") =>
-            onFiltersChange({ ...filters, dateField: v })
-          }
-        >
-          <SelectTrigger className={FILTER_CONTROL_CLASS}>
-            <SelectValue placeholder="Berdasarkan tanggal" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="dibuat">Tanggal dibuat</SelectItem>
-            <SelectItem value="selesai">Tanggal selesai</SelectItem>
-          </SelectContent>
-        </Select>
-      </FilterField>
-      <FilterField>
-        <Select
-          value={filters.status}
-          onValueChange={(v) => onFiltersChange({ ...filters, status: v })}
-        >
-          <SelectTrigger className={FILTER_CONTROL_CLASS}>
-            <SelectValue placeholder="Status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Semua</SelectItem>
-            {Object.entries(IT_TIKET_STATUS_LABEL).map(([code, label]) => (
-              <SelectItem key={code} value={code}>
-                {label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </FilterField>
-      <FilterField>
-        <Select
-          value={filters.kategoriId}
-          onValueChange={(v) => onFiltersChange({ ...filters, kategoriId: v })}
-        >
-          <SelectTrigger className={FILTER_CONTROL_CLASS}>
-            <SelectValue placeholder="Kategori" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Semua</SelectItem>
-            {kategori.map((k) => (
-              <SelectItem key={k.idKategori} value={String(k.idKategori)}>
-                {k.nama}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </FilterField>
-      <FilterField>
-        <Input
-          className={FILTER_CONTROL_CLASS}
-          placeholder="Pemohon"
-          value={filters.username}
-          onChange={(e) =>
-            onFiltersChange({ ...filters, username: e.target.value })
-          }
-        />
-      </FilterField>
-      <FilterField>
-        <Input
-          className={FILTER_CONTROL_CLASS}
-          placeholder="Teknisi"
-          value={filters.ditugaskanKe}
-          onChange={(e) =>
-            onFiltersChange({ ...filters, ditugaskanKe: e.target.value })
-          }
-        />
-      </FilterField>
-    </CompactFilterCard>
+    <div className="mr-auto flex min-w-0 flex-wrap items-center gap-2">
+      <DatePicker
+        className="w-[160px]"
+        value={filters.startDate}
+        onChange={(startDate) => onFiltersChange({ ...filters, startDate })}
+        placeholder="Tanggal mulai"
+      />
+      <DatePicker
+        className="w-[160px]"
+        value={filters.endDate}
+        onChange={(endDate) => onFiltersChange({ ...filters, endDate })}
+        placeholder="Tanggal akhir"
+      />
+      <Select
+        value={filters.dateField}
+        onValueChange={(v: "dibuat" | "selesai") =>
+          onFiltersChange({ ...filters, dateField: v })
+        }
+      >
+        <SelectTrigger className="w-[160px]">
+          <SelectValue placeholder="Berdasarkan tanggal" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="dibuat">Tanggal dibuat</SelectItem>
+          <SelectItem value="selesai">Tanggal selesai</SelectItem>
+        </SelectContent>
+      </Select>
+      <Select
+        value={filters.status}
+        onValueChange={(v) => onFiltersChange({ ...filters, status: v })}
+      >
+        <SelectTrigger className="w-[140px]">
+          <SelectValue placeholder="Status" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">Semua</SelectItem>
+          {Object.entries(IT_TIKET_STATUS_LABEL).map(([code, label]) => (
+            <SelectItem key={code} value={code}>
+              {label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      <Select
+        value={filters.kategoriId}
+        onValueChange={(v) => onFiltersChange({ ...filters, kategoriId: v })}
+      >
+        <SelectTrigger className="w-[160px]">
+          <SelectValue placeholder="Kategori" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">Semua</SelectItem>
+          {kategori.map((k) => (
+            <SelectItem key={k.idKategori} value={String(k.idKategori)}>
+              {k.nama}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      <Input
+        className="w-[140px]"
+        placeholder="Pemohon"
+        value={filters.username}
+        onChange={(e) =>
+          onFiltersChange({ ...filters, username: e.target.value })
+        }
+      />
+      <Input
+        className="w-[140px]"
+        placeholder="Teknisi"
+        value={filters.ditugaskanKe}
+        onChange={(e) =>
+          onFiltersChange({ ...filters, ditugaskanKe: e.target.value })
+        }
+      />
+      <Button type="button" onClick={onFetch}>
+        Tampilkan
+      </Button>
+    </div>
   )
 }

@@ -1,8 +1,8 @@
 "use client"
 
-import { Eye, FileDown } from "lucide-react"
 import { format } from "date-fns"
 import { id } from "date-fns/locale"
+import { Eye, Printer } from "lucide-react"
 import {
   TableActionButton,
   TableActionLink,
@@ -90,7 +90,7 @@ export function PengajuanGroupTable({ groups, page, pageSize }: Props) {
                     />
                     <TableActionButton
                       label="Cetak PDF"
-                      icon={FileDown}
+                      icon={Printer}
                       onClick={() =>
                         downloadPengajuanGroupPdf(group.unit, group.tglPengajuan)
                       }

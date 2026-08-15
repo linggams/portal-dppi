@@ -335,7 +335,9 @@ model MobilLaporanPerjalanan {
   idLaporan    Int    @map("id_laporan")
   urutan       Int
   dari         String @db.VarChar(100)
+  jamDari      String @map("jam_dari") @db.VarChar(5)
   ke           String @db.VarChar(100)
+  jamKe        String @map("jam_ke") @db.VarChar(5)
   km           Int
   tol          Int    @default(0)
   buktiPath    String? @map("bukti_path") @db.VarChar(255)

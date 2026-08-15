@@ -1,7 +1,6 @@
 ﻿"use client"
 
 import { useState, useEffect } from "react"
-import { Check, X } from "lucide-react"
 import { useSearchParams } from "next/navigation"
 import { PageActions } from "@/components/layout"
 import { DashboardLayout } from "@/components/layout/DashboardLayout"
@@ -21,6 +20,7 @@ import { toast } from "sonner"
 import { format } from "date-fns"
 import { id } from "date-fns/locale"
 import Link from "next/link"
+import { Check, X } from "lucide-react"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -52,7 +52,8 @@ interface Permintaan {
   }
 }
 
-export default function DetailPermintaanPage() {  const searchParams = useSearchParams()
+export default function DetailPermintaanPage() {
+  const searchParams = useSearchParams()
   const unit = searchParams.get("unit")
   const tgl = searchParams.get("tgl")
 

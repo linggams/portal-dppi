@@ -3,30 +3,20 @@
 import { useState, useEffect, useCallback } from "react"
 import { toast } from "sonner"
 import { downloadPdf } from "@/lib/makepdf"
+import { getMonthToDateRangeWIB } from "@/lib/purchasing/permintaan-daily-limit-types"
 import { formatDate, formatRupiah } from "../utils"
 import type { LaporanFilters, LaporanSummary } from "../types"
 
 export function useLaporan() {
   const [loading, setLoading] = useState(false)
   const [activeTab, setActiveTab] = useState("permintaan")
-  const [filters, setFilters] = useState<LaporanFilters>({
-    startDate: "",
-    endDate: "",
+  const [filters, setFilters] = useState<LaporanFilters>(() => ({
+    ...getMonthToDateRangeWIB(),
     unit: "",
     status: "all",
-  })
+  }))
   const [data, setData] = useState<Record<string, unknown>[]>([])
   const [summary, setSummary] = useState<LaporanSummary>({})
-
-  useEffect(() => {
-    const today = new Date()
-    const firstDay = new Date(today.getFullYear(), today.getMonth(), 1)
-    setFilters((prev) => ({
-      ...prev,
-      startDate: firstDay.toISOString().split("T")[0],
-      endDate: today.toISOString().split("T")[0],
-    }))
-  }, [])
 
   const fetchData = useCallback(async () => {
     setLoading(true)
@@ -53,10 +43,8 @@ export function useLaporan() {
   }, [activeTab, filters])
 
   useEffect(() => {
-    if (filters.startDate || filters.endDate) {
-      fetchData()
-    }
-  }, [activeTab, filters, fetchData])
+    fetchData()
+  }, [fetchData])
 
   const getHeaders = (tab: string) => {
     switch (tab) {
