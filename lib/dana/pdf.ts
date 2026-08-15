@@ -1,16 +1,16 @@
 import { toast } from "sonner"
 import { downloadPdf } from "@/lib/makepdf"
-import { danaTerpakai, DANA_STATUS } from "./constants"
+import { DANA_STATUS } from "./constants"
 import type { DanaPengajuan } from "./dana-types"
 import { capitalize, formatDanaDate, formatRupiah, terbilang } from "./format"
 
 /** Slip landscape: ukuran kertas = ukuran border (tanpa margin kosong di luar). */
 const PAGE_WIDTH = 595.28
-const PAGE_HEIGHT = 248
+const PAGE_HEIGHT = 310
 const BOX_PADDING = 12
 const CONTENT_WIDTH = PAGE_WIDTH - BOX_PADDING * 2
-const RIGHT_COLUMN_WIDTH = 215
-const SIGN_LINE_WIDTH = 88
+const RIGHT_COLUMN_WIDTH = 250
+const SIGN_LINE_WIDTH = 100
 const BORDER_WIDTH = 1.6
 const BORDER_INSET = BORDER_WIDTH / 2
 
@@ -78,7 +78,7 @@ export async function downloadPengajuanDanaPdf(item: DanaPengajuan) {
             body: [
               [
                 { stack: buildIdentity(item, tglDisetujui) },
-                { stack: buildAmount(item, pengelola) },
+                { stack: buildAmount(item) },
               ],
             ],
           },
@@ -91,6 +91,15 @@ export async function downloadPengajuanDanaPdf(item: DanaPengajuan) {
             paddingTop: () => 0,
             paddingBottom: () => 0,
           },
+          margin: [0, 0, 0, 44],
+        },
+        {
+          columns: [
+            signatureBlock("Pemohon", `( ${item.username} )`),
+            signatureBlock("Pengelola", `( ${pengelola} )`),
+            signatureBlock("Approval", " "),
+          ],
+          columnGap: 24,
         },
       ],
       styles: {
@@ -134,14 +143,11 @@ function buildIdentity(item: DanaPengajuan, tglDisetujui: string) {
         ],
       },
       layout: "noBorders",
-      margin: [0, 0, 0, 8],
     },
-    { text: "KEPERLUAN", style: "caption", margin: [0, 0, 0, 3] },
-    { text: item.keperluan, style: "body" },
   ]
 }
 
-function buildAmount(item: DanaPengajuan, pengelola: string) {
+function buildAmount(item: DanaPengajuan) {
   return [
     { text: "NOMINAL DIAJUKAN", style: "caption" },
     {
@@ -152,35 +158,10 @@ function buildAmount(item: DanaPengajuan, pengelola: string) {
     {
       text: `Terbilang: ${capitalize(terbilang(item.nominal))} rupiah`,
       style: "terbilang",
-      margin: [0, 0, 0, 8],
+      margin: [0, 0, 0, 10],
     },
-    {
-      table: {
-        widths: ["*", "auto"],
-        body: [
-          amountRow(
-            "Dana terpakai",
-            formatRupiah(danaTerpakai(item.nominal, item.kembalian))
-          ),
-        ],
-      },
-      layout: {
-        hLineWidth: () => 0,
-        vLineWidth: () => 0,
-        paddingLeft: () => 0,
-        paddingRight: () => 0,
-        paddingTop: () => 2,
-        paddingBottom: () => 2,
-      },
-      margin: [0, 0, 0, 14],
-    },
-    {
-      columns: [
-        signatureBlock("Pemohon", item.username),
-        signatureBlock("Pengelola", pengelola),
-      ],
-      columnGap: 12,
-    },
+    { text: "KEPERLUAN", style: "caption", margin: [0, 0, 0, 3] },
+    { text: item.keperluan, style: "body" },
   ]
 }
 
@@ -189,6 +170,7 @@ function signatureBlock(role: string, name: string) {
     width: "*",
     alignment: "center",
     stack: [
+      { text: "\n\n", fontSize: 10 },
       {
         canvas: [
           {
@@ -200,10 +182,10 @@ function signatureBlock(role: string, name: string) {
             lineWidth: 0.5,
           },
         ],
-        margin: [0, 0, 0, 3],
+        margin: [0, 0, 0, 4],
       },
       { text: role, style: "signLabel" },
-      { text: `( ${name} )`, style: "signName" },
+      { text: name, style: "signName", margin: [0, 1, 0, 0] },
     ],
   }
 }
@@ -213,12 +195,5 @@ function metaRow(label: string, value: string) {
     { text: label, style: "meta" },
     { text: ":", style: "meta" },
     { text: value, style: "metaValue" },
-  ]
-}
-
-function amountRow(label: string, value: string) {
-  return [
-    { text: label, style: "meta" },
-    { text: value, style: "metaValue", alignment: "right" },
   ]
 }

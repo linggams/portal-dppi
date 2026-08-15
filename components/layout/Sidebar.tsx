@@ -257,6 +257,11 @@ function getAdminDanaMenu(): NavLink[] {
       href: "/dana/admin/pengajuan",
       icon: ClipboardList,
     },
+    {
+      title: "Laporan",
+      href: "/dana/admin/laporan",
+      icon: BarChart3,
+    },
   ]
 }
 
