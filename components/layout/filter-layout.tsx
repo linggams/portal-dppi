@@ -9,11 +9,11 @@ import { Label } from "@/components/ui/label"
 import { cn } from "@/lib/utils"
 
 /** Baris field filter — horizontal, wrap di layar sempit */
-export const FILTER_GRID_CLASS =
+const FILTER_GRID_CLASS =
   "flex min-w-0 flex-1 flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center"
 
 /** Lebar minimum tiap field di baris horizontal */
-export const FILTER_FIELD_CLASS =
+const FILTER_FIELD_CLASS =
   "min-w-0 w-full sm:min-w-[132px] sm:max-w-full sm:flex-1 lg:w-[148px] lg:flex-none"
 
 export const FILTER_CONTROL_CLASS = "h-8 w-full text-sm"
