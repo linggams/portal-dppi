@@ -22,16 +22,16 @@ function slugNopol(nopol: string) {
   return slug || "NOPOL"
 }
 
-function buildBuktiFilename(nopol: string, tanggal: string) {
+function buildBuktiFilename(nopol: string, tanggal: string, urutan: number) {
   const date = /^\d{4}-\d{2}-\d{2}$/.test(tanggal)
     ? tanggal
     : new Date().toISOString().slice(0, 10)
-  return `${slugNopol(nopol)}_${date}.jpg`
+  return `${slugNopol(nopol)}_${date}_${urutan}.jpg`
 }
 
 export async function saveMobilBuktiJpg(
   file: File,
-  meta: { nopol: string; tanggal: string }
+  meta: { nopol: string; tanggal: string; urutan: number }
 ): Promise<{ ok: true; relativePath: string } | { ok: false; error: string }> {
   if (!file || file.size <= 0) {
     return { ok: false, error: "Bukti foto wajib dilampirkan" }
@@ -44,7 +44,10 @@ export async function saveMobilBuktiJpg(
   const type = (file.type || "").toLowerCase()
   const name = (file.name || "").toLowerCase()
   const looksJpg =
-    type === "image/jpeg" || type === "image/jpg" || name.endsWith(".jpg") || name.endsWith(".jpeg")
+    type === "image/jpeg" ||
+    type === "image/jpg" ||
+    name.endsWith(".jpg") ||
+    name.endsWith(".jpeg")
   if (!looksJpg) {
     return { ok: false, error: "File harus berformat JPG" }
   }
@@ -55,7 +58,7 @@ export async function saveMobilBuktiJpg(
   }
 
   await mkdir(MOBIL_BUKTI_DIR, { recursive: true })
-  const filename = buildBuktiFilename(meta.nopol, meta.tanggal)
+  const filename = buildBuktiFilename(meta.nopol, meta.tanggal, meta.urutan)
   await writeFile(path.join(MOBIL_BUKTI_DIR, filename), buffer)
 
   return { ok: true, relativePath: `/uploads/mobil/${filename}` }

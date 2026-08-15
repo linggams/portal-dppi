@@ -2,7 +2,7 @@ import { PrismaClient } from '@prisma/client'
 import { PrismaPg } from '@prisma/adapter-pg'
 import { Pool } from 'pg'
 
-const PRISMA_CLIENT_REV = 9
+const PRISMA_CLIENT_REV = 13
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined
@@ -43,10 +43,12 @@ function isStaleClient(client: PrismaClient) {
   const c = client as {
     danaPengajuan?: { findMany?: unknown }
     mobilJenis?: { findMany?: unknown }
+    mobilLaporanPerjalanan?: { findMany?: unknown }
   }
   return (
     typeof c.danaPengajuan?.findMany !== "function" ||
-    typeof c.mobilJenis?.findMany !== "function"
+    typeof c.mobilJenis?.findMany !== "function" ||
+    typeof c.mobilLaporanPerjalanan?.findMany !== "function"
   )
 }
 

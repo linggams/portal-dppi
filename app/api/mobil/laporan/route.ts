@@ -16,6 +16,36 @@ const includeLaporan = {
       jenis: { select: { nama: true } },
     },
   },
+  perjalanan: {
+    orderBy: { urutan: "asc" as const },
+  },
+}
+
+type TripInput = { dari: string; ke: string; km: number; tol: number }
+
+function parsePerjalanan(raw: string): TripInput[] | null {
+  try {
+    const parsed = JSON.parse(raw) as unknown
+    if (!Array.isArray(parsed) || parsed.length === 0) return null
+    const trips: TripInput[] = []
+    for (const item of parsed) {
+      if (!item || typeof item !== "object") return null
+      const dari = String((item as { dari?: unknown }).dari ?? "").trim()
+      const ke = String((item as { ke?: unknown }).ke ?? "").trim()
+      const km = Number((item as { km?: unknown }).km)
+      const tolRaw = (item as { tol?: unknown }).tol
+      const tol = tolRaw === undefined || tolRaw === null || tolRaw === ""
+        ? 0
+        : Number(tolRaw)
+      if (!dari || !ke || !Number.isInteger(km) || km <= 0) return null
+      if (!Number.isInteger(tol) || tol < 0) return null
+      if (dari.length > 100 || ke.length > 100) return null
+      trips.push({ dari, ke, km, tol })
+    }
+    return trips
+  } catch {
+    return null
+  }
 }
 
 export async function GET(request: NextRequest) {
@@ -38,7 +68,6 @@ export async function GET(request: NextRequest) {
       tanggal?: { gte?: Date; lte?: Date }
       OR?: Array<
         | { username: { contains: string; mode: "insensitive" } }
-        | { keterangan: { contains: string; mode: "insensitive" } }
         | { kendaraan: { nopol: { contains: string; mode: "insensitive" } } }
       >
     } = {}
@@ -67,7 +96,6 @@ export async function GET(request: NextRequest) {
     if (q) {
       where.OR = [
         { username: { contains: q, mode: "insensitive" } },
-        { keterangan: { contains: q, mode: "insensitive" } },
         { kendaraan: { nopol: { contains: q, mode: "insensitive" } } },
       ]
     }
@@ -86,6 +114,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const uploadedPaths: string[] = []
   try {
     const session = await getSessionFromRequest(request)
     if (!session || !canAccessMobil(session.user)) {
@@ -95,9 +124,7 @@ export async function POST(request: NextRequest) {
     const form = await request.formData()
     const idKendaraan = parseInt(String(form.get("idKendaraan") ?? ""), 10)
     const tanggalRaw = String(form.get("tanggal") ?? "")
-    const kmAkhir = parseInt(String(form.get("kmAkhir") ?? ""), 10)
-    const keterangan = String(form.get("keterangan") ?? "").trim()
-    const file = form.get("bukti")
+    const trips = parsePerjalanan(String(form.get("perjalanan") ?? ""))
 
     if (!idKendaraan || Number.isNaN(idKendaraan)) {
       return NextResponse.json({ error: "Kendaraan wajib dipilih" }, { status: 400 })
@@ -106,12 +133,9 @@ export async function POST(request: NextRequest) {
     if (!tanggal) {
       return NextResponse.json({ error: "Tanggal tidak valid" }, { status: 400 })
     }
-    if (Number.isNaN(kmAkhir) || kmAkhir < 0) {
-      return NextResponse.json({ error: "KM akhir tidak valid" }, { status: 400 })
-    }
-    if (!(file instanceof File)) {
+    if (!trips) {
       return NextResponse.json(
-        { error: "Bukti foto wajib dilampirkan" },
+        { error: "Minimal satu perjalanan (dari, ke, km > 0)" },
         { status: 400 }
       )
     }
@@ -131,12 +155,8 @@ export async function POST(request: NextRequest) {
       orderBy: [{ tanggal: "desc" }, { idLaporan: "desc" }],
     })
     const kmAwal = last?.kmAkhir ?? kendaraan.kmAwal
-    if (kmAkhir < kmAwal) {
-      return NextResponse.json(
-        { error: `KM akhir tidak boleh kurang dari KM awal (${kmAwal})` },
-        { status: 400 }
-      )
-    }
+    const totalKm = trips.reduce((sum, t) => sum + t.km, 0)
+    const kmAkhir = kmAwal + totalKm
 
     const duplicate = await prisma.mobilLaporanKm.findUnique({
       where: {
@@ -150,12 +170,27 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const uploaded = await saveMobilBuktiJpg(file, {
-      nopol: kendaraan.nopol,
-      tanggal: tanggalRaw,
-    })
-    if (!uploaded.ok) {
-      return NextResponse.json({ error: uploaded.error }, { status: 400 })
+    const buktiPaths: Array<string | null> = []
+    for (let i = 0; i < trips.length; i++) {
+      const file = form.get(`bukti_${i}`)
+      if (!(file instanceof File) || file.size <= 0) {
+        buktiPaths.push(null)
+        continue
+      }
+      const uploaded = await saveMobilBuktiJpg(file, {
+        nopol: kendaraan.nopol,
+        tanggal: tanggalRaw,
+        urutan: i + 1,
+      })
+      if (!uploaded.ok) {
+        for (const p of uploadedPaths) await deleteMobilBukti(p)
+        return NextResponse.json(
+          { error: `Perjalanan #${i + 1}: ${uploaded.error}` },
+          { status: 400 }
+        )
+      }
+      uploadedPaths.push(uploaded.relativePath)
+      buktiPaths.push(uploaded.relativePath)
     }
 
     try {
@@ -167,14 +202,22 @@ export async function POST(request: NextRequest) {
           tanggal,
           kmAwal,
           kmAkhir,
-          keterangan,
-          buktiPath: uploaded.relativePath,
+          perjalanan: {
+            create: trips.map((trip, index) => ({
+              urutan: index + 1,
+              dari: trip.dari,
+              ke: trip.ke,
+              km: trip.km,
+              tol: trip.tol,
+              buktiPath: buktiPaths[index],
+            })),
+          },
         },
         include: includeLaporan,
       })
       return NextResponse.json(toMobilLaporan(row), { status: 201 })
     } catch (error) {
-      await deleteMobilBukti(uploaded.relativePath)
+      for (const p of uploadedPaths) await deleteMobilBukti(p)
       throw error
     }
   } catch (error) {

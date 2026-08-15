@@ -317,16 +317,32 @@ model MobilLaporanKm {
   tanggal     DateTime @db.Date
   kmAwal      Int      @map("km_awal")
   kmAkhir     Int      @map("km_akhir")
-  keterangan  String   @default("") @db.Text
-  buktiPath   String   @map("bukti_path") @db.VarChar(255)
   tglDibuat   DateTime @default(now()) @map("tgl_dibuat")
   tglDiupdate DateTime @updatedAt @map("tgl_diupdate")
 
-  kendaraan MobilKendaraan @relation(fields: [idKendaraan], references: [idKendaraan], onDelete: Restrict)
+  kendaraan  MobilKendaraan           @relation(fields: [idKendaraan], references: [idKendaraan], onDelete: Restrict)
+  perjalanan MobilLaporanPerjalanan[]
 
   @@unique([idKendaraan, tanggal])
   @@map("mobil_laporan_km")
   @@index([username])
   @@index([tanggal])
   @@index([idKendaraan])
+}
+
+model MobilLaporanPerjalanan {
+  idPerjalanan Int    @id @default(autoincrement()) @map("id_perjalanan")
+  idLaporan    Int    @map("id_laporan")
+  urutan       Int
+  dari         String @db.VarChar(100)
+  ke           String @db.VarChar(100)
+  km           Int
+  tol          Int    @default(0)
+  buktiPath    String? @map("bukti_path") @db.VarChar(255)
+
+  laporan MobilLaporanKm @relation(fields: [idLaporan], references: [idLaporan], onDelete: Cascade)
+
+  @@map("mobil_laporan_perjalanan")
+  @@index([idLaporan])
+  @@unique([idLaporan, urutan])
 }

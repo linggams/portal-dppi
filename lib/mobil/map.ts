@@ -1,4 +1,9 @@
-import { pemakaianKm, type MobilLaporanKm, type MobilKendaraan } from "./mobil-types"
+import {
+  pemakaianKm,
+  type MobilLaporanKm,
+  type MobilLaporanPerjalanan,
+  type MobilKendaraan,
+} from "./mobil-types"
 
 export function toMobilKendaraan(row: {
   idKendaraan: number
@@ -25,6 +30,28 @@ export function toMobilKendaraan(row: {
   }
 }
 
+function toPerjalanan(row: {
+  idPerjalanan: number
+  idLaporan: number
+  urutan: number
+  dari: string
+  ke: string
+  km: number
+  tol: number
+  buktiPath: string | null
+}): MobilLaporanPerjalanan {
+  return {
+    idPerjalanan: row.idPerjalanan,
+    idLaporan: row.idLaporan,
+    urutan: row.urutan,
+    dari: row.dari,
+    ke: row.ke,
+    km: row.km,
+    tol: row.tol,
+    buktiPath: row.buktiPath,
+  }
+}
+
 export function toMobilLaporan(row: {
   idLaporan: number
   idKendaraan: number
@@ -33,16 +60,29 @@ export function toMobilLaporan(row: {
   tanggal: Date
   kmAwal: number
   kmAkhir: number
-  keterangan: string
-  buktiPath: string
   tglDibuat: Date
   tglDiupdate: Date
+  perjalanan?: Array<{
+    idPerjalanan: number
+    idLaporan: number
+    urutan: number
+    dari: string
+    ke: string
+    km: number
+    tol: number
+    buktiPath: string | null
+  }>
   kendaraan?: {
     idKendaraan: number
     nopol: string
     jenis?: { nama: string } | null
   } | null
 }): MobilLaporanKm {
+  const perjalanan = (row.perjalanan ?? [])
+    .slice()
+    .sort((a, b) => a.urutan - b.urutan)
+    .map(toPerjalanan)
+
   return {
     idLaporan: row.idLaporan,
     idKendaraan: row.idKendaraan,
@@ -52,10 +92,11 @@ export function toMobilLaporan(row: {
     kmAwal: row.kmAwal,
     kmAkhir: row.kmAkhir,
     pemakaian: pemakaianKm(row.kmAwal, row.kmAkhir),
-    keterangan: row.keterangan,
-    buktiPath: row.buktiPath,
+    jumlahPerjalanan: perjalanan.length,
+    totalTol: perjalanan.reduce((sum, trip) => sum + trip.tol, 0),
     tglDibuat: row.tglDibuat.toISOString(),
     tglDiupdate: row.tglDiupdate.toISOString(),
+    perjalanan,
     kendaraan: row.kendaraan
       ? {
           idKendaraan: row.kendaraan.idKendaraan,

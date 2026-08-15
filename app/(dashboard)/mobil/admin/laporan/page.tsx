@@ -1,7 +1,7 @@
 "use client"
 
 import { useCallback, useEffect, useMemo, useState } from "react"
-import { Eye } from "lucide-react"
+import { Eye, Trash2 } from "lucide-react"
 import { toast } from "sonner"
 import {
   CompactFilterCard,
@@ -16,12 +16,6 @@ import { Button } from "@/components/ui/button"
 import { DatePicker } from "@/components/ui/date-picker"
 import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
 import {
   Select,
   SelectContent,
@@ -39,7 +33,11 @@ import {
 } from "@/components/ui/table"
 import { TableContainer } from "@/components/ui/table-container"
 import { TableEmptyState } from "@/components/ui/table-empty-state"
-import { TableActionButton, TableActions } from "@/components/ui/table-actions"
+import {
+  TableActionButton,
+  TableActionLink,
+  TableActions,
+} from "@/components/ui/table-actions"
 import type { MobilKendaraan, MobilLaporanKm } from "@/lib/mobil/mobil-types"
 
 export default function MobilAdminLaporanPage() {
@@ -50,7 +48,6 @@ export default function MobilAdminLaporanPage() {
   const [endDate, setEndDate] = useState("")
   const [idKendaraan, setIdKendaraan] = useState("all")
   const [q, setQ] = useState("")
-  const [preview, setPreview] = useState<MobilLaporanKm | null>(null)
 
   useEffect(() => {
     const today = new Date()
@@ -88,8 +85,30 @@ export default function MobilAdminLaporanPage() {
 
   const summary = useMemo(() => {
     const totalPemakaian = rows.reduce((sum, r) => sum + r.pemakaian, 0)
-    return { total: rows.length, totalPemakaian }
+    const totalTrip = rows.reduce((sum, r) => sum + r.jumlahPerjalanan, 0)
+    return { total: rows.length, totalPemakaian, totalTrip }
   }, [rows])
+
+  const handleDelete = async (row: MobilLaporanKm) => {
+    const nopol = row.kendaraan?.nopol ?? `#${row.idKendaraan}`
+    if (
+      !confirm(
+        `Hapus laporan ${nopol} tanggal ${row.tanggal} (pemohon: ${row.username})?`
+      )
+    ) {
+      return
+    }
+    const res = await fetch(`/api/mobil/laporan/${row.idLaporan}`, {
+      method: "DELETE",
+    })
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}))
+      toast.error(typeof data.error === "string" ? data.error : "Gagal menghapus")
+      return
+    }
+    toast.success("Laporan dihapus")
+    await fetchRows()
+  }
 
   return (
     <DashboardLayout title="Laporan Kilometer">
@@ -149,6 +168,10 @@ export default function MobilAdminLaporanPage() {
             <CompactSummaryGrid>
               <SummaryMetric label="Total laporan" value={summary.total} />
               <SummaryMetric
+                label="Total perjalanan"
+                value={summary.totalTrip}
+              />
+              <SummaryMetric
                 label="Total KM pemakaian"
                 value={summary.totalPemakaian.toLocaleString("id-ID")}
               />
@@ -174,12 +197,13 @@ export default function MobilAdminLaporanPage() {
                   <TableHead className="text-right">KM awal</TableHead>
                   <TableHead className="text-right">KM akhir</TableHead>
                   <TableHead className="text-right">Pemakaian</TableHead>
+                  <TableHead className="text-right">Trip</TableHead>
                   <TableHead className="text-right">Aksi</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {rows.length === 0 ? (
-                  <TableEmptyState colSpan={7} title="Tidak ada laporan" />
+                  <TableEmptyState colSpan={8} title="Tidak ada laporan" />
                 ) : (
                   rows.map((row) => (
                     <TableRow key={row.idLaporan}>
@@ -198,11 +222,20 @@ export default function MobilAdminLaporanPage() {
                         {row.pemakaian.toLocaleString("id-ID")}
                       </TableCell>
                       <TableCell className="text-right">
+                        {row.jumlahPerjalanan}
+                      </TableCell>
+                      <TableCell className="text-right">
                         <TableActions>
-                          <TableActionButton
-                            label="Lihat bukti"
+                          <TableActionLink
+                            label="Detail"
                             icon={Eye}
-                            onClick={() => setPreview(row)}
+                            href={`/mobil/admin/laporan/${row.idLaporan}`}
+                          />
+                          <TableActionButton
+                            label="Hapus"
+                            icon={Trash2}
+                            className="text-destructive hover:text-destructive"
+                            onClick={() => handleDelete(row)}
                           />
                         </TableActions>
                       </TableCell>
@@ -214,28 +247,6 @@ export default function MobilAdminLaporanPage() {
           </TableContainer>
         )}
       </div>
-
-      <Dialog open={!!preview} onOpenChange={(o) => !o && setPreview(null)}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Bukti Dashboard</DialogTitle>
-          </DialogHeader>
-          {preview ? (
-            <div className="space-y-3">
-              <p className="text-sm text-muted-foreground">
-                {preview.kendaraan?.nopol} · {preview.tanggal} · KM{" "}
-                {preview.kmAkhir.toLocaleString("id-ID")}
-              </p>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={preview.buktiPath}
-                alt="Bukti dashboard"
-                className="max-h-[70vh] w-full rounded-md border object-contain"
-              />
-            </div>
-          ) : null}
-        </DialogContent>
-      </Dialog>
     </DashboardLayout>
   )
 }

@@ -16,6 +16,17 @@ export type MobilKendaraan = {
   kmTerakhir?: number
 }
 
+export type MobilLaporanPerjalanan = {
+  idPerjalanan: number
+  idLaporan: number
+  urutan: number
+  dari: string
+  ke: string
+  km: number
+  tol: number
+  buktiPath: string | null
+}
+
 export type MobilLaporanKm = {
   idLaporan: number
   idKendaraan: number
@@ -25,10 +36,11 @@ export type MobilLaporanKm = {
   kmAwal: number
   kmAkhir: number
   pemakaian: number
-  keterangan: string
-  buktiPath: string
+  jumlahPerjalanan: number
+  totalTol: number
   tglDibuat: string
   tglDiupdate: string
+  perjalanan: MobilLaporanPerjalanan[]
   kendaraan?: {
     idKendaraan: number
     nopol: string
