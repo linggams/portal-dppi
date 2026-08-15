@@ -36,6 +36,10 @@ dump-*.sql
 .DS_Store
 *.pem
 
+# uploaded bukti mobil
+/public/uploads/mobil/*
+!/public/uploads/mobil/.gitkeep
+
 # debug
 npm-debug.log*
 yarn-debug.log*

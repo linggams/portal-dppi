@@ -39,6 +39,11 @@ model User {
   managePurchasing Boolean @default(false) @map("manage_purchasing")
   manageIt         Boolean @default(false) @map("manage_it")
   manageDana       Boolean @default(false) @map("manage_dana")
+  manageMobil      Boolean @default(false) @map("manage_mobil")
+  accessPurchasing Boolean @default(false) @map("access_purchasing")
+  accessIt         Boolean @default(false) @map("access_it")
+  accessDana       Boolean @default(false) @map("access_dana")
+  accessMobil      Boolean @default(false) @map("access_mobil")
 
   role Role @relation(fields: [roleId], references: [idRole], onDelete: Restrict)
 
@@ -275,4 +280,53 @@ model DanaPengajuan {
   @@index([username])
   @@index([status])
   @@index([tglDibuat])
+}
+
+model MobilJenis {
+  idJenis     Int    @id @default(autoincrement()) @map("id_jenis")
+  nama        String @db.VarChar(100)
+  keterangan  String @default("") @db.VarChar(255)
+
+  kendaraan MobilKendaraan[]
+
+  @@map("mobil_jenis")
+}
+
+model MobilKendaraan {
+  idKendaraan Int      @id @default(autoincrement()) @map("id_kendaraan")
+  nopol       String   @unique @db.VarChar(20)
+  idJenis     Int      @map("id_jenis")
+  kmAwal      Int      @default(0) @map("km_awal")
+  aktif       Boolean  @default(true)
+  tglDibuat   DateTime @default(now()) @map("tgl_dibuat")
+  tglDiupdate DateTime @updatedAt @map("tgl_diupdate")
+
+  jenis   MobilJenis       @relation(fields: [idJenis], references: [idJenis], onDelete: Restrict)
+  laporan MobilLaporanKm[]
+
+  @@map("mobil_kendaraan")
+  @@index([idJenis])
+  @@index([aktif])
+}
+
+model MobilLaporanKm {
+  idLaporan   Int      @id @default(autoincrement()) @map("id_laporan")
+  idKendaraan Int      @map("id_kendaraan")
+  username    String   @db.VarChar(20)
+  jabatan     String   @db.VarChar(50)
+  tanggal     DateTime @db.Date
+  kmAwal      Int      @map("km_awal")
+  kmAkhir     Int      @map("km_akhir")
+  keterangan  String   @default("") @db.Text
+  buktiPath   String   @map("bukti_path") @db.VarChar(255)
+  tglDibuat   DateTime @default(now()) @map("tgl_dibuat")
+  tglDiupdate DateTime @updatedAt @map("tgl_diupdate")
+
+  kendaraan MobilKendaraan @relation(fields: [idKendaraan], references: [idKendaraan], onDelete: Restrict)
+
+  @@unique([idKendaraan, tanggal])
+  @@map("mobil_laporan_km")
+  @@index([username])
+  @@index([tanggal])
+  @@index([idKendaraan])
 }

@@ -20,6 +20,7 @@ import {
   Wrench,
   Monitor,
   Wallet,
+  Car,
 } from "lucide-react"
 import {
   Sidebar,
@@ -49,9 +50,11 @@ import {
   canAccessDanaUser,
   canAccessItStaff,
   canAccessItUser,
+  canAccessMobilUser,
   canAccessPlatform,
   canAccessPurchasingUser,
   canHandleDanaWorkflow,
+  canHandleMobilWorkflow,
   canManagePurchasingMaster,
   getDefaultHomePath,
   shouldFetchPurchasingKategori,
@@ -280,6 +283,41 @@ function getUserDanaMenu(): NavLink[] {
   ]
 }
 
+function getAdminMobilMenu(): NavLink[] {
+  return [
+    {
+      title: "Jenis",
+      href: "/mobil/admin/jenis",
+      icon: Tag,
+    },
+    {
+      title: "Kendaraan",
+      href: "/mobil/admin/kendaraan",
+      icon: Package,
+    },
+    {
+      title: "Laporan KM",
+      href: "/mobil/admin/laporan",
+      icon: BarChart3,
+    },
+    {
+      title: "Input Laporan",
+      href: "/mobil/user/laporan",
+      icon: ClipboardList,
+    },
+  ]
+}
+
+function getUserMobilMenu(): NavLink[] {
+  return [
+    {
+      title: "Input Laporan",
+      href: "/mobil/user/laporan",
+      icon: ClipboardList,
+    },
+  ]
+}
+
 function NavLeaf({
   item,
   pathname,
@@ -465,6 +503,12 @@ export function AppSidebar() {
     return []
   }, [principal])
 
+  const mobilItems = useMemo(() => {
+    if (canHandleMobilWorkflow(principal)) return getAdminMobilMenu()
+    if (canAccessMobilUser(principal)) return getUserMobilMenu()
+    return []
+  }, [principal])
+
   const homeHref = getDefaultHomePath(principal)
   const dashboardActive = isActive(pathname, search, homeHref)
   const usersActive = isActive(pathname, search, "/platform/users")
@@ -532,7 +576,10 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {purchasingItems.length > 0 || itItems.length > 0 || danaItems.length > 0 ? (
+        {purchasingItems.length > 0 ||
+        itItems.length > 0 ||
+        danaItems.length > 0 ||
+        mobilItems.length > 0 ? (
           <SidebarGroup>
             <SidebarGroupLabel>Modul</SidebarGroupLabel>
             <SidebarGroupContent>
@@ -562,6 +609,16 @@ export function AppSidebar() {
                     title="Pengajuan Dana"
                     icon={Wallet}
                     items={danaItems}
+                    pathname={pathname}
+                    search={search}
+                  />
+                ) : null}
+
+                {mobilItems.length > 0 ? (
+                  <ModuleNav
+                    title="Penggunaan Mobil"
+                    icon={Car}
+                    items={mobilItems}
                     pathname={pathname}
                     search={search}
                   />

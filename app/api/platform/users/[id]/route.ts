@@ -2,16 +2,25 @@ import { NextRequest, NextResponse } from "next/server"
 import { getSessionFromRequest } from "@/lib/get-session"
 import { canAccessPlatform } from "@/lib/auth/permissions"
 import { legacyLevelFromRole } from "@/lib/auth/capabilities"
+import { applicantModulesForRole } from "@/lib/auth/applicant-modules"
 import { managerModulesForRole } from "@/lib/auth/manager-modules"
 import { prisma } from "@/lib/db/prisma"
 import type { Prisma } from "@prisma/client"
 import bcrypt from "bcryptjs"
 import { z } from "zod"
 
-const modulesSchema = z.object({
+const managerModulesSchema = z.object({
   managePurchasing: z.boolean(),
   manageIt: z.boolean(),
   manageDana: z.boolean(),
+  manageMobil: z.boolean(),
+})
+
+const applicantModulesSchema = z.object({
+  accessPurchasing: z.boolean(),
+  accessIt: z.boolean(),
+  accessDana: z.boolean(),
+  accessMobil: z.boolean(),
 })
 
 const updateUserSchema = z.object({
@@ -19,7 +28,8 @@ const updateUserSchema = z.object({
   password: z.string().min(3).optional(),
   roleId: z.number().int().positive().optional(),
   jabatan: z.string().min(1).max(50).optional(),
-  modules: modulesSchema.optional(),
+  modules: managerModulesSchema.optional(),
+  accessModules: applicantModulesSchema.optional(),
 })
 
 const userRoleSelect = {
@@ -28,43 +38,21 @@ const userRoleSelect = {
   },
 } as const
 
-// GET - Get single user
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+function resolveUserModules(
+  isPengelola: boolean,
+  modules?: z.infer<typeof managerModulesSchema>,
+  accessModules?: z.infer<typeof applicantModulesSchema>
 ) {
-  try {
-    const session = await getSessionFromRequest(request)
-    const { id } = await params
-
-    if (!session || !canAccessPlatform(session.user)) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      )
-    }
-
-    const user = await prisma.user.findUnique({
-      where: { idUser: parseInt(id) },
-      include: userRoleSelect,
-    })
-
-    if (!user) {
-      return NextResponse.json(
-        { error: "User not found" },
-        { status: 404 }
-      )
-    }
-
-    const { password, ...userWithoutPassword } = user
-
-    return NextResponse.json(userWithoutPassword)
-  } catch (error) {
-    console.error("Error fetching user:", error)
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    )
+  const managerResult = managerModulesForRole(isPengelola, modules)
+  if (!managerResult.ok) return managerResult
+  const applicantResult = applicantModulesForRole(!isPengelola, accessModules)
+  if (!applicantResult.ok) return applicantResult
+  return {
+    ok: true as const,
+    modules: {
+      ...managerResult.modules,
+      ...applicantResult.modules,
+    },
   }
 }
 
@@ -135,10 +123,15 @@ export async function PUT(
       updateData.level = legacyLevelFromRole(role)
     }
 
-    if (validatedData.modules || validatedData.roleId) {
-      const modulesResult = managerModulesForRole(
+    if (
+      validatedData.modules ||
+      validatedData.accessModules ||
+      validatedData.roleId
+    ) {
+      const modulesResult = resolveUserModules(
         role.canAccessPlatform,
-        validatedData.modules
+        validatedData.modules,
+        validatedData.accessModules
       )
       if (!modulesResult.ok) {
         return NextResponse.json({ error: modulesResult.error }, { status: 400 })
@@ -146,6 +139,11 @@ export async function PUT(
       updateData.managePurchasing = modulesResult.modules.managePurchasing
       updateData.manageIt = modulesResult.modules.manageIt
       updateData.manageDana = modulesResult.modules.manageDana
+      updateData.manageMobil = modulesResult.modules.manageMobil
+      updateData.accessPurchasing = modulesResult.modules.accessPurchasing
+      updateData.accessIt = modulesResult.modules.accessIt
+      updateData.accessDana = modulesResult.modules.accessDana
+      updateData.accessMobil = modulesResult.modules.accessMobil
     }
 
     const user = await prisma.user.update({
@@ -166,10 +164,9 @@ export async function PUT(
     }
 
     console.error("Error updating user:", error)
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    )
+    const message =
+      error instanceof Error ? error.message : "Internal server error"
+    return NextResponse.json({ error: message }, { status: 500 })
   }
 }
 
@@ -197,7 +194,7 @@ export async function DELETE(
       )
     }
 
-    const user = await prisma.user.delete({
+    await prisma.user.delete({
       where: { idUser: parseInt(id) },
     })
 

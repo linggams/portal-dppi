@@ -6,7 +6,6 @@ import { PageSection, PageActions } from "@/components/layout"
 import { DashboardLayout } from "@/components/layout/DashboardLayout"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
-import { Skeleton } from "@/components/ui/skeleton"
 import {
   Table,
   TableBody,

@@ -1,15 +1,16 @@
 import { USER_LEVEL_LABEL, normalizeUserLevel } from "@/lib/auth/user-level"
 import {
   SYSTEM_ROLE_HOME_PATH,
-  applyManagerModules,
+  applyUserModules,
   capabilitiesFromLevel,
   capabilitiesFromRole,
+  homePathFromCapabilities,
   hydrateCapabilities,
   type RoleCapabilities,
   type RoleCapabilityFields,
 } from "@/lib/auth/capabilities"
 
-export type SessionAuthUser = {
+type SessionAuthUser = {
   id: string
   username: string
   jabatan: string
@@ -33,17 +34,32 @@ export function buildSessionAuthUser(user: {
   managePurchasing?: boolean
   manageIt?: boolean
   manageDana?: boolean
+  manageMobil?: boolean
+  accessPurchasing?: boolean
+  accessIt?: boolean
+  accessDana?: boolean
+  accessMobil?: boolean
   role?: RoleForSession | null
 }): SessionAuthUser {
   const normalizedLevel = normalizeUserLevel(user.level)
   const roleCaps = user.role
     ? capabilitiesFromRole(user.role)
     : capabilitiesFromLevel(user.level)
-  const capabilities = applyManagerModules(roleCaps, {
-    managePurchasing: Boolean(user.managePurchasing),
-    manageIt: Boolean(user.manageIt),
-    manageDana: Boolean(user.manageDana),
-  })
+  const capabilities = applyUserModules(
+    roleCaps,
+    {
+      managePurchasing: Boolean(user.managePurchasing),
+      manageIt: Boolean(user.manageIt),
+      manageDana: Boolean(user.manageDana),
+      manageMobil: Boolean(user.manageMobil),
+    },
+    {
+      accessPurchasing: Boolean(user.accessPurchasing),
+      accessIt: Boolean(user.accessIt),
+      accessDana: Boolean(user.accessDana),
+      accessMobil: Boolean(user.accessMobil),
+    }
+  )
 
   return {
     id: String(user.idUser),
@@ -51,7 +67,7 @@ export function buildSessionAuthUser(user: {
     jabatan: user.jabatan,
     level: user.role?.code ?? user.level,
     roleName: user.role?.name ?? USER_LEVEL_LABEL[normalizedLevel],
-    homePath: user.role?.homePath ?? SYSTEM_ROLE_HOME_PATH[normalizedLevel],
+    homePath: homePathFromCapabilities(capabilities),
     capabilities,
   }
 }
@@ -67,13 +83,17 @@ export function sessionUserFromToken(token: {
 }): SessionAuthUser {
   const level = token.level || "user"
   const normalizedLevel = normalizeUserLevel(level)
+  const capabilities = hydrateCapabilities(token.capabilities, level)
   return {
     id: token.sub || "",
     username: token.username || "",
     jabatan: token.jabatan || "",
     level,
     roleName: token.roleName || USER_LEVEL_LABEL[normalizedLevel],
-    homePath: token.homePath || SYSTEM_ROLE_HOME_PATH[normalizedLevel],
-    capabilities: hydrateCapabilities(token.capabilities, level),
+    homePath:
+      token.homePath ||
+      homePathFromCapabilities(capabilities) ||
+      SYSTEM_ROLE_HOME_PATH[normalizedLevel],
+    capabilities,
   }
 }

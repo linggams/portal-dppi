@@ -1,12 +1,8 @@
 import {
   capabilitiesFromRole,
-  type RoleCapabilities,
   type RoleCapabilityFields,
 } from "@/lib/auth/capabilities"
-import {
-  normalizeRoleCapabilities,
-  type RoleListItem,
-} from "@/lib/platform/role-types"
+import type { RoleListItem } from "@/lib/platform/role-types"
 
 export function toRoleListItem(role: RoleCapabilityFields & {
   idRole: number
@@ -26,19 +22,5 @@ export function toRoleListItem(role: RoleCapabilityFields & {
     homePath: role.homePath,
     userCount: role._count?.users ?? 0,
     capabilities: capabilitiesFromRole(role),
-  }
-}
-
-export function capabilitiesToRoleFields(
-  caps: RoleCapabilities
-): RoleCapabilityFields {
-  const normalized = normalizeRoleCapabilities(caps)
-  return {
-    canAccessPlatform: normalized.platform,
-    canAccessPurchasingUser: normalized.purchasingUser,
-    canHandlePurchasingWorkflow: normalized.purchasingWorkflow,
-    canManagePurchasingMaster: normalized.purchasingMaster,
-    canAccessItUser: normalized.itUser,
-    canAccessItStaff: normalized.itStaff,
   }
 }

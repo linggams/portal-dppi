@@ -2,7 +2,7 @@ import { PrismaClient } from '@prisma/client'
 import { PrismaPg } from '@prisma/adapter-pg'
 import { Pool } from 'pg'
 
-const PRISMA_CLIENT_REV = 3
+const PRISMA_CLIENT_REV = 9
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined
@@ -40,8 +40,14 @@ function createPrismaClient() {
 
 function isStaleClient(client: PrismaClient) {
   if (globalForPrisma.prismaRev !== PRISMA_CLIENT_REV) return true
-  return typeof (client as { danaPengajuan?: { findMany?: unknown } }).danaPengajuan
-    ?.findMany !== "function"
+  const c = client as {
+    danaPengajuan?: { findMany?: unknown }
+    mobilJenis?: { findMany?: unknown }
+  }
+  return (
+    typeof c.danaPengajuan?.findMany !== "function" ||
+    typeof c.mobilJenis?.findMany !== "function"
+  )
 }
 
 function getPrismaClient() {

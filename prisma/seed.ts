@@ -54,6 +54,11 @@ async function main() {
       managePurchasing: true,
       manageIt: true,
       manageDana: true,
+      manageMobil: true,
+      accessPurchasing: false,
+      accessIt: false,
+      accessDana: false,
+      accessMobil: false,
     },
     create: {
       username: 'sheva',
@@ -64,6 +69,11 @@ async function main() {
       managePurchasing: true,
       manageIt: true,
       manageDana: true,
+      manageMobil: true,
+      accessPurchasing: false,
+      accessIt: false,
+      accessDana: false,
+      accessMobil: false,
     },
   })
 

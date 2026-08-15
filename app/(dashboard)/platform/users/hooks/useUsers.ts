@@ -42,6 +42,7 @@ export function useUsers() {
       roleId: Number(formData.roleId),
       jabatan: formData.jabatan,
       modules: formData.modules,
+      accessModules: formData.accessModules,
     }
     if (formData.password) {
       body.password = formData.password

@@ -5,7 +5,10 @@ import {
   isClientUser,
 } from "@/lib/auth/permissions"
 import { fetchPengajuanGroups } from "@/lib/purchasing/pengajuan-groups"
-import { getDefaultPengajuanGroupDateRange } from "@/lib/purchasing/pengajuan-group-types"
+import {
+  getDefaultPengajuanGroupDateRange,
+  PENGAJUAN_GROUP_PAGE_SIZE,
+} from "@/lib/purchasing/pengajuan-group-types"
 
 export async function GET(request: NextRequest) {
   try {
@@ -26,7 +29,6 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get("status") ?? "all"
     const unit = searchParams.get("unit")
     const page = parseInt(searchParams.get("page") ?? "1", 10)
-    const limit = parseInt(searchParams.get("limit") ?? "20", 10)
 
     const result = await fetchPengajuanGroups(
       {
@@ -35,7 +37,7 @@ export async function GET(request: NextRequest) {
         status: status === "all" ? null : status,
         unit,
         page: Number.isNaN(page) ? 1 : page,
-        limit: Number.isNaN(limit) ? 20 : limit,
+        limit: PENGAJUAN_GROUP_PAGE_SIZE,
       },
       isClientUser(session.user)
         ? { unitOverride: session.user.username }

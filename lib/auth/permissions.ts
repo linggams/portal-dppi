@@ -1,17 +1,10 @@
-import type { AppUserLevel } from "@/lib/auth/user-level"
 import {
   resolveCapabilities,
   SYSTEM_ROLE_HOME_PATH,
   type AccessPrincipal,
 } from "@/lib/auth/capabilities"
 
-export type { AccessPrincipal, RoleCapabilities } from "@/lib/auth/capabilities"
-
 type AccessInput = string | AccessPrincipal
-
-export function isAdministrator(input: AccessInput): boolean {
-  return resolveCapabilities(input).platform
-}
 
 export function isClientUser(input: AccessInput): boolean {
   const caps = resolveCapabilities(input)
@@ -21,11 +14,6 @@ export function isClientUser(input: AccessInput): boolean {
     !caps.purchasingMaster &&
     !caps.platform
   )
-}
-
-export function isItSupport(input: AccessInput): boolean {
-  const caps = resolveCapabilities(input)
-  return caps.itStaff && !caps.platform
 }
 
 export function canAccessPlatform(input: AccessInput): boolean {
@@ -62,15 +50,20 @@ export function getDefaultHomePath(input: AccessInput): string {
     return input.homePath
   }
 
-  if (canAccessPlatform(input)) {
+  const caps = resolveCapabilities(input)
+  if (caps.platform) {
     return SYSTEM_ROLE_HOME_PATH.administrator
   }
+  if (caps.purchasingUser) return "/purchasing/user/dashboard"
+  if (caps.itUser) return "/it/user/tiket"
+  if (caps.danaUser) return "/dana/user/pengajuan"
+  if (caps.mobilUser) return "/mobil/user/laporan"
 
   return SYSTEM_ROLE_HOME_PATH.user
 }
 
 export function canAccessDanaUser(input: AccessInput): boolean {
-  return resolveCapabilities(input).purchasingUser
+  return resolveCapabilities(input).danaUser
 }
 
 export function canHandleDanaWorkflow(input: AccessInput): boolean {
@@ -80,6 +73,18 @@ export function canHandleDanaWorkflow(input: AccessInput): boolean {
 /** Baca pengajuan dana: pemohon (user) atau pengelola modul dana. */
 export function canAccessDana(input: AccessInput): boolean {
   return canAccessDanaUser(input) || canHandleDanaWorkflow(input)
+}
+
+export function canAccessMobilUser(input: AccessInput): boolean {
+  return resolveCapabilities(input).mobilUser
+}
+
+export function canHandleMobilWorkflow(input: AccessInput): boolean {
+  return resolveCapabilities(input).mobilWorkflow
+}
+
+export function canAccessMobil(input: AccessInput): boolean {
+  return canAccessMobilUser(input) || canHandleMobilWorkflow(input)
 }
 
 export function canAccessUiPath(input: AccessInput, pathname: string): boolean {
@@ -111,6 +116,14 @@ export function canAccessUiPath(input: AccessInput, pathname: string): boolean {
     return canHandleDanaWorkflow(input)
   }
 
+  if (pathname.startsWith("/mobil/user")) {
+    return canAccessMobil(input)
+  }
+
+  if (pathname.startsWith("/mobil/admin")) {
+    return canHandleMobilWorkflow(input)
+  }
+
   if (pathname === "/unauthorized") return true
 
   return false
@@ -120,6 +133,3 @@ export function shouldFetchPurchasingKategori(input: AccessInput): boolean {
   const caps = resolveCapabilities(input)
   return caps.purchasingUser || caps.purchasingMaster
 }
-
-/** @deprecated Gunakan AccessPrincipal; tetap ada untuk kompatibilitas level. */
-export type { AppUserLevel }

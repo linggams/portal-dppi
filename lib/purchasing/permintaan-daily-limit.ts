@@ -10,7 +10,6 @@ export {
   PERMINTAAN_DAILY_LIMIT_MESSAGE,
   getTodayDateWIB,
   parseDateOnly,
-  type PermintaanDailyLimitStatus,
 } from "./permintaan-daily-limit-types"
 
 export async function hasSubmittedPermintaanOnDate(

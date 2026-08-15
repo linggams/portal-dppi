@@ -22,6 +22,13 @@ import {
 } from "@/components/ui/select"
 import type { RoleListItem } from "@/lib/platform/role-types"
 import {
+  ALL_APPLICANT_MODULES,
+  APPLICANT_MODULE_OPTIONS,
+  EMPTY_APPLICANT_MODULES,
+  hasAnyApplicantModule,
+  type ApplicantModules,
+} from "@/lib/auth/applicant-modules"
+import {
   ALL_MANAGER_MODULES,
   EMPTY_MANAGER_MODULES,
   MANAGER_MODULE_OPTIONS,
@@ -43,6 +50,7 @@ const initialFormData: UserFormData = {
   roleId: "",
   jabatan: "",
   modules: EMPTY_MANAGER_MODULES,
+  accessModules: EMPTY_APPLICANT_MODULES,
 }
 
 function modulesFromUser(user: User): ManagerModules {
@@ -50,6 +58,16 @@ function modulesFromUser(user: User): ManagerModules {
     managePurchasing: Boolean(user.managePurchasing),
     manageIt: Boolean(user.manageIt),
     manageDana: Boolean(user.manageDana),
+    manageMobil: Boolean(user.manageMobil),
+  }
+}
+
+function accessModulesFromUser(user: User): ApplicantModules {
+  return {
+    accessPurchasing: Boolean(user.accessPurchasing),
+    accessIt: Boolean(user.accessIt),
+    accessDana: Boolean(user.accessDana),
+    accessMobil: Boolean(user.accessMobil),
   }
 }
 
@@ -78,6 +96,7 @@ export function UserFormDialog({
         roleId: editingUser.roleId,
         jabatan: editingUser.jabatan,
         modules: modulesFromUser(editingUser),
+        accessModules: accessModulesFromUser(editingUser),
       })
     } else {
       setFormData(initialFormData)
@@ -86,10 +105,12 @@ export function UserFormDialog({
 
   const selectedRole = roles.find((role) => role.idRole === formData.roleId)
   const isPengelola = Boolean(selectedRole?.capabilities.platform)
+  const isPemohon = Boolean(selectedRole) && !isPengelola
   const canSubmit =
     Boolean(formData.roleId) &&
     (Boolean(editingUser) || Boolean(formData.password)) &&
-    (!isPengelola || hasAnyManagerModule(formData.modules))
+    (!isPengelola || hasAnyManagerModule(formData.modules)) &&
+    (!isPemohon || hasAnyApplicantModule(formData.accessModules))
 
   const handleRoleChange = (value: string) => {
     const roleId = Number(value)
@@ -99,6 +120,9 @@ export function UserFormDialog({
       ...formData,
       roleId,
       modules: nextPengelola ? ALL_MANAGER_MODULES : EMPTY_MANAGER_MODULES,
+      accessModules: nextPengelola
+        ? EMPTY_APPLICANT_MODULES
+        : ALL_APPLICANT_MODULES,
     })
   }
 
@@ -106,6 +130,16 @@ export function UserFormDialog({
     setFormData({
       ...formData,
       modules: { ...formData.modules, [key]: checked },
+    })
+  }
+
+  const handleAccessModuleChange = (
+    key: keyof ApplicantModules,
+    checked: boolean
+  ) => {
+    setFormData({
+      ...formData,
+      accessModules: { ...formData.accessModules, [key]: checked },
     })
   }
 
@@ -216,6 +250,42 @@ export function UserFormDialog({
                   ))}
                 </div>
                 {!hasAnyManagerModule(formData.modules) ? (
+                  <p className="text-xs text-destructive">
+                    Pilih minimal satu modul.
+                  </p>
+                ) : null}
+              </div>
+            ) : null}
+            {isPemohon ? (
+              <div className="grid gap-2">
+                <Label>Akses modul</Label>
+                <div className="rounded-md border p-3 space-y-3">
+                  {APPLICANT_MODULE_OPTIONS.map((option) => (
+                    <label
+                      key={option.key}
+                      htmlFor={option.key}
+                      className="flex items-start gap-3 cursor-pointer"
+                    >
+                      <Checkbox
+                        id={option.key}
+                        checked={Boolean(formData.accessModules[option.key])}
+                        onCheckedChange={(checked) =>
+                          handleAccessModuleChange(option.key, checked === true)
+                        }
+                        className="mt-0.5"
+                      />
+                      <span className="grid gap-0.5">
+                        <span className="text-sm font-medium leading-none">
+                          {option.label}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          {option.description}
+                        </span>
+                      </span>
+                    </label>
+                  ))}
+                </div>
+                {!hasAnyApplicantModule(formData.accessModules) ? (
                   <p className="text-xs text-destructive">
                     Pilih minimal satu modul.
                   </p>

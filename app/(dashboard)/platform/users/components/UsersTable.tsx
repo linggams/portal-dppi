@@ -13,6 +13,7 @@ import { TableContainer } from "@/components/ui/table-container"
 import { TableEmptyState } from "@/components/ui/table-empty-state"
 import { Badge } from "@/components/ui/badge"
 import { MANAGER_MODULE_OPTIONS } from "@/lib/auth/manager-modules"
+import { APPLICANT_MODULE_OPTIONS } from "@/lib/auth/applicant-modules"
 import type { User } from "../types"
 import {
   TableActionButton,
@@ -60,6 +61,16 @@ export function UsersTable({ data, onEdit, onDelete }: UsersTableProps) {
                   {user.role?.code === "administrator" ? (
                     <div className="flex flex-wrap gap-1">
                       {MANAGER_MODULE_OPTIONS.filter(
+                        (option) => user[option.key]
+                      ).map((option) => (
+                        <Badge key={option.key} variant="outline">
+                          {option.label}
+                        </Badge>
+                      ))}
+                    </div>
+                  ) : user.role?.code === "user" ? (
+                    <div className="flex flex-wrap gap-1">
+                      {APPLICANT_MODULE_OPTIONS.filter(
                         (option) => user[option.key]
                       ).map((option) => (
                         <Badge key={option.key} variant="outline">

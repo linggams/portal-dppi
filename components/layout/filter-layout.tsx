@@ -156,6 +156,3 @@ export function CompactSummaryGrid({
     </Card>
   )
 }
-
-/** @deprecated Gunakan CompactSummaryGrid — dipertahankan untuk kompatibilitas impor */
-export const SUMMARY_GRID_CLASS = "flex flex-wrap items-baseline gap-x-4 gap-y-2"

@@ -18,6 +18,8 @@ Next.js App Router + PostgreSQL + Prisma + NextAuth + shadcn/ui.
 | IT user | `/it/user/*` | `/api/it/*` | `it_*` |
 | Pengajuan Dana admin | `/dana/admin/*` | `/api/dana/*` | `dana_*` |
 | Pengajuan Dana user | `/dana/user/*` | `/api/dana/*` | `dana_*` |
+| Penggunaan Mobil admin | `/mobil/admin/*` | `/api/mobil/*` | `mobil_*` |
+| Penggunaan Mobil user | `/mobil/user/*` | `/api/mobil/*` | `mobil_*` |
 
 Permission: `lib/auth/permissions.ts`. Arsitektur: `docs/architecture.md`.
 
