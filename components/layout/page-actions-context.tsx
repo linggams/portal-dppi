@@ -43,14 +43,14 @@ function usePageActionsContext() {
   return context
 }
 
-/** Bar aksi di bawah header; lebar penuh dengan border seperti header. */
+/** Bar aksi di bawah header; sticky, lebar penuh dengan border seperti header. */
 export function PageActionsBar() {
   const { actions } = usePageActionsContext()
   if (!actions) return null
 
   return (
-    <div className="shrink-0 border-b bg-background">
-      <div className="flex flex-wrap items-center justify-end gap-2 px-4 py-3 sm:px-6 lg:px-8">
+    <div className="sticky top-0 z-30 shrink-0 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="flex flex-wrap items-center justify-end gap-2 px-4 py-1.5">
         {actions}
       </div>
     </div>

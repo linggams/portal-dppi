@@ -21,6 +21,21 @@ Permission terpusat: `lib/auth/permissions.ts` + `lib/auth/capabilities.ts`
 
 Kolom `user.level` tetap diisi sebagai kompatibilitas (`user` / `administrator`).
 
+## Struktur folder (ringkas)
+
+```
+app/           # Next.js App Router (UI + API)
+components/    # UI reusable (layout, ui, domain)
+lib/           # server/shared logic per domain + shared/
+  auth/ db/ purchasing/ it/ dana/ mobil/ platform/ shared/
+prisma/        # schema + migrations Prisma
+  scripts/legacy/  # SQL one-off (bukan migrate)
+docs/          # SETUP, SERVICE-PM2, architecture
+scripts/       # PM2 bat helpers
+hooks/         # React hooks (shadcn)
+types/         # ambient TypeScript declarations
+```
+
 ## Redirect legacy
 
 URL lama (`/admin/*`, `/user/*`, `/it/dashboard`, dll.) di-redirect otomatis via `middleware.ts`.

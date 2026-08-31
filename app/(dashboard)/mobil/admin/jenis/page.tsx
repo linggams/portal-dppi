@@ -25,15 +25,21 @@ import {
 } from "@/components/ui/table"
 import { TableContainer } from "@/components/ui/table-container"
 import { TableEmptyState } from "@/components/ui/table-empty-state"
+import { TablePagination } from "@/components/ui/table-pagination"
 import {
   TableActionButton,
   TableActions,
 } from "@/components/ui/table-actions"
+import { DEFAULT_PAGE_SIZE, readPaginatedJson } from "@/lib/shared/pagination"
 import type { MobilJenis } from "@/lib/mobil/mobil-types"
 
 export default function MobilJenisPage() {
   const [rows, setRows] = useState<MobilJenis[]>([])
   const [loading, setLoading] = useState(true)
+  const [page, setPage] = useState(1)
+  const [total, setTotal] = useState(0)
+  const [totalPages, setTotalPages] = useState(1)
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE)
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState<MobilJenis | null>(null)
   const [nama, setNama] = useState("")
@@ -43,16 +49,24 @@ export default function MobilJenisPage() {
   const fetchRows = useCallback(async () => {
     setLoading(true)
     try {
-      const res = await fetch("/api/mobil/jenis")
+      const params = new URLSearchParams()
+      params.set("page", String(page))
+      const res = await fetch(`/api/mobil/jenis?${params.toString()}`)
       if (!res.ok) throw new Error("Gagal memuat jenis")
-      setRows(await res.json())
+      const result = readPaginatedJson<MobilJenis>(await res.json())
+      setRows(result.data)
+      setTotal(result.total)
+      setTotalPages(result.totalPages)
+      setPageSize(result.pageSize)
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Gagal memuat")
       setRows([])
+      setTotal(0)
+      setTotalPages(1)
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [page])
 
   useEffect(() => {
     fetchRows()
@@ -126,44 +140,54 @@ export default function MobilJenisPage() {
           ))}
         </div>
       ) : (
-        <TableContainer>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Nama</TableHead>
-                <TableHead>Keterangan</TableHead>
-                <TableHead className="text-right">Aksi</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {rows.length === 0 ? (
-                <TableEmptyState colSpan={3} title="Belum ada jenis kendaraan" />
-              ) : (
-                rows.map((row) => (
-                  <TableRow key={row.idJenis}>
-                    <TableCell className="font-medium">{row.nama}</TableCell>
-                    <TableCell>{row.keterangan || "—"}</TableCell>
-                    <TableCell className="text-right">
-                      <TableActions>
-                        <TableActionButton
-                          label="Edit"
-                          icon={Pencil}
-                          onClick={() => openEdit(row)}
-                        />
-                        <TableActionButton
-                          label="Hapus"
-                          icon={Trash2}
-                          className="text-destructive hover:text-destructive"
-                          onClick={() => handleDelete(row)}
-                        />
-                      </TableActions>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
+        <div className="space-y-4">
+          <TableContainer>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nama</TableHead>
+                  <TableHead>Keterangan</TableHead>
+                  <TableHead className="text-right">Aksi</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {rows.length === 0 ? (
+                  <TableEmptyState colSpan={3} title="Belum ada jenis kendaraan" />
+                ) : (
+                  rows.map((row) => (
+                    <TableRow key={row.idJenis}>
+                      <TableCell className="font-medium">{row.nama}</TableCell>
+                      <TableCell>{row.keterangan || "—"}</TableCell>
+                      <TableCell className="text-right">
+                        <TableActions>
+                          <TableActionButton
+                            label="Edit"
+                            icon={Pencil}
+                            onClick={() => openEdit(row)}
+                          />
+                          <TableActionButton
+                            label="Hapus"
+                            icon={Trash2}
+                            className="text-destructive hover:text-destructive"
+                            onClick={() => handleDelete(row)}
+                          />
+                        </TableActions>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+          <TablePagination
+            page={page}
+            totalPages={totalPages}
+            total={total}
+            pageSize={pageSize}
+            onPageChange={setPage}
+            itemLabel="jenis"
+          />
+        </div>
       )}
 
       <Dialog open={open} onOpenChange={setOpen}>

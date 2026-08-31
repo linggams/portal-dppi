@@ -17,4 +17,3 @@ export function downloadPdf(docDefinition: any, filename: string) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   ;(pdfMake as any).createPdf(docDefinition).download(filename)
 }
-

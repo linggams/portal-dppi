@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from "next/server"
 import { getSessionFromRequest } from "@/lib/get-session"
 import { canManagePurchasingMaster } from "@/lib/auth/permissions"
 import { prisma } from "@/lib/db/prisma"
+import {
+  paginateArray,
+  parsePaginationParams,
+} from "@/lib/shared/pagination"
 
 // GET - Laporan pemasukan (only for admin)
 export async function GET(request: NextRequest) {
@@ -19,6 +23,7 @@ export async function GET(request: NextRequest) {
     const startDate = searchParams.get("start_date")
     const endDate = searchParams.get("end_date")
     const unit = searchParams.get("unit")
+    const { page, pageSize } = parsePaginationParams(searchParams)
 
     const where: {
       tglMasuk?: {
@@ -57,15 +62,16 @@ export async function GET(request: NextRequest) {
       },
     })
 
-    // Calculate summary
     const totalJumlah = pemasukan.reduce(
       (sum: number, item) => sum + item.jumlah,
       0
     )
     const totalItems = pemasukan.length
 
+    const paginated = paginateArray(pemasukan, page, pageSize)
+
     return NextResponse.json({
-      data: pemasukan,
+      ...paginated,
       summary: {
         totalJumlah,
         totalItems,

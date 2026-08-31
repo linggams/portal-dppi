@@ -1,9 +1,13 @@
-﻿import { NextRequest, NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
 import { getSessionFromRequest } from "@/lib/get-session"
 import { prisma } from "@/lib/db/prisma"
 import { canAccessItUser } from "@/lib/auth/permissions"
 import { canManageItTiket } from "@/lib/it/constants"
 import { generateNomorTiket } from "@/lib/it/nomor"
+import {
+  parsePaginationParams,
+  toPaginatedResult,
+} from "@/lib/shared/pagination"
 import { z } from "zod"
 
 const createSchema = z.object({
@@ -22,6 +26,7 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams
     const status = searchParams.get("status")
     const mine = searchParams.get("mine") === "true"
+    const { page, pageSize, skip } = parsePaginationParams(searchParams)
 
     const where: {
       status?: number
@@ -43,13 +48,18 @@ export async function GET(request: NextRequest) {
       where.username = session.user.username
     }
 
-    const tiket = await prisma.itTiket.findMany({
-      where,
-      include: { kategori: true },
-      orderBy: [{ status: "asc" }, { tglDibuat: "desc" }],
-    })
+    const [total, tiket] = await Promise.all([
+      prisma.itTiket.count({ where }),
+      prisma.itTiket.findMany({
+        where,
+        include: { kategori: true },
+        orderBy: [{ status: "asc" }, { tglDibuat: "desc" }],
+        skip,
+        take: pageSize,
+      }),
+    ])
 
-    return NextResponse.json(tiket)
+    return NextResponse.json(toPaginatedResult(tiket, total, page, pageSize))
   } catch (error) {
     console.error("Error fetching it tiket:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })

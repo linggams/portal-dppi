@@ -1,6 +1,6 @@
 import { getMonthToDateRangeWIB } from "@/lib/purchasing/permintaan-daily-limit-types"
 
-export const PENGAJUAN_GROUP_PAGE_SIZE = 20
+export const PENGAJUAN_GROUP_PAGE_SIZE = 15
 
 export interface PengajuanGroupFilters {
   startDate: string

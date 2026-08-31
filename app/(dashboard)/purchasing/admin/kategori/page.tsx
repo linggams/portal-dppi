@@ -4,6 +4,7 @@ import { useState } from "react"
 import { PageActions } from "@/components/layout"
 import { DashboardLayout } from "@/components/layout/DashboardLayout"
 import { Skeleton } from "@/components/ui/skeleton"
+import { TablePagination } from "@/components/ui/table-pagination"
 import { useKategori } from "./hooks/useKategori"
 import {
   KategoriTable,
@@ -13,7 +14,17 @@ import {
 import type { Kategori } from "./types"
 
 export default function KategoriPage() {
-  const { kategori, loading, addKategori, deleteKategori } = useKategori()
+  const {
+    kategori,
+    loading,
+    page,
+    setPage,
+    total,
+    totalPages,
+    pageSize,
+    addKategori,
+    deleteKategori,
+  } = useKategori()
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [kategoriToDelete, setKategoriToDelete] = useState<Kategori | null>(null)
 
@@ -42,7 +53,17 @@ export default function KategoriPage() {
       </PageActions>
 
       <div className="space-y-6">
-        <KategoriTable data={kategori} onDelete={handleDeleteClick} />
+        <div className="space-y-4">
+          <KategoriTable data={kategori} onDelete={handleDeleteClick} />
+          <TablePagination
+            page={page}
+            totalPages={totalPages}
+            total={total}
+            pageSize={pageSize}
+            onPageChange={setPage}
+            itemLabel="kategori"
+          />
+        </div>
 
         <DeleteKategoriDialog
           item={kategoriToDelete}

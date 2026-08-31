@@ -3,13 +3,14 @@
 import * as React from "react"
 import Link from "next/link"
 import type { LucideIcon } from "lucide-react"
-import { Loader2 } from "lucide-react"
+import { Loader2, MoreHorizontal } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip"
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { cn } from "@/lib/utils"
 
 export function TableActions({
@@ -19,18 +20,40 @@ export function TableActions({
   className?: string
   children: React.ReactNode
 }) {
+  const items = React.Children.toArray(children).filter(Boolean)
+  if (items.length === 0) return null
+
   return (
-    <div className={cn("flex justify-end gap-1", className)}>{children}</div>
+    <div className={cn("flex justify-end", className)}>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            aria-label="Aksi"
+            className="size-6 text-muted-foreground hover:text-foreground [&_svg]:size-3.5"
+          >
+            <MoreHorizontal />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="min-w-[10rem]">
+          {items}
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
   )
 }
 
-type TableActionButtonProps = Omit<
-  React.ComponentProps<typeof Button>,
-  "size" | "children"
-> & {
+type TableActionButtonProps = {
   label: string
-  icon: LucideIcon
+  icon?: LucideIcon
   loading?: boolean
+  disabled?: boolean
+  className?: string
+  /** Diabaikan — kompatibilitas pemakaian lama berbasis Button. */
+  variant?: string
+  onClick?: (event: Event) => void
 }
 
 export function TableActionButton({
@@ -38,29 +61,34 @@ export function TableActionButton({
   icon: Icon,
   loading = false,
   className,
-  variant = "ghost",
-  ...props
+  disabled,
+  onClick,
+  variant,
 }: TableActionButtonProps) {
+  const isDestructive =
+    variant === "destructive" ||
+    className?.includes("text-destructive") === true
+
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <Button
-          type="button"
-          variant={variant}
-          size="icon-sm"
-          aria-label={label}
-          className={className}
-          {...props}
-        >
-          {loading ? (
-            <Loader2 className="size-4 animate-spin" />
-          ) : (
-            <Icon className="size-4" />
-          )}
-        </Button>
-      </TooltipTrigger>
-      <TooltipContent side="top">{label}</TooltipContent>
-    </Tooltip>
+    <DropdownMenuItem
+      variant={isDestructive ? "destructive" : "default"}
+      disabled={disabled || loading}
+      className={className}
+      onSelect={(event) => {
+        if (disabled || loading) {
+          event.preventDefault()
+          return
+        }
+        onClick?.(event)
+      }}
+    >
+      {loading ? (
+        <Loader2 className="size-4 animate-spin" />
+      ) : Icon ? (
+        <Icon className="size-4" />
+      ) : null}
+      {label}
+    </DropdownMenuItem>
   )
 }
 
@@ -69,7 +97,7 @@ type TableActionLinkProps = Omit<
   "children"
 > & {
   label: string
-  icon: LucideIcon
+  icon?: LucideIcon
   buttonClassName?: string
 }
 
@@ -81,21 +109,11 @@ export function TableActionLink({
   ...props
 }: TableActionLinkProps) {
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-sm"
-          className={buttonClassName}
-          asChild
-        >
-          <Link aria-label={label} className={className} {...props}>
-            <Icon className="size-4" />
-          </Link>
-        </Button>
-      </TooltipTrigger>
-      <TooltipContent side="top">{label}</TooltipContent>
-    </Tooltip>
+    <DropdownMenuItem asChild className={buttonClassName}>
+      <Link className={cn("cursor-pointer", className)} {...props}>
+        {Icon ? <Icon className="size-4" /> : null}
+        {label}
+      </Link>
+    </DropdownMenuItem>
   )
 }

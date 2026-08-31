@@ -10,6 +10,10 @@ import {
   toDanaLaporanRow,
   type DanaLaporanTab,
 } from "@/lib/dana/laporan"
+import {
+  paginateArray,
+  parsePaginationParams,
+} from "@/lib/shared/pagination"
 
 export async function GET(request: NextRequest) {
   try {
@@ -20,6 +24,7 @@ export async function GET(request: NextRequest) {
 
     const searchParams = request.nextUrl.searchParams
     const tab = (searchParams.get("tab") ?? "daftar") as DanaLaporanTab
+    const { page, pageSize } = parsePaginationParams(searchParams)
     const where = buildDanaLaporanWhere({
       startDate: searchParams.get("start_date"),
       endDate: searchParams.get("end_date"),
@@ -35,12 +40,14 @@ export async function GET(request: NextRequest) {
     const hydrated = await attachKembalian(rows)
     const summary = computeDanaLaporanSummary(hydrated)
 
-    const data =
+    const list: unknown[] =
       tab === "jabatan"
         ? aggregateDanaByJabatan(hydrated)
         : hydrated.map(toDanaLaporanRow)
 
-    return NextResponse.json({ data, summary, tab })
+    const paginated = paginateArray(list, page, pageSize)
+
+    return NextResponse.json({ ...paginated, summary, tab })
   } catch (error) {
     console.error("Error fetching laporan dana:", error)
     return NextResponse.json(

@@ -2,18 +2,31 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { toast } from "sonner"
+import { DEFAULT_PAGE_SIZE, readPaginatedJson } from "@/lib/shared/pagination"
 import type { Kategori, KategoriFormData } from "../types"
 
 export function useKategori() {
   const [kategori, setKategori] = useState<Kategori[]>([])
   const [loading, setLoading] = useState(true)
+  const [page, setPage] = useState(1)
+  const [total, setTotal] = useState(0)
+  const [totalPages, setTotalPages] = useState(1)
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE)
 
   const fetchKategori = useCallback(async () => {
+    setLoading(true)
     try {
-      const response = await fetch("/api/purchasing/jenis-barang")
+      const params = new URLSearchParams()
+      params.set("page", String(page))
+      const response = await fetch(
+        `/api/purchasing/jenis-barang?${params.toString()}`
+      )
       if (response.ok) {
-        const data = await response.json()
-        setKategori(data)
+        const result = readPaginatedJson<Kategori>(await response.json())
+        setKategori(result.data)
+        setTotal(result.total)
+        setTotalPages(result.totalPages)
+        setPageSize(result.pageSize)
       } else {
         toast.error("Gagal memuat data kategori")
       }
@@ -22,7 +35,7 @@ export function useKategori() {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [page])
 
   useEffect(() => {
     fetchKategori()
@@ -62,5 +75,16 @@ export function useKategori() {
     return false
   }
 
-  return { kategori, loading, fetchKategori, addKategori, deleteKategori }
+  return {
+    kategori,
+    loading,
+    page,
+    setPage,
+    total,
+    totalPages,
+    pageSize,
+    fetchKategori,
+    addKategori,
+    deleteKategori,
+  }
 }

@@ -1,9 +1,14 @@
-﻿"use client"
+"use client"
 
 import { useState, useEffect, useCallback } from "react"
 import { useSearchParams } from "next/navigation"
 import { toast } from "sonner"
-import { downloadPdf } from "@/lib/makepdf"
+import { downloadPdf } from "@/lib/shared/makepdf"
+import {
+  DEFAULT_PAGE_SIZE,
+  MAX_PAGE_SIZE,
+  readPaginatedJson,
+} from "@/lib/shared/pagination"
 import type { StokBarang, JenisBarang, StokFormData } from "../types"
 
 export function useStok() {
@@ -13,13 +18,21 @@ export function useStok() {
   const [stokBarang, setStokBarang] = useState<StokBarang[]>([])
   const [jenisBarang, setJenisBarang] = useState<JenisBarang[]>([])
   const [loading, setLoading] = useState(true)
+  const [page, setPage] = useState(1)
+  const [total, setTotal] = useState(0)
+  const [totalPages, setTotalPages] = useState(1)
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE)
+
+  useEffect(() => {
+    setPage(1)
+  }, [jenisParam])
 
   const fetchJenisBarang = useCallback(async () => {
     try {
       const response = await fetch("/api/purchasing/jenis-barang")
       if (response.ok) {
         const data = await response.json()
-        setJenisBarang(data)
+        setJenisBarang(Array.isArray(data) ? data : [])
       } else {
         toast.error("Gagal memuat data jenis barang")
       }
@@ -31,10 +44,16 @@ export function useStok() {
   const fetchStokBarang = useCallback(async () => {
     setLoading(true)
     try {
-      const response = await fetch(`/api/purchasing/stok?id_jenis=${jenisParam}`)
+      const params = new URLSearchParams()
+      params.set("id_jenis", jenisParam)
+      params.set("page", String(page))
+      const response = await fetch(`/api/purchasing/stok?${params.toString()}`)
       if (response.ok) {
-        const data = await response.json()
-        setStokBarang(data)
+        const result = readPaginatedJson<StokBarang>(await response.json())
+        setStokBarang(result.data)
+        setTotal(result.total)
+        setTotalPages(result.totalPages)
+        setPageSize(result.pageSize)
       } else {
         toast.error("Gagal memuat data stok barang")
       }
@@ -43,7 +62,7 @@ export function useStok() {
     } finally {
       setLoading(false)
     }
-  }, [jenisParam])
+  }, [jenisParam, page])
 
   useEffect(() => {
     fetchJenisBarang()
@@ -116,7 +135,19 @@ export function useStok() {
 
   const downloadPDF = async () => {
     try {
-      if (!stokBarang.length) {
+      const params = new URLSearchParams()
+      params.set("id_jenis", jenisParam)
+      params.set("page", "1")
+      params.set("page_size", String(MAX_PAGE_SIZE))
+      const response = await fetch(`/api/purchasing/stok?${params.toString()}`)
+      if (!response.ok) {
+        toast.error("Gagal memuat data untuk PDF")
+        return
+      }
+      const result = readPaginatedJson<StokBarang>(await response.json())
+      const exportRows = result.data
+
+      if (!exportRows.length) {
         toast.error("Tidak ada data untuk diexport")
         return
       }
@@ -137,7 +168,7 @@ export function useStok() {
           { text: "Keluar", style: "tableHeader" },
           { text: "Sisa", style: "tableHeader" },
         ],
-        ...stokBarang.map((item, index) => [
+        ...exportRows.map((item, index) => [
           { text: String(index + 1), alignment: "center" },
           { text: item.kodeBrg },
           { text: item.namaBrg },
@@ -227,6 +258,11 @@ export function useStok() {
     jenisBarang,
     loading,
     jenisParam,
+    page,
+    setPage,
+    total,
+    totalPages,
+    pageSize,
     fetchNextKode,
     saveStok,
     deleteStok,

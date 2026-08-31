@@ -1,6 +1,6 @@
 ﻿"use client"
 
-import { DashboardLayout, FilterSummaryPanel } from "@/components/layout"
+import { DashboardLayout, PageActions } from "@/components/layout"
 import { Button } from "@/components/ui/button"
 import { usePengajuanGroups } from "./hooks/usePengajuanGroups"
 import {
@@ -31,22 +31,19 @@ export default function DataPengajuanPage() {
 
   return (
     <DashboardLayout title="Data Pengajuan Barang">
-      <div className="space-y-4">
-        <FilterSummaryPanel
-          filter={
-            <PengajuanGroupFilters
-              filters={filters}
-              onFiltersChange={setFilters}
-              onApply={handleApplyFilters}
-              onReset={handleResetFilters}
-            />
-          }
-          summary={
-            !loading && summary.total > 0 ? (
-              <PengajuanGroupSummary summary={summary} />
-            ) : undefined
-          }
+      <PageActions>
+        <PengajuanGroupFilters
+          filters={filters}
+          onFiltersChange={setFilters}
+          onApply={handleApplyFilters}
+          onReset={handleResetFilters}
         />
+      </PageActions>
+
+      <div className="space-y-4">
+        {!loading && summary.total > 0 ? (
+          <PengajuanGroupSummary summary={summary} />
+        ) : null}
 
         {loading ? (
           <PengajuanGroupSkeleton />
@@ -58,7 +55,6 @@ export default function DataPengajuanPage() {
             </p>
             <Button
               variant="outline"
-              size="sm"
               className="mt-4"
               onClick={handleResetFilters}
             >

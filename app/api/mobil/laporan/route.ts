@@ -5,6 +5,10 @@ import { prisma } from "@/lib/db/prisma"
 import { parseDateOnly, toMobilLaporan } from "@/lib/mobil/map"
 import { parseJamHm } from "@/lib/mobil/time"
 import { deleteMobilBukti, saveMobilBuktiJpg } from "@/lib/mobil/upload"
+import {
+  parsePaginationParams,
+  toPaginatedResult,
+} from "@/lib/shared/pagination"
 
 const includeLaporan = {
   kendaraan: {
@@ -116,13 +120,50 @@ export async function GET(request: NextRequest) {
       ]
     }
 
-    const rows = await prisma.mobilLaporanKm.findMany({
-      where,
-      include: includeLaporan,
-      orderBy: [{ tanggal: "desc" }, { idLaporan: "desc" }],
-    })
+    const { page, pageSize, skip } = parsePaginationParams(params)
 
-    return NextResponse.json(rows.map(toMobilLaporan))
+    const [total, rows, summaryRows] = await Promise.all([
+      prisma.mobilLaporanKm.count({ where }),
+      prisma.mobilLaporanKm.findMany({
+        where,
+        include: includeLaporan,
+        orderBy: [{ tanggal: "desc" }, { idLaporan: "desc" }],
+        skip,
+        take: pageSize,
+      }),
+      prisma.mobilLaporanKm.findMany({
+        where,
+        select: {
+          kmAwal: true,
+          kmAkhir: true,
+          uangJalan: true,
+          perjalanan: { select: { tol: true } },
+        },
+      }),
+    ])
+
+    const summary = {
+      total,
+      totalPemakaian: summaryRows.reduce(
+        (sum, r) => sum + Math.max(0, r.kmAkhir - r.kmAwal),
+        0
+      ),
+      totalTrip: summaryRows.reduce((sum, r) => sum + r.perjalanan.length, 0),
+      totalUangJalan: summaryRows.reduce((sum, r) => sum + (r.uangJalan ?? 0), 0),
+      totalBiayaPerjalanan: summaryRows.reduce(
+        (sum, r) => sum + r.perjalanan.reduce((s, t) => s + t.tol, 0),
+        0
+      ),
+      totalBalance: summaryRows.reduce((sum, r) => {
+        const tol = r.perjalanan.reduce((s, t) => s + t.tol, 0)
+        return sum + ((r.uangJalan ?? 0) - tol)
+      }, 0),
+    }
+
+    return NextResponse.json({
+      ...toPaginatedResult(rows.map(toMobilLaporan), total, page, pageSize),
+      summary,
+    })
   } catch (error) {
     console.error("Error fetching mobil laporan:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })

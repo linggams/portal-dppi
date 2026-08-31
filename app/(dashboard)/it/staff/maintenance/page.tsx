@@ -7,7 +7,6 @@ import { Eye } from "lucide-react"
 import {
   ContentEmpty,
   DashboardLayout,
-  FilterSummaryPanel,
   PageActions,
   PageSection,
 } from "@/components/layout"
@@ -24,7 +23,8 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { TableContainer } from "@/components/ui/table-container"
-import { TableActionLink } from "@/components/ui/table-actions"
+import { TablePagination } from "@/components/ui/table-pagination"
+import { TableActionLink, TableActions } from "@/components/ui/table-actions"
 import {
   formatDurasiMenit,
   getMaintenanceRowClassName,
@@ -66,6 +66,11 @@ export default function ItMaintenancePage() {
     kategoriData,
     teknisiData,
     summary,
+    page,
+    setPage,
+    total,
+    totalPages,
+    pageSize,
     fetchData,
     hasData,
   } = useItMaintenance()
@@ -80,6 +85,12 @@ export default function ItMaintenancePage() {
   return (
     <DashboardLayout title="Maintenance / Log Pekerjaan">
       <PageActions>
+        <ItMaintenanceFilters
+          filters={filters}
+          kategori={kategori}
+          onFiltersChange={setFilters}
+          onFetch={fetchData}
+        />
         <Button onClick={() => setFormOpen(true)}>Catat Pekerjaan</Button>
         <Button asChild variant="outline">
           <Link href="/it/staff/kategori">Kelola Kategori</Link>
@@ -87,27 +98,15 @@ export default function ItMaintenancePage() {
       </PageActions>
 
       <div className="space-y-4">
-        <FilterSummaryPanel
-          filter={
-            <ItMaintenanceFilters
-              filters={filters}
-              kategori={kategori}
-              onFiltersChange={setFilters}
-              onFetch={fetchData}
-            />
-          }
-          summary={
-            loading && !summary ? (
-              <div className="grid gap-2">
-                {Array.from({ length: 3 }).map((_, i) => (
-                  <Skeleton key={i} className="h-14" />
-                ))}
-              </div>
-            ) : (
-              <ItMaintenanceSummary summary={summary} />
-            )
-          }
-        />
+        {loading && !summary ? (
+          <div className="grid gap-2">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <Skeleton key={i} className="h-14" />
+            ))}
+          </div>
+        ) : (
+          <ItMaintenanceSummary summary={summary} />
+        )}
 
         <Tabs
           value={activeTab}
@@ -132,77 +131,88 @@ export default function ItMaintenancePage() {
                   description="Ubah filter atau catat pekerjaan manual"
                 />
               ) : (
-                <TableContainer>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Tanggal</TableHead>
-                        <TableHead>Teknisi</TableHead>
-                        <TableHead>Sumber</TableHead>
-                        <TableHead>Kategori</TableHead>
-                        <TableHead>Judul</TableHead>
-                        <TableHead>Lokasi</TableHead>
-                        <TableHead>Durasi</TableHead>
-                        <TableHead>Hasil</TableHead>
-                        <TableHead className="text-right">Aksi</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {listData.map((row) => {
-                        const href = detailHref(row)
-                        return (
-                          <TableRow
-                            key={row.id}
-                            className={getMaintenanceRowClassName(row.sumber)}
-                          >
-                            <TableCell className="whitespace-nowrap text-sm">
-                              {formatTiketDate(row.tglKerja)}
-                            </TableCell>
-                            <TableCell>{row.username}</TableCell>
-                            <TableCell>
-                              <MaintenanceSumberBadge sumber={row.sumber} />
-                            </TableCell>
-                            <TableCell>
-                              <Badge variant="outline">{row.kategoriNama}</Badge>
-                            </TableCell>
-                            <TableCell className="max-w-[240px]">
-                              <div className="flex flex-col gap-1">
-                                {row.sumber === "tiket" && row.nomorTiket ? (
-                                  <span className="font-mono text-xs text-blue-700 dark:text-blue-300">
-                                    {row.nomorTiket}
-                                  </span>
-                                ) : null}
-                                <span className="font-medium">{row.judul}</span>
-                                {row.jenisPekerjaan ? (
-                                  <Badge variant="secondary" className="w-fit text-[10px]">
-                                    {IT_JENIS_PEKERJAAN_LABEL[row.jenisPekerjaan] ??
-                                      row.jenisPekerjaan}
-                                  </Badge>
-                                ) : null}
-                              </div>
-                            </TableCell>
-                            <TableCell>{row.lokasi ?? "—"}</TableCell>
-                            <TableCell>{formatDurasiMenit(row.durasiMenit)}</TableCell>
-                            <TableCell>
-                              {IT_HASIL_PEKERJAAN_LABEL[row.hasil] ?? row.hasil}
-                            </TableCell>
-                            <TableCell className="text-right">
-                              {href ? (
-                                <TableActionLink
-                                  label="Detail"
-                                  icon={Eye}
-                                  href={href}
-                                />
-                              ) : (
-                                <span className="text-xs text-muted-foreground">—</span>
-                              )}
-                            </TableCell>
-                          </TableRow>
-                        )
-                      })}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
+                <div className="space-y-4">
+                  <TableContainer>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Tanggal</TableHead>
+                          <TableHead>Teknisi</TableHead>
+                          <TableHead>Sumber</TableHead>
+                          <TableHead>Kategori</TableHead>
+                          <TableHead>Judul</TableHead>
+                          <TableHead>Lokasi</TableHead>
+                          <TableHead>Durasi</TableHead>
+                          <TableHead>Hasil</TableHead>
+                          <TableHead className="text-right">Aksi</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {listData.map((row) => {
+                          const href = detailHref(row)
+                          return (
+                            <TableRow
+                              key={row.id}
+                              className={getMaintenanceRowClassName(row.sumber)}
+                            >
+                              <TableCell className="whitespace-nowrap text-sm">
+                                {formatTiketDate(row.tglKerja)}
+                              </TableCell>
+                              <TableCell>{row.username}</TableCell>
+                              <TableCell>
+                                <MaintenanceSumberBadge sumber={row.sumber} />
+                              </TableCell>
+                              <TableCell>
+                                <Badge variant="outline">{row.kategoriNama}</Badge>
+                              </TableCell>
+                              <TableCell className="max-w-[240px]">
+                                <div className="flex flex-col gap-1">
+                                  {row.sumber === "tiket" && row.nomorTiket ? (
+                                    <span className="font-mono text-xs text-blue-700 dark:text-blue-300">
+                                      {row.nomorTiket}
+                                    </span>
+                                  ) : null}
+                                  <span className="font-medium">{row.judul}</span>
+                                  {row.jenisPekerjaan ? (
+                                    <Badge variant="secondary" className="w-fit text-[10px]">
+                                      {IT_JENIS_PEKERJAAN_LABEL[row.jenisPekerjaan] ??
+                                        row.jenisPekerjaan}
+                                    </Badge>
+                                  ) : null}
+                                </div>
+                              </TableCell>
+                              <TableCell>{row.lokasi ?? "—"}</TableCell>
+                              <TableCell>{formatDurasiMenit(row.durasiMenit)}</TableCell>
+                              <TableCell>
+                                {IT_HASIL_PEKERJAAN_LABEL[row.hasil] ?? row.hasil}
+                              </TableCell>
+                              <TableCell className="text-right">
+                                {href ? (
+                                  <TableActions>
+                                    <TableActionLink
+                                      label="Detail"
+                                      icon={Eye}
+                                      href={href}
+                                    />
+                                  </TableActions>
+                                ) : (
+                                  <span className="text-xs text-muted-foreground">—</span>
+                                )}
+                              </TableCell>
+                            </TableRow>
+                          )
+                        })}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                  <TablePagination
+                    page={page}
+                    totalPages={totalPages}
+                    total={total}
+                    pageSize={pageSize}
+                    onPageChange={setPage}
+                  />
+                </div>
               )}
             </PageSection>
           </TabsContent>
@@ -214,42 +224,51 @@ export default function ItMaintenancePage() {
               ) : !hasData ? (
                 <ContentEmpty title="Tidak ada data" />
               ) : (
-                <TableContainer>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Kategori</TableHead>
-                        <TableHead>Total</TableHead>
-                        <TableHead>Dari tiket</TableHead>
-                        <TableHead>Manual</TableHead>
-                        <TableHead>Rata-rata durasi</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {kategoriData.map((k) => (
-                        <TableRow key={k.idKategori}>
-                          <TableCell className="font-medium">
-                            {k.kategoriNama}
-                          </TableCell>
-                          <TableCell>{k.total}</TableCell>
-                          <TableCell>
-                            <span className="font-medium text-blue-700 dark:text-blue-300">
-                              {k.dariTiket}
-                            </span>
-                          </TableCell>
-                          <TableCell>
-                            <span className="font-medium text-amber-800 dark:text-amber-200">
-                              {k.manual}
-                            </span>
-                          </TableCell>
-                          <TableCell>
-                            {formatDurasiMenit(k.rataRataMenit)}
-                          </TableCell>
+                <div className="space-y-4">
+                  <TableContainer>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Kategori</TableHead>
+                          <TableHead>Total</TableHead>
+                          <TableHead>Dari tiket</TableHead>
+                          <TableHead>Manual</TableHead>
+                          <TableHead>Rata-rata durasi</TableHead>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
+                      </TableHeader>
+                      <TableBody>
+                        {kategoriData.map((k) => (
+                          <TableRow key={k.idKategori}>
+                            <TableCell className="font-medium">
+                              {k.kategoriNama}
+                            </TableCell>
+                            <TableCell>{k.total}</TableCell>
+                            <TableCell>
+                              <span className="font-medium text-blue-700 dark:text-blue-300">
+                                {k.dariTiket}
+                              </span>
+                            </TableCell>
+                            <TableCell>
+                              <span className="font-medium text-amber-800 dark:text-amber-200">
+                                {k.manual}
+                              </span>
+                            </TableCell>
+                            <TableCell>
+                              {formatDurasiMenit(k.rataRataMenit)}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                  <TablePagination
+                    page={page}
+                    totalPages={totalPages}
+                    total={total}
+                    pageSize={pageSize}
+                    onPageChange={setPage}
+                  />
+                </div>
               )}
             </PageSection>
           </TabsContent>
@@ -261,40 +280,49 @@ export default function ItMaintenancePage() {
               ) : !hasData ? (
                 <ContentEmpty title="Tidak ada data" />
               ) : (
-                <TableContainer>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Teknisi</TableHead>
-                        <TableHead>Total</TableHead>
-                        <TableHead>Dari tiket</TableHead>
-                        <TableHead>Manual</TableHead>
-                        <TableHead>Rata-rata durasi</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {teknisiData.map((t) => (
-                        <TableRow key={t.username}>
-                          <TableCell className="font-medium">{t.username}</TableCell>
-                          <TableCell>{t.total}</TableCell>
-                          <TableCell>
-                            <span className="font-medium text-blue-700 dark:text-blue-300">
-                              {t.dariTiket}
-                            </span>
-                          </TableCell>
-                          <TableCell>
-                            <span className="font-medium text-amber-800 dark:text-amber-200">
-                              {t.manual}
-                            </span>
-                          </TableCell>
-                          <TableCell>
-                            {formatDurasiMenit(t.rataRataMenit)}
-                          </TableCell>
+                <div className="space-y-4">
+                  <TableContainer>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Teknisi</TableHead>
+                          <TableHead>Total</TableHead>
+                          <TableHead>Dari tiket</TableHead>
+                          <TableHead>Manual</TableHead>
+                          <TableHead>Rata-rata durasi</TableHead>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
+                      </TableHeader>
+                      <TableBody>
+                        {teknisiData.map((t) => (
+                          <TableRow key={t.username}>
+                            <TableCell className="font-medium">{t.username}</TableCell>
+                            <TableCell>{t.total}</TableCell>
+                            <TableCell>
+                              <span className="font-medium text-blue-700 dark:text-blue-300">
+                                {t.dariTiket}
+                              </span>
+                            </TableCell>
+                            <TableCell>
+                              <span className="font-medium text-amber-800 dark:text-amber-200">
+                                {t.manual}
+                              </span>
+                            </TableCell>
+                            <TableCell>
+                              {formatDurasiMenit(t.rataRataMenit)}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                  <TablePagination
+                    page={page}
+                    totalPages={totalPages}
+                    total={total}
+                    pageSize={pageSize}
+                    onPageChange={setPage}
+                  />
+                </div>
               )}
             </PageSection>
           </TabsContent>

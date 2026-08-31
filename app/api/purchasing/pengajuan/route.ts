@@ -5,6 +5,11 @@ import {
   isClientUser,
 } from "@/lib/auth/permissions"
 import { prisma } from "@/lib/db/prisma"
+import {
+  parsePaginationParams,
+  toPaginatedResult,
+  wantsPagination,
+} from "@/lib/shared/pagination"
 
 export async function GET(request: NextRequest) {
   try {
@@ -25,6 +30,7 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get("status")
     const unit = searchParams.get("unit")
     const tglPengajuan = searchParams.get("tgl_pengajuan")
+    const paginate = wantsPagination(searchParams)
 
     const where: {
       status?: number
@@ -41,9 +47,25 @@ export async function GET(request: NextRequest) {
       where.tglPengajuan = new Date(tglPengajuan)
     }
 
-    // If admin, can see all. If user, only their own
     if (isClientUser(session.user)) {
       where.unit = session.user.username
+    }
+
+    if (paginate) {
+      const { page, pageSize, skip } = parsePaginationParams(searchParams)
+      const [total, pengajuan] = await Promise.all([
+        prisma.pengajuan.count({ where }),
+        prisma.pengajuan.findMany({
+          where,
+          include: { stokbarang: true },
+          orderBy: { tglPengajuan: "desc" },
+          skip,
+          take: pageSize,
+        }),
+      ])
+      return NextResponse.json(
+        toPaginatedResult(pengajuan, total, page, pageSize)
+      )
     }
 
     const pengajuan = await prisma.pengajuan.findMany({

@@ -14,10 +14,15 @@ import type { StokBarang } from "../types"
 
 interface StokTableProps {
   stokBarang: StokBarang[]
+  rowOffset?: number
   formatRupiah: (value: string) => string
 }
 
-export function StokTable({ stokBarang, formatRupiah }: StokTableProps) {
+export function StokTable({
+  stokBarang,
+  rowOffset = 0,
+  formatRupiah,
+}: StokTableProps) {
   return (
     <TableContainer>
       <Table>
@@ -39,7 +44,7 @@ export function StokTable({ stokBarang, formatRupiah }: StokTableProps) {
           ) : (
             stokBarang.map((stok, index) => (
               <TableRow key={stok.idKodeBrg}>
-                <TableCell>{index + 1}</TableCell>
+                <TableCell>{rowOffset + index + 1}</TableCell>
                 <TableCell>{stok.kodeBrg}</TableCell>
                 <TableCell>{stok.namaBrg}</TableCell>
                 <TableCell>{formatRupiah(stok.hargabarang)}</TableCell>

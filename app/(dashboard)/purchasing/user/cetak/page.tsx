@@ -2,12 +2,9 @@
 
 import { DashboardLayout, PageActions } from "@/components/layout"
 import { Button } from "@/components/ui/button"
+import { DatePicker } from "@/components/ui/date-picker"
 import { useCetakBPP } from "./hooks/useCetakBPP"
-import {
-  CetakDateFilter,
-  CetakBPPCard,
-  CetakLoadingSkeleton,
-} from "./components"
+import { CetakBPPCard, CetakLoadingSkeleton } from "./components"
 
 export default function CetakBPPPage() {
   const {
@@ -28,9 +25,17 @@ export default function CetakBPPPage() {
   return (
     <DashboardLayout title="Cetak BPP">
       <PageActions>
-        <Button onClick={fetchPermintaan} disabled={loading}>
-          Tampilkan
-        </Button>
+        <div className="mr-auto flex min-w-0 flex-wrap items-center gap-2">
+          <DatePicker
+            className="w-[180px]"
+            value={selectedDate}
+            onChange={setSelectedDate}
+            placeholder="Tanggal permintaan"
+          />
+          <Button onClick={fetchPermintaan} disabled={loading}>
+            Tampilkan
+          </Button>
+        </div>
         {hasData ? (
           <>
             <Button variant="outline" onClick={handleExportAllPDF}>
@@ -44,11 +49,6 @@ export default function CetakBPPPage() {
       </PageActions>
 
       <div className="space-y-6">
-        <CetakDateFilter
-          selectedDate={selectedDate}
-          onDateChange={setSelectedDate}
-        />
-
         {loading ? (
           <CetakLoadingSkeleton />
         ) : !hasData ? (

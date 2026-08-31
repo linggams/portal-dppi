@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from "next/server"
 import { getSessionFromRequest } from "@/lib/get-session"
 import { canManagePurchasingMaster } from "@/lib/auth/permissions"
 import { prisma } from "@/lib/db/prisma"
+import {
+  parsePaginationParams,
+  toPaginatedResult,
+} from "@/lib/shared/pagination"
 import { z } from "zod"
 
 const stokSchema = z.object({
@@ -14,7 +18,7 @@ const stokSchema = z.object({
   keterangan: z.string().max(50).default(""),
 })
 
-// GET - List all stok barang (with optional filter by jenis)
+// GET - List stok barang (always paginated; optional filter by jenis)
 export async function GET(request: NextRequest) {
   try {
     const session = await getSessionFromRequest(request)
@@ -28,20 +32,26 @@ export async function GET(request: NextRequest) {
 
     const searchParams = request.nextUrl.searchParams
     const idJenis = searchParams.get("id_jenis")
+    const { page, pageSize, skip } = parsePaginationParams(searchParams)
 
-    const where: any = {}
+    const where: { idJenis?: number } = {}
     if (idJenis) {
       where.idJenis = parseInt(idJenis)
     }
 
-    const stokBarang = await prisma.stokbarang.findMany({
-      where,
-      orderBy: {
-        kodeBrg: "asc",
-      },
-    })
+    const [total, stokBarang] = await Promise.all([
+      prisma.stokbarang.count({ where }),
+      prisma.stokbarang.findMany({
+        where,
+        orderBy: { kodeBrg: "asc" },
+        skip,
+        take: pageSize,
+      }),
+    ])
 
-    return NextResponse.json(stokBarang)
+    return NextResponse.json(
+      toPaginatedResult(stokBarang, total, page, pageSize)
+    )
   } catch (error) {
     console.error("Error fetching stok barang:", error)
     return NextResponse.json(

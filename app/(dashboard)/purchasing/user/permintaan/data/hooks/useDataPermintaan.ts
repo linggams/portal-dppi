@@ -1,14 +1,16 @@
 ﻿"use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useMemo } from "react"
 import { toast } from "sonner"
 import { format } from "date-fns"
 import { id } from "date-fns/locale"
+import { DEFAULT_PAGE_SIZE, paginateArray } from "@/lib/shared/pagination"
 import type { Permintaan } from "../types"
 
 export function useDataPermintaan() {
   const [permintaan, setPermintaan] = useState<Permintaan[]>([])
   const [loading, setLoading] = useState(true)
+  const [page, setPage] = useState(1)
 
   const fetchPermintaan = useCallback(async () => {
     setLoading(true)
@@ -16,7 +18,8 @@ export function useDataPermintaan() {
       const response = await fetch("/api/purchasing/permintaan")
       if (response.ok) {
         const data = await response.json()
-        setPermintaan(data)
+        setPermintaan(Array.isArray(data) ? data : [])
+        setPage(1)
       }
     } catch {
       toast.error("Gagal memuat data permintaan")
@@ -37,12 +40,38 @@ export function useDataPermintaan() {
     }
   }, [])
 
-  const groupedPermintaan = permintaan.reduce((acc, item) => {
-    const date = item.tglPermintaan.split("T")[0]
-    if (!acc[date]) acc[date] = []
-    acc[date].push(item)
-    return acc
-  }, {} as Record<string, Permintaan[]>)
+  const dateGroups = useMemo(() => {
+    const grouped = permintaan.reduce(
+      (acc, item) => {
+        const date = item.tglPermintaan.split("T")[0]
+        if (!acc[date]) acc[date] = []
+        acc[date].push(item)
+        return acc
+      },
+      {} as Record<string, Permintaan[]>
+    )
+    return Object.entries(grouped).sort(([a], [b]) => b.localeCompare(a))
+  }, [permintaan])
 
-  return { permintaan, loading, groupedPermintaan, formatDate }
+  const paginatedGroups = useMemo(
+    () => paginateArray(dateGroups, page, DEFAULT_PAGE_SIZE),
+    [dateGroups, page]
+  )
+
+  const groupedPermintaan = useMemo(
+    () => Object.fromEntries(paginatedGroups.data),
+    [paginatedGroups.data]
+  )
+
+  return {
+    permintaan,
+    loading,
+    groupedPermintaan,
+    formatDate,
+    page,
+    setPage,
+    total: paginatedGroups.total,
+    totalPages: paginatedGroups.totalPages,
+    pageSize: paginatedGroups.pageSize,
+  }
 }

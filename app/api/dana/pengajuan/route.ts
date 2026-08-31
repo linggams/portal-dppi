@@ -15,6 +15,10 @@ import {
 import { generateNomorPengajuanDana } from "@/lib/dana/nomor"
 import { attachKembalian } from "@/lib/dana/hydrate"
 import { toDanaPengajuan } from "@/lib/dana/map"
+import {
+  parsePaginationParams,
+  toPaginatedResult,
+} from "@/lib/shared/pagination"
 
 const createSchema = z.object({
   nominal: z.number().int().positive().max(DANA_NOMINAL_MAX),
@@ -32,6 +36,7 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get("status")
     const mine = searchParams.get("mine") === "true"
     const q = searchParams.get("q")?.trim() ?? ""
+    const { page, pageSize, skip } = parsePaginationParams(searchParams)
 
     const where: {
       status?: number
@@ -60,13 +65,25 @@ export async function GET(request: NextRequest) {
       ]
     }
 
-    const rows = await prisma.danaPengajuan.findMany({
-      where,
-      orderBy: [{ status: "asc" }, { tglDibuat: "desc" }],
-    })
+    const [total, rows] = await Promise.all([
+      prisma.danaPengajuan.count({ where }),
+      prisma.danaPengajuan.findMany({
+        where,
+        orderBy: [{ status: "asc" }, { tglDibuat: "desc" }],
+        skip,
+        take: pageSize,
+      }),
+    ])
 
     const hydrated = await attachKembalian(rows)
-    return NextResponse.json(hydrated.map(toDanaPengajuan))
+    return NextResponse.json(
+      toPaginatedResult(
+        hydrated.map(toDanaPengajuan),
+        total,
+        page,
+        pageSize
+      )
+    )
   } catch (error) {
     console.error("Error fetching pengajuan dana:", error)
     const message =

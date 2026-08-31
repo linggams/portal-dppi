@@ -5,6 +5,7 @@ import { DashboardLayout } from "@/components/layout/DashboardLayout"
 import { PageActions } from "@/components/layout"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
+import { TablePagination } from "@/components/ui/table-pagination"
 import { useUsers } from "./hooks/useUsers"
 import {
   UsersTable,
@@ -14,7 +15,17 @@ import {
 import type { User } from "./types"
 
 export default function UsersPage() {
-  const { users, loading, saveUser, deleteUser } = useUsers()
+  const {
+    users,
+    loading,
+    page,
+    setPage,
+    total,
+    totalPages,
+    pageSize,
+    saveUser,
+    deleteUser,
+  } = useUsers()
   const [formOpen, setFormOpen] = useState(false)
   const [editingUser, setEditingUser] = useState<User | null>(null)
   const [deleteOpen, setDeleteOpen] = useState(false)
@@ -61,11 +72,22 @@ export default function UsersPage() {
           onSubmit={saveUser}
         />
 
-        <UsersTable
-          data={users}
-          onEdit={handleEditClick}
-          onDelete={handleDeleteClick}
-        />
+        <div className="space-y-4">
+          <UsersTable
+            data={users}
+            rowOffset={(page - 1) * pageSize}
+            onEdit={handleEditClick}
+            onDelete={handleDeleteClick}
+          />
+          <TablePagination
+            page={page}
+            totalPages={totalPages}
+            total={total}
+            pageSize={pageSize}
+            onPageChange={setPage}
+            itemLabel="user"
+          />
+        </div>
 
         <DeleteUserDialog
           user={userToDelete}

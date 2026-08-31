@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 
 import { useState, useEffect, useMemo } from "react"
 import Link from "next/link"
@@ -45,8 +45,8 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { APP_NAME } from "@/lib/app-branding"
-import { USER_LEVEL_LABEL, normalizeUserLevel } from "@/lib/user-level"
+import { APP_NAME } from "@/lib/shared/app-branding"
+import { USER_LEVEL_LABEL, normalizeUserLevel } from "@/lib/auth/user-level"
 import {
   canAccessDanaUser,
   canAccessItStaff,

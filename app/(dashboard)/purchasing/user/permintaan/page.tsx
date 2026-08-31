@@ -36,8 +36,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { TableActionButton } from "@/components/ui/table-actions"
+import { TableActionButton, TableActions } from "@/components/ui/table-actions"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { MAX_PAGE_SIZE, readPaginatedJson } from "@/lib/shared/pagination"
 import {
   getTodayDateWIB,
   PERMINTAAN_DAILY_LIMIT_MESSAGE,
@@ -133,10 +134,14 @@ export default function PermintaanPage() {
 
   const fetchStokBarang = async (idJenis: number) => {
     try {
-      const response = await fetch(`/api/purchasing/stok?id_jenis=${idJenis}`)
+      const params = new URLSearchParams()
+      params.set("id_jenis", String(idJenis))
+      params.set("page", "1")
+      params.set("page_size", String(MAX_PAGE_SIZE))
+      const response = await fetch(`/api/purchasing/stok?${params.toString()}`)
       if (response.ok) {
-        const data = await response.json()
-        setStokBarang(data.filter((item: StokBarang) => item.sisa > 0))
+        const result = readPaginatedJson<StokBarang>(await response.json())
+        setStokBarang(result.data.filter((item) => item.sisa > 0))
       }
     } catch (error) {
       toast.error("Gagal memuat data stok barang")
@@ -411,12 +416,14 @@ export default function PermintaanPage() {
                           <TableCell>{item.jumlah}</TableCell>
                           <TableCell>{item.stokbarang.satuan}</TableCell>
                           <TableCell className="text-right">
-                            <TableActionButton
-                              label="Hapus"
-                              icon={Trash2}
-                              className="text-destructive hover:text-destructive"
-                              onClick={() => handleDelete(item.idSementara)}
-                            />
+                            <TableActions>
+                              <TableActionButton
+                                label="Hapus"
+                                icon={Trash2}
+                                className="text-destructive hover:text-destructive"
+                                onClick={() => handleDelete(item.idSementara)}
+                              />
+                            </TableActions>
                           </TableCell>
                         </TableRow>
                       ))}

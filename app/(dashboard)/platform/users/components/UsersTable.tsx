@@ -22,11 +22,17 @@ import {
 
 interface UsersTableProps {
   data: User[]
+  rowOffset?: number
   onEdit: (user: User) => void
   onDelete: (user: User) => void
 }
 
-export function UsersTable({ data, onEdit, onDelete }: UsersTableProps) {
+export function UsersTable({
+  data,
+  rowOffset = 0,
+  onEdit,
+  onDelete,
+}: UsersTableProps) {
   return (
     <TableContainer>
       <Table>
@@ -46,7 +52,7 @@ export function UsersTable({ data, onEdit, onDelete }: UsersTableProps) {
           ) : (
             data.map((user, index) => (
               <TableRow key={user.idUser}>
-                <TableCell>{index + 1}</TableCell>
+                <TableCell>{rowOffset + index + 1}</TableCell>
                 <TableCell>{user.username}</TableCell>
                 <TableCell>
                   <Badge

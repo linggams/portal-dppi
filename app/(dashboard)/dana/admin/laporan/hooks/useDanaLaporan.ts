@@ -2,10 +2,15 @@
 
 import { useCallback, useEffect, useState } from "react"
 import { toast } from "sonner"
-import { downloadPdf } from "@/lib/makepdf"
+import { downloadPdf } from "@/lib/shared/makepdf"
 import { DANA_STATUS_LABEL } from "@/lib/dana/constants"
 import { formatDanaDateOnly, formatRupiah } from "@/lib/dana/format"
 import { getMonthToDateRangeWIB } from "@/lib/purchasing/permintaan-daily-limit-types"
+import {
+  DEFAULT_PAGE_SIZE,
+  MAX_PAGE_SIZE,
+  readPaginatedJson,
+} from "@/lib/shared/pagination"
 import type {
   DanaLaporanByJabatan,
   DanaLaporanFilterState,
@@ -25,55 +30,117 @@ function defaultFilters(): DanaLaporanFilterState {
 
 export function useDanaLaporan() {
   const [loading, setLoading] = useState(false)
-  const [activeTab, setActiveTab] = useState<DanaLaporanTab>("daftar")
-  const [filters, setFilters] = useState<DanaLaporanFilterState>(defaultFilters)
+  const [activeTab, setActiveTabState] = useState<DanaLaporanTab>("daftar")
+  const [filters, setFiltersState] =
+    useState<DanaLaporanFilterState>(defaultFilters)
   const [daftarData, setDaftarData] = useState<DanaLaporanRow[]>([])
   const [jabatanData, setJabatanData] = useState<DanaLaporanByJabatan[]>([])
   const [summary, setSummary] = useState<DanaLaporanSummary | null>(null)
+  const [page, setPage] = useState(1)
+  const [total, setTotal] = useState(0)
+  const [totalPages, setTotalPages] = useState(1)
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE)
 
-  const buildParams = useCallback(() => {
-    const params = new URLSearchParams({ tab: activeTab })
-    if (filters.startDate) params.set("start_date", filters.startDate)
-    if (filters.endDate) params.set("end_date", filters.endDate)
-    if (filters.status !== "all") params.set("status", filters.status)
-    if (filters.q.trim()) params.set("q", filters.q.trim())
-    if (filters.jabatan.trim()) params.set("jabatan", filters.jabatan.trim())
-    return params
-  }, [activeTab, filters])
+  const setActiveTab = useCallback((tab: DanaLaporanTab) => {
+    setPage(1)
+    setActiveTabState(tab)
+  }, [])
 
-  const fetchData = useCallback(async () => {
-    setLoading(true)
-    try {
-      const response = await fetch(`/api/dana/laporan?${buildParams().toString()}`)
-      if (!response.ok) {
-        toast.error("Gagal memuat laporan dana")
-        return
+  const setFilters = useCallback((next: DanaLaporanFilterState) => {
+    setPage(1)
+    setFiltersState(next)
+  }, [])
+
+  const buildParams = useCallback(
+    (currentPage: number, size?: number) => {
+      const params = new URLSearchParams({ tab: activeTab })
+      if (filters.startDate) params.set("start_date", filters.startDate)
+      if (filters.endDate) params.set("end_date", filters.endDate)
+      if (filters.status !== "all") params.set("status", filters.status)
+      if (filters.q.trim()) params.set("q", filters.q.trim())
+      if (filters.jabatan.trim()) params.set("jabatan", filters.jabatan.trim())
+      params.set("page", String(currentPage))
+      if (size) params.set("page_size", String(size))
+      return params
+    },
+    [activeTab, filters]
+  )
+
+  const fetchData = useCallback(
+    async (pageOverride?: number) => {
+      const currentPage = pageOverride ?? page
+      setLoading(true)
+      try {
+        const response = await fetch(
+          `/api/dana/laporan?${buildParams(currentPage).toString()}`
+        )
+        if (!response.ok) {
+          toast.error("Gagal memuat laporan dana")
+          return
+        }
+        const json = await response.json()
+        setSummary(json.summary ?? null)
+        if (activeTab === "jabatan") {
+          const result = readPaginatedJson<DanaLaporanByJabatan>(json)
+          setJabatanData(result.data)
+          setTotal(result.total)
+          setTotalPages(result.totalPages)
+          setPageSize(result.pageSize)
+        } else {
+          const result = readPaginatedJson<DanaLaporanRow>(json)
+          setDaftarData(result.data)
+          setTotal(result.total)
+          setTotalPages(result.totalPages)
+          setPageSize(result.pageSize)
+        }
+      } catch {
+        toast.error("Terjadi kesalahan saat memuat laporan")
+      } finally {
+        setLoading(false)
       }
-      const result = await response.json()
-      setSummary(result.summary ?? null)
-      if (activeTab === "jabatan") {
-        setJabatanData(Array.isArray(result.data) ? result.data : [])
-      } else {
-        setDaftarData(Array.isArray(result.data) ? result.data : [])
-      }
-    } catch {
-      toast.error("Terjadi kesalahan saat memuat laporan")
-    } finally {
-      setLoading(false)
-    }
-  }, [activeTab, buildParams])
+    },
+    [activeTab, buildParams, page]
+  )
+
+  const handleFetch = useCallback(() => {
+    setPage(1)
+    void fetchData(1)
+  }, [fetchData])
 
   useEffect(() => {
     fetchData()
   }, [fetchData])
 
   const resetFilters = () => {
-    setFilters(defaultFilters())
+    setPage(1)
+    setFiltersState(defaultFilters())
   }
 
-  const handleExport = useCallback(() => {
+  const handleExport = useCallback(async () => {
     try {
       const isDaftar = activeTab === "daftar"
+      const allDaftar: DanaLaporanRow[] = []
+      const allJabatan: DanaLaporanByJabatan[] = []
+      let exportPage = 1
+      let exportTotalPages = 1
+      do {
+        const response = await fetch(
+          `/api/dana/laporan?${buildParams(exportPage, MAX_PAGE_SIZE).toString()}`
+        )
+        if (!response.ok) throw new Error("Gagal memuat data ekspor")
+        const json = await response.json()
+        if (isDaftar) {
+          const result = readPaginatedJson<DanaLaporanRow>(json)
+          allDaftar.push(...result.data)
+          exportTotalPages = result.totalPages
+        } else {
+          const result = readPaginatedJson<DanaLaporanByJabatan>(json)
+          allJabatan.push(...result.data)
+          exportTotalPages = result.totalPages
+        }
+        exportPage += 1
+      } while (exportPage <= exportTotalPages)
+
       const headers = isDaftar
         ? [
             "Nomor",
@@ -96,7 +163,7 @@ export function useDanaLaporan() {
           ]
 
       const tableRows = isDaftar
-        ? daftarData.map((row) => [
+        ? allDaftar.map((row) => [
             row.nomor,
             formatDanaDateOnly(row.tglDibuat),
             row.username,
@@ -106,7 +173,7 @@ export function useDanaLaporan() {
             DANA_STATUS_LABEL[row.status] ?? String(row.status),
             row.keperluan,
           ])
-        : jabatanData.map((row) => [
+        : allJabatan.map((row) => [
             row.jabatan,
             String(row.total),
             String(row.approved),
@@ -115,6 +182,11 @@ export function useDanaLaporan() {
             formatRupiah(row.nominalDisetujui),
             formatRupiah(row.danaTerpakai),
           ])
+
+      if (tableRows.length === 0) {
+        toast.error("Tidak ada data untuk diekspor")
+        return
+      }
 
       const body = [
         headers.map((h) => ({ text: h, style: "tableHeader" })),
@@ -192,7 +264,7 @@ export function useDanaLaporan() {
     } catch {
       toast.error("Gagal mengunduh PDF")
     }
-  }, [activeTab, daftarData, jabatanData])
+  }, [activeTab, buildParams])
 
   const hasData =
     activeTab === "daftar" ? daftarData.length > 0 : jabatanData.length > 0
@@ -207,7 +279,12 @@ export function useDanaLaporan() {
     daftarData,
     jabatanData,
     summary,
-    fetchData,
+    page,
+    setPage,
+    total,
+    totalPages,
+    pageSize,
+    fetchData: handleFetch,
     handleExport,
     hasData,
   }

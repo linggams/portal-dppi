@@ -5,6 +5,11 @@ import {
   isClientUser,
 } from "@/lib/auth/permissions"
 import { prisma } from "@/lib/db/prisma"
+import {
+  parsePaginationParams,
+  toPaginatedResult,
+  wantsPagination,
+} from "@/lib/shared/pagination"
 
 export async function GET(request: NextRequest) {
   try {
@@ -25,6 +30,7 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get("status")
     const unit = searchParams.get("unit")
     const tglPermintaan = searchParams.get("tgl_permintaan")
+    const paginate = wantsPagination(searchParams)
 
     const where: {
       status?: number
@@ -41,9 +47,25 @@ export async function GET(request: NextRequest) {
       where.tglPermintaan = new Date(tglPermintaan)
     }
 
-    // If user, only show their own requests
     if (isClientUser(session.user)) {
       where.unit = session.user.username
+    }
+
+    if (paginate) {
+      const { page, pageSize, skip } = parsePaginationParams(searchParams)
+      const [total, permintaan] = await Promise.all([
+        prisma.permintaan.count({ where }),
+        prisma.permintaan.findMany({
+          where,
+          include: { stokbarang: true },
+          orderBy: { tglPermintaan: "desc" },
+          skip,
+          take: pageSize,
+        }),
+      ])
+      return NextResponse.json(
+        toPaginatedResult(permintaan, total, page, pageSize)
+      )
     }
 
     const permintaan = await prisma.permintaan.findMany({

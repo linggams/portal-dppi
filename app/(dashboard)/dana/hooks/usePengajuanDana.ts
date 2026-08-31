@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react"
 import { toast } from "sonner"
 import type { DanaPengajuan, DanaPengajuanPayload } from "@/lib/dana/dana-types"
+import { DEFAULT_PAGE_SIZE, readPaginatedJson } from "@/lib/shared/pagination"
 
 async function readError(response: Response, fallback: string) {
   try {
@@ -14,10 +15,12 @@ async function readError(response: Response, fallback: string) {
   return fallback
 }
 
-export function usePengajuanDana(options: {
-  mine?: boolean
-  initialStatus?: string
-} = {}) {
+export function usePengajuanDana(
+  options: {
+    mine?: boolean
+    initialStatus?: string
+  } = {}
+) {
   const mine = options.mine ?? false
   const [rows, setRows] = useState<DanaPengajuan[]>([])
   const [loading, setLoading] = useState(true)
@@ -26,11 +29,19 @@ export function usePengajuanDana(options: {
   )
   const [query, setQuery] = useState("")
   const [debouncedQuery, setDebouncedQuery] = useState("")
+  const [page, setPage] = useState(1)
+  const [total, setTotal] = useState(0)
+  const [totalPages, setTotalPages] = useState(1)
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE)
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedQuery(query.trim()), 400)
     return () => clearTimeout(timer)
   }, [query])
+
+  useEffect(() => {
+    setPage(1)
+  }, [statusFilter, debouncedQuery])
 
   const fetchRows = useCallback(async () => {
     setLoading(true)
@@ -39,22 +50,28 @@ export function usePengajuanDana(options: {
       if (mine) params.set("mine", "true")
       if (statusFilter !== "all") params.set("status", statusFilter)
       if (debouncedQuery) params.set("q", debouncedQuery)
+      params.set("page", String(page))
 
       const response = await fetch(`/api/dana/pengajuan?${params.toString()}`)
       if (!response.ok) {
         throw new Error(await readError(response, "Gagal memuat pengajuan dana"))
       }
-      const data = await response.json()
-      setRows(Array.isArray(data) ? data : [])
+      const result = readPaginatedJson<DanaPengajuan>(await response.json())
+      setRows(result.data)
+      setTotal(result.total)
+      setTotalPages(result.totalPages)
+      setPageSize(result.pageSize)
     } catch (error) {
       setRows([])
+      setTotal(0)
+      setTotalPages(1)
       toast.error(
         error instanceof Error ? error.message : "Gagal memuat pengajuan dana"
       )
     } finally {
       setLoading(false)
     }
-  }, [mine, statusFilter, debouncedQuery])
+  }, [mine, statusFilter, debouncedQuery, page])
 
   useEffect(() => {
     fetchRows()
@@ -130,6 +147,11 @@ export function usePengajuanDana(options: {
     setStatusFilter,
     query,
     setQuery,
+    page,
+    setPage,
+    total,
+    totalPages,
+    pageSize,
     createPengajuan,
     revisePengajuan,
     cancelPengajuan,

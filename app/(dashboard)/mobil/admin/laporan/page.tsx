@@ -34,20 +34,78 @@ import {
   TableActionLink,
   TableActions,
 } from "@/components/ui/table-actions"
+import { TablePagination } from "@/components/ui/table-pagination"
 import type { MobilKendaraan, MobilLaporanKm } from "@/lib/mobil/mobil-types"
 import { downloadMobilLaporanListExcel } from "@/lib/mobil/export-laporan"
 import { formatRupiah } from "@/lib/dana/format"
+import { DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE, readPaginatedJson } from "@/lib/shared/pagination"
 import { getMonthToDateRangeWIB } from "@/lib/purchasing/permintaan-daily-limit-types"
+
+type LaporanSummary = {
+  total: number
+  totalPemakaian: number
+  totalTrip: number
+  totalUangJalan: number
+  totalBiayaPerjalanan: number
+  totalBalance: number
+}
+
+const EMPTY_SUMMARY: LaporanSummary = {
+  total: 0,
+  totalPemakaian: 0,
+  totalTrip: 0,
+  totalUangJalan: 0,
+  totalBiayaPerjalanan: 0,
+  totalBalance: 0,
+}
+
+function parseSummary(json: unknown): LaporanSummary {
+  if (!json || typeof json !== "object") return EMPTY_SUMMARY
+  const s = (json as { summary?: Partial<LaporanSummary> }).summary
+  if (!s || typeof s !== "object") return EMPTY_SUMMARY
+  return {
+    total: typeof s.total === "number" ? s.total : 0,
+    totalPemakaian: typeof s.totalPemakaian === "number" ? s.totalPemakaian : 0,
+    totalTrip: typeof s.totalTrip === "number" ? s.totalTrip : 0,
+    totalUangJalan: typeof s.totalUangJalan === "number" ? s.totalUangJalan : 0,
+    totalBiayaPerjalanan:
+      typeof s.totalBiayaPerjalanan === "number" ? s.totalBiayaPerjalanan : 0,
+    totalBalance: typeof s.totalBalance === "number" ? s.totalBalance : 0,
+  }
+}
+
+function buildLaporanParams(opts: {
+  startDate: string
+  endDate: string
+  idKendaraan: string
+  q: string
+  page: number
+  pageSize?: number
+}) {
+  const params = new URLSearchParams()
+  if (opts.startDate) params.set("start_date", opts.startDate)
+  if (opts.endDate) params.set("end_date", opts.endDate)
+  if (opts.idKendaraan !== "all") params.set("id_kendaraan", opts.idKendaraan)
+  if (opts.q.trim()) params.set("q", opts.q.trim())
+  params.set("page", String(opts.page))
+  if (opts.pageSize) params.set("page_size", String(opts.pageSize))
+  return params
+}
 
 export default function MobilAdminLaporanPage() {
   const defaultRange = useMemo(() => getMonthToDateRangeWIB(), [])
   const [rows, setRows] = useState<MobilLaporanKm[]>([])
+  const [summary, setSummary] = useState<LaporanSummary>(EMPTY_SUMMARY)
   const [kendaraan, setKendaraan] = useState<MobilKendaraan[]>([])
   const [loading, setLoading] = useState(true)
   const [startDate, setStartDate] = useState(defaultRange.startDate)
   const [endDate, setEndDate] = useState(defaultRange.endDate)
   const [idKendaraan, setIdKendaraan] = useState("all")
   const [q, setQ] = useState("")
+  const [page, setPage] = useState(1)
+  const [total, setTotal] = useState(0)
+  const [totalPages, setTotalPages] = useState(1)
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE)
 
   useEffect(() => {
     fetch("/api/mobil/kendaraan")
@@ -56,44 +114,48 @@ export default function MobilAdminLaporanPage() {
       .catch(() => setKendaraan([]))
   }, [])
 
-  const fetchRows = useCallback(async () => {
-    setLoading(true)
-    try {
-      const params = new URLSearchParams()
-      if (startDate) params.set("start_date", startDate)
-      if (endDate) params.set("end_date", endDate)
-      if (idKendaraan !== "all") params.set("id_kendaraan", idKendaraan)
-      if (q.trim()) params.set("q", q.trim())
-      const res = await fetch(`/api/mobil/laporan?${params.toString()}`)
-      if (!res.ok) throw new Error("Gagal memuat laporan")
-      setRows(await res.json())
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Gagal memuat")
-      setRows([])
-    } finally {
-      setLoading(false)
-    }
-  }, [startDate, endDate, idKendaraan, q])
+  const fetchRows = useCallback(
+    async (pageOverride?: number) => {
+      const currentPage = pageOverride ?? page
+      setLoading(true)
+      try {
+        const params = buildLaporanParams({
+          startDate,
+          endDate,
+          idKendaraan,
+          q,
+          page: currentPage,
+        })
+        const res = await fetch(`/api/mobil/laporan?${params.toString()}`)
+        if (!res.ok) throw new Error("Gagal memuat laporan")
+        const json = await res.json()
+        const result = readPaginatedJson<MobilLaporanKm>(json)
+        setRows(result.data)
+        setTotal(result.total)
+        setTotalPages(result.totalPages)
+        setPageSize(result.pageSize)
+        setSummary(parseSummary(json))
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : "Gagal memuat")
+        setRows([])
+        setTotal(0)
+        setTotalPages(1)
+        setSummary(EMPTY_SUMMARY)
+      } finally {
+        setLoading(false)
+      }
+    },
+    [startDate, endDate, idKendaraan, q, page]
+  )
 
   useEffect(() => {
     fetchRows()
   }, [fetchRows])
 
-  const summary = useMemo(() => {
-    const totalPemakaian = rows.reduce((sum, r) => sum + r.pemakaian, 0)
-    const totalTrip = rows.reduce((sum, r) => sum + r.jumlahPerjalanan, 0)
-    const totalUangJalan = rows.reduce((sum, r) => sum + r.uangJalan, 0)
-    const totalBiayaPerjalanan = rows.reduce((sum, r) => sum + r.totalTol, 0)
-    const totalBalance = rows.reduce((sum, r) => sum + r.balanceUangJalan, 0)
-    return {
-      total: rows.length,
-      totalPemakaian,
-      totalTrip,
-      totalUangJalan,
-      totalBiayaPerjalanan,
-      totalBalance,
-    }
-  }, [rows])
+  const handleTampilkan = () => {
+    setPage(1)
+    void fetchRows(1)
+  }
 
   const handleDelete = async (row: MobilLaporanKm) => {
     const nopol = row.kendaraan?.nopol ?? `#${row.idKendaraan}`
@@ -122,12 +184,36 @@ export default function MobilAdminLaporanPage() {
       : "/mobil/admin/laporan/baru"
 
   const handleExport = async () => {
-    if (rows.length === 0) {
+    if (total === 0) {
       toast.error("Tidak ada data untuk diekspor")
       return
     }
     try {
-      await downloadMobilLaporanListExcel(rows, { startDate, endDate })
+      const allRows: MobilLaporanKm[] = []
+      let exportPage = 1
+      let exportTotalPages = 1
+      do {
+        const params = buildLaporanParams({
+          startDate,
+          endDate,
+          idKendaraan,
+          q,
+          page: exportPage,
+          pageSize: MAX_PAGE_SIZE,
+        })
+        const res = await fetch(`/api/mobil/laporan?${params.toString()}`)
+        if (!res.ok) throw new Error("Gagal memuat data ekspor")
+        const result = readPaginatedJson<MobilLaporanKm>(await res.json())
+        allRows.push(...result.data)
+        exportTotalPages = result.totalPages
+        exportPage += 1
+      } while (exportPage <= exportTotalPages)
+
+      if (allRows.length === 0) {
+        toast.error("Tidak ada data untuk diekspor")
+        return
+      }
+      await downloadMobilLaporanListExcel(allRows, { startDate, endDate })
       toast.success("Excel diunduh")
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Gagal mengekspor")
@@ -169,14 +255,14 @@ export default function MobilAdminLaporanPage() {
             value={q}
             onChange={(e) => setQ(e.target.value)}
           />
-          <Button type="button" variant="outline" onClick={fetchRows}>
+          <Button type="button" variant="outline" onClick={handleTampilkan}>
             Tampilkan
           </Button>
         </div>
         <Button
           type="button"
           variant="outline"
-          disabled={loading || rows.length === 0}
+          disabled={loading || total === 0}
           onClick={handleExport}
         >
           Export
@@ -228,76 +314,86 @@ export default function MobilAdminLaporanPage() {
             ))}
           </div>
         ) : (
-          <TableContainer>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Tanggal</TableHead>
-                  <TableHead>Nopol</TableHead>
-                  <TableHead>Pelapor</TableHead>
-                  <TableHead className="text-right">KM awal</TableHead>
-                  <TableHead className="text-right">KM akhir</TableHead>
-                  <TableHead className="text-right">Pemakaian</TableHead>
-                  <TableHead className="text-right">Trip</TableHead>
-                  <TableHead className="text-right">Uang jalan</TableHead>
-                  <TableHead className="text-right">Biaya perjalanan</TableHead>
-                  <TableHead className="text-right">Balance</TableHead>
-                  <TableHead className="text-right">Aksi</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {rows.length === 0 ? (
-                  <TableEmptyState colSpan={11} title="Tidak ada laporan" />
-                ) : (
-                  rows.map((row) => (
-                    <TableRow key={row.idLaporan}>
-                      <TableCell>{row.tanggal}</TableCell>
-                      <TableCell className="font-medium">
-                        {row.kendaraan?.nopol ?? "—"}
-                      </TableCell>
-                      <TableCell>{row.username}</TableCell>
-                      <TableCell className="text-right">
-                        {row.kmAwal.toLocaleString("id-ID")}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {row.kmAkhir.toLocaleString("id-ID")}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {row.pemakaian.toLocaleString("id-ID")}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {row.jumlahPerjalanan}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {formatRupiah(row.uangJalan)}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {formatRupiah(row.totalTol)}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {formatRupiah(row.balanceUangJalan)}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <TableActions>
-                          <TableActionLink
-                            label="Detail"
-                            icon={Eye}
-                            href={`/mobil/admin/laporan/${row.idLaporan}`}
-                          />
-                          <TableActionButton
-                            label="Hapus"
-                            icon={Trash2}
-                            className="text-destructive hover:text-destructive"
-                            onClick={() => handleDelete(row)}
-                          />
-                        </TableActions>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </TableContainer>
+          <div className="space-y-4">
+            <TableContainer>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Tanggal</TableHead>
+                    <TableHead>Nopol</TableHead>
+                    <TableHead>Pelapor</TableHead>
+                    <TableHead className="text-right">KM awal</TableHead>
+                    <TableHead className="text-right">KM akhir</TableHead>
+                    <TableHead className="text-right">Pemakaian</TableHead>
+                    <TableHead className="text-right">Trip</TableHead>
+                    <TableHead className="text-right">Uang jalan</TableHead>
+                    <TableHead className="text-right">Biaya perjalanan</TableHead>
+                    <TableHead className="text-right">Balance</TableHead>
+                    <TableHead className="text-right">Aksi</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {rows.length === 0 ? (
+                    <TableEmptyState colSpan={11} title="Tidak ada laporan" />
+                  ) : (
+                    rows.map((row) => (
+                      <TableRow key={row.idLaporan}>
+                        <TableCell>{row.tanggal}</TableCell>
+                        <TableCell className="font-medium">
+                          {row.kendaraan?.nopol ?? "—"}
+                        </TableCell>
+                        <TableCell>{row.username}</TableCell>
+                        <TableCell className="text-right">
+                          {row.kmAwal.toLocaleString("id-ID")}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {row.kmAkhir.toLocaleString("id-ID")}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {row.pemakaian.toLocaleString("id-ID")}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {row.jumlahPerjalanan}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {formatRupiah(row.uangJalan)}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {formatRupiah(row.totalTol)}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {formatRupiah(row.balanceUangJalan)}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <TableActions>
+                            <TableActionLink
+                              label="Detail"
+                              icon={Eye}
+                              href={`/mobil/admin/laporan/${row.idLaporan}`}
+                            />
+                            <TableActionButton
+                              label="Hapus"
+                              icon={Trash2}
+                              className="text-destructive hover:text-destructive"
+                              onClick={() => handleDelete(row)}
+                            />
+                          </TableActions>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
+            <TablePagination
+              page={page}
+              totalPages={totalPages}
+              total={total}
+              pageSize={pageSize}
+              onPageChange={setPage}
+              itemLabel="laporan"
+            />
+          </div>
         )}
       </div>
     </DashboardLayout>

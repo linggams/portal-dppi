@@ -1,7 +1,7 @@
 import type { ApplicantModules } from "@/lib/auth/applicant-modules"
 import type { ManagerModules } from "@/lib/auth/manager-modules"
 
-export interface UserRole {
+interface UserRole {
   idRole: number
   code: string
   name: string

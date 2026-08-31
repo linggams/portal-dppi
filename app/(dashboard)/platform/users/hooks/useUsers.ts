@@ -2,18 +2,29 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { toast } from "sonner"
+import { DEFAULT_PAGE_SIZE, readPaginatedJson } from "@/lib/shared/pagination"
 import type { User, UserFormData } from "../types"
 
 export function useUsers() {
   const [users, setUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
+  const [page, setPage] = useState(1)
+  const [total, setTotal] = useState(0)
+  const [totalPages, setTotalPages] = useState(1)
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE)
 
   const fetchUsers = useCallback(async () => {
+    setLoading(true)
     try {
-      const response = await fetch("/api/platform/users")
+      const params = new URLSearchParams()
+      params.set("page", String(page))
+      const response = await fetch(`/api/platform/users?${params.toString()}`)
       if (response.ok) {
-        const data = await response.json()
-        setUsers(data)
+        const result = readPaginatedJson<User>(await response.json())
+        setUsers(result.data)
+        setTotal(result.total)
+        setTotalPages(result.totalPages)
+        setPageSize(result.pageSize)
       } else {
         toast.error("Gagal memuat data user")
       }
@@ -22,7 +33,7 @@ export function useUsers() {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [page])
 
   useEffect(() => {
     fetchUsers()
@@ -81,5 +92,16 @@ export function useUsers() {
     return false
   }
 
-  return { users, loading, fetchUsers, saveUser, deleteUser }
+  return {
+    users,
+    loading,
+    page,
+    setPage,
+    total,
+    totalPages,
+    pageSize,
+    fetchUsers,
+    saveUser,
+    deleteUser,
+  }
 }

@@ -90,12 +90,12 @@ Skrip cepat: `scripts\pm2-setup.bat`. Auto-start saat boot: `scripts\pm2-startup
 
 ### Important Notes:
 1. **Nama tabel**: Tabel bisnis memakai prefix `atk_` (mis. `atk_stokbarang`, `atk_permintaan`). Tabel akun tetap `user` (tanpa prefix).
-   - Migrasi prefix: `npx prisma db execute --file prisma/migrations/rename_tables_atk_prefix.sql`
-   - Jika `user` sempat jadi `atk_user`: `npx prisma db execute --file prisma/migrations/rename_user_remove_atk_prefix.sql`
+   - Migrasi prefix: `npx prisma db execute --file prisma/scripts/legacy/rename_tables_atk_prefix.sql`
+   - Jika `user` sempat jadi `atk_user`: `npx prisma db execute --file prisma/scripts/legacy/rename_user_remove_atk_prefix.sql`
 
 2. **id_jenis**: 
    - Di `atk_jenis_barang` dan `atk_stokbarang`: `id_jenis` adalah `Int` dengan foreign key relation
-   - Jika melakukan migrasi dari database lama (VARCHAR), jalankan: `npx prisma db execute --file prisma/migrations/fix_jenis_barang_id.sql`
+   - Jika melakukan migrasi dari database lama (VARCHAR), jalankan: `npx prisma db execute --file prisma/scripts/legacy/fix_jenis_barang_id.sql`
 
 3. **Password Hashing**:
    - Database existing menggunakan MD5

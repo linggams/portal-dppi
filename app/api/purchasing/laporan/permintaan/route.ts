@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from "next/server"
 import { getSessionFromRequest } from "@/lib/get-session"
 import { canManagePurchasingMaster } from "@/lib/auth/permissions"
 import { prisma } from "@/lib/db/prisma"
+import {
+  paginateArray,
+  parsePaginationParams,
+} from "@/lib/shared/pagination"
 
 // GET - Laporan permintaan (only for admin)
 export async function GET(request: NextRequest) {
@@ -20,6 +24,7 @@ export async function GET(request: NextRequest) {
     const endDate = searchParams.get("end_date")
     const unit = searchParams.get("unit")
     const status = searchParams.get("status")
+    const { page, pageSize } = parsePaginationParams(searchParams)
 
     const where: {
       tglPermintaan?: {
@@ -63,7 +68,6 @@ export async function GET(request: NextRequest) {
       },
     })
 
-    // Calculate summary
     const totalJumlah = permintaan.reduce(
       (sum: number, item) => sum + item.jumlah,
       0
@@ -73,8 +77,10 @@ export async function GET(request: NextRequest) {
     const approved = permintaan.filter((item) => item.status === 1).length
     const rejected = permintaan.filter((item) => item.status === 2).length
 
+    const paginated = paginateArray(permintaan, page, pageSize)
+
     return NextResponse.json({
-      data: permintaan,
+      ...paginated,
       summary: {
         totalJumlah,
         totalItems,

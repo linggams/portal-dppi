@@ -15,16 +15,28 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Skeleton } from "@/components/ui/skeleton"
+import { TablePagination } from "@/components/ui/table-pagination"
 import { PengajuanTable } from "@/components/dana/PengajuanTable"
 import { DANA_STATUS, DANA_STATUS_LABEL } from "@/lib/dana/constants"
 import { downloadPengajuanDanaPdf } from "@/lib/dana/pdf"
 import { usePengajuanDana } from "../../hooks/usePengajuanDana"
 
 export default function AdminAntrianDanaPage() {
-  const { rows, loading, statusFilter, setStatusFilter, query, setQuery } =
-    usePengajuanDana({
-      initialStatus: String(DANA_STATUS.PENDING),
-    })
+  const {
+    rows,
+    loading,
+    statusFilter,
+    setStatusFilter,
+    query,
+    setQuery,
+    page,
+    setPage,
+    total,
+    totalPages,
+    pageSize,
+  } = usePengajuanDana({
+    initialStatus: String(DANA_STATUS.PENDING),
+  })
 
   return (
     <DashboardLayout title="Antrian Pengajuan Dana">
@@ -56,12 +68,22 @@ export default function AdminAntrianDanaPage() {
         ) : rows.length === 0 ? (
           <ContentEmpty title="Tidak ada pengajuan dana" />
         ) : (
-          <PengajuanTable
-            rows={rows}
-            showPemohon
-            detailHref={(row) => `/dana/admin/antrian/${row.idPengajuan}`}
-            onPrint={downloadPengajuanDanaPdf}
-          />
+          <div className="space-y-4">
+            <PengajuanTable
+              rows={rows}
+              showPemohon
+              detailHref={(row) => `/dana/admin/antrian/${row.idPengajuan}`}
+              onPrint={downloadPengajuanDanaPdf}
+            />
+            <TablePagination
+              page={page}
+              totalPages={totalPages}
+              total={total}
+              pageSize={pageSize}
+              onPageChange={setPage}
+              itemLabel="pengajuan"
+            />
+          </div>
         )}
       </PageSection>
     </DashboardLayout>

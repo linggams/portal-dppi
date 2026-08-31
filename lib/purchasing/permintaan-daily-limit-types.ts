@@ -1,5 +1,5 @@
 /** Zona waktu operasional purchasing (WIB). */
-export const PURCHASING_TIMEZONE = "Asia/Jakarta"
+const PURCHASING_TIMEZONE = "Asia/Jakarta"
 
 export const PERMINTAAN_DAILY_LIMIT_MESSAGE =
   "Anda sudah mengajukan permintaan hari ini. Permintaan berikutnya dapat diajukan besok."
@@ -12,7 +12,7 @@ export function getTodayDateWIB(): string {
 }
 
 /** Tanggal 1 bulan berjalan (WIB), format YYYY-MM-DD. */
-export function getMonthStartDateWIB(today = getTodayDateWIB()): string {
+function getMonthStartDateWIB(today = getTodayDateWIB()): string {
   return `${today.slice(0, 7)}-01`
 }
 

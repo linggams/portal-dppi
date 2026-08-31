@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { toast } from "sonner"
-import { getDefaultPengajuanGroupDateRange } from "@/lib/purchasing/pengajuan-group-types"
+import { getDefaultPengajuanGroupDateRange, PENGAJUAN_GROUP_PAGE_SIZE } from "@/lib/purchasing/pengajuan-group-types"
 import type {
   PengajuanGroupFilters,
   PengajuanGroupRow,
@@ -33,7 +33,7 @@ export function usePengajuanGroups() {
   const [summary, setSummary] = useState<PengajuanGroupsSummary>(emptySummary)
   const [total, setTotal] = useState(0)
   const [totalPages, setTotalPages] = useState(1)
-  const [pageSize, setPageSize] = useState(20)
+  const [pageSize, setPageSize] = useState(PENGAJUAN_GROUP_PAGE_SIZE)
   const [loading, setLoading] = useState(true)
 
   const fetchGroups = useCallback(async () => {
@@ -64,7 +64,7 @@ export function usePengajuanGroups() {
       setSummary(result.summary ?? emptySummary)
       setTotal(result.total ?? 0)
       setTotalPages(result.totalPages ?? 1)
-      setPageSize(result.pageSize ?? 20)
+      setPageSize(result.pageSize ?? PENGAJUAN_GROUP_PAGE_SIZE)
     } catch {
       toast.error("Terjadi kesalahan saat memuat data")
     } finally {

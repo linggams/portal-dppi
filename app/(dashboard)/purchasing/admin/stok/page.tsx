@@ -5,15 +5,22 @@ import { PageActions } from "@/components/layout"
 import { DashboardLayout } from "@/components/layout/DashboardLayout"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
+import { TablePagination } from "@/components/ui/table-pagination"
 import { useStok } from "./hooks/useStok"
 import { StokTable, StokFormDialog, DeleteStokDialog } from "./components"
 import type { StokBarang } from "./types"
 
-export default function StokPage() {  const {
+export default function StokPage() {
+  const {
     stokBarang,
     jenisBarang,
     loading,
     jenisParam,
+    page,
+    setPage,
+    total,
+    totalPages,
+    pageSize,
     fetchNextKode,
     saveStok,
     deleteStok,
@@ -75,7 +82,7 @@ export default function StokPage() {  const {
               onClick={downloadPDF}
               variant="default"
               className="hidden print:hidden"
-              disabled={stokBarang.length === 0}
+              disabled={total === 0}
             >
               Cetak PDF
             </Button>
@@ -90,7 +97,7 @@ export default function StokPage() {  const {
             <Button
               variant="outline"
               onClick={downloadPDF}
-              disabled={stokBarang.length === 0}
+              disabled={total === 0}
             >
               Export
             </Button>
@@ -110,8 +117,17 @@ export default function StokPage() {  const {
         <div id="pdf-stok-content" className="space-y-4 print:space-y-2">
           <StokTable
             data={stokBarang}
+            rowOffset={(page - 1) * pageSize}
             onEdit={handleEditClick}
             onDelete={handleDeleteClick}
+          />
+          <TablePagination
+            page={page}
+            totalPages={totalPages}
+            total={total}
+            pageSize={pageSize}
+            onPageChange={setPage}
+            itemLabel="barang"
           />
         </div>
 

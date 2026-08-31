@@ -1,6 +1,6 @@
 ﻿"use client"
 
-import { DashboardLayout, FilterSummaryPanel } from "@/components/layout"
+import { DashboardLayout, PageActions } from "@/components/layout"
 import { Button } from "@/components/ui/button"
 import { usePermintaanGroups } from "./hooks/usePermintaanGroups"
 import {
@@ -10,6 +10,7 @@ import {
   PermintaanGroupSummary,
   PermintaanGroupTable,
 } from "./components"
+
 export default function DataPermintaanAdminPage() {
   const {
     filters,
@@ -30,22 +31,19 @@ export default function DataPermintaanAdminPage() {
 
   return (
     <DashboardLayout title="Data Permintaan Barang">
-      <div className="space-y-4">
-        <FilterSummaryPanel
-          filter={
-            <PermintaanGroupFilters
-              filters={filters}
-              onFiltersChange={setFilters}
-              onApply={handleApplyFilters}
-              onReset={handleResetFilters}
-            />
-          }
-          summary={
-            !loading && summary.total > 0 ? (
-              <PermintaanGroupSummary summary={summary} />
-            ) : undefined
-          }
+      <PageActions>
+        <PermintaanGroupFilters
+          filters={filters}
+          onFiltersChange={setFilters}
+          onApply={handleApplyFilters}
+          onReset={handleResetFilters}
         />
+      </PageActions>
+
+      <div className="space-y-4">
+        {!loading && summary.total > 0 ? (
+          <PermintaanGroupSummary summary={summary} />
+        ) : null}
 
         {loading ? (
           <PermintaanGroupSkeleton />
@@ -57,7 +55,6 @@ export default function DataPermintaanAdminPage() {
             </p>
             <Button
               variant="outline"
-              size="sm"
               className="mt-4"
               onClick={handleResetFilters}
             >

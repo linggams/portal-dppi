@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 
 import { useState } from "react"
 import { signIn } from "next-auth/react"
@@ -21,7 +21,7 @@ import {
   APP_NAME,
   APP_TAGLINE,
   COMPANY_NAME,
-} from "@/lib/app-branding"
+} from "@/lib/shared/app-branding"
 import { cn } from "@/lib/utils"
 
 export default function LoginPage() {

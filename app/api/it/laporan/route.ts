@@ -9,6 +9,10 @@ import {
   type ItLaporanTab,
 } from "@/lib/it/laporan"
 import { prisma } from "@/lib/db/prisma"
+import {
+  paginateArray,
+  parsePaginationParams,
+} from "@/lib/shared/pagination"
 
 function parseFilters(searchParams: URLSearchParams) {
   return {
@@ -33,6 +37,7 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams
     const tab = (searchParams.get("tab") ?? "tiket") as ItLaporanTab
     const filters = parseFilters(searchParams)
+    const { page, pageSize } = parsePaginationParams(searchParams)
     const where = buildTiketLaporanWhere(filters)
 
     const tiket = await prisma.itTiket.findMany({
@@ -45,14 +50,16 @@ export async function GET(request: NextRequest) {
 
     const summary = computeItLaporanSummary(tiket)
 
-    let data: unknown[] = tiket
+    let list: unknown[] = tiket
     if (tab === "kategori") {
-      data = aggregateByKategori(tiket)
+      list = aggregateByKategori(tiket)
     } else if (tab === "teknisi") {
-      data = aggregateByTeknisi(tiket)
+      list = aggregateByTeknisi(tiket)
     }
 
-    return NextResponse.json({ data, summary, tab })
+    const paginated = paginateArray(list, page, pageSize)
+
+    return NextResponse.json({ ...paginated, summary, tab })
   } catch (error) {
     console.error("Error fetching IT laporan:", error)
     return NextResponse.json(

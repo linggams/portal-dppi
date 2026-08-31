@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from "next/server"
 import { getSessionFromRequest } from "@/lib/get-session"
 import { canManagePurchasingMaster } from "@/lib/auth/permissions"
 import { prisma } from "@/lib/db/prisma"
+import {
+  parsePaginationParams,
+  toPaginatedResult,
+  wantsPagination,
+} from "@/lib/shared/pagination"
 import { z } from "zod"
 
 const kategoriSchema = z.object({
@@ -19,6 +24,23 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(
         { error: "Unauthorized" },
         { status: 401 }
+      )
+    }
+
+    const searchParams = request.nextUrl.searchParams
+
+    if (wantsPagination(searchParams)) {
+      const { page, pageSize, skip } = parsePaginationParams(searchParams)
+      const [total, kategori] = await Promise.all([
+        prisma.jenisBarang.count(),
+        prisma.jenisBarang.findMany({
+          orderBy: { idJenis: "asc" },
+          skip,
+          take: pageSize,
+        }),
+      ])
+      return NextResponse.json(
+        toPaginatedResult(kategori, total, page, pageSize)
       )
     }
 

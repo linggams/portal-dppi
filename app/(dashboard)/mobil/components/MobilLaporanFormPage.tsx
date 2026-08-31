@@ -18,12 +18,17 @@ import {
 } from "@/components/ui/table"
 import { TableContainer } from "@/components/ui/table-container"
 import {
+  TableActionButton,
+  TableActions,
+} from "@/components/ui/table-actions"
+import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { Trash2 } from "lucide-react"
 import { MOBIL_BUKTI_MAX_BYTES, MOBIL_BUKTI_MAX_MB, MOBIL_BUKTI_PLACEHOLDER } from "@/lib/mobil/upload-limits"
 import { formatRupiah, parseRupiahInput } from "@/lib/dana/format"
 import type { MobilKendaraan } from "@/lib/mobil/mobil-types"
@@ -468,15 +473,14 @@ function MobilLaporanForm({
                           </TableCell>
                           <TableCell className="text-right">
                             {trips.length > 1 ? (
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                className="text-destructive"
-                                onClick={() => removeTrip(trip.key)}
-                              >
-                                Hapus
-                              </Button>
+                              <TableActions>
+                                <TableActionButton
+                                  label="Hapus"
+                                  icon={Trash2}
+                                  className="text-destructive"
+                                  onClick={() => removeTrip(trip.key)}
+                                />
+                              </TableActions>
                             ) : null}
                           </TableCell>
                         </TableRow>

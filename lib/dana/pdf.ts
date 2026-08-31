@@ -1,5 +1,5 @@
 import { toast } from "sonner"
-import { downloadPdf } from "@/lib/makepdf"
+import { downloadPdf } from "@/lib/shared/makepdf"
 import { DANA_STATUS } from "./constants"
 import type { DanaPengajuan } from "./dana-types"
 import { capitalize, formatDanaDate, formatRupiah, terbilang } from "./format"

@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { Ban, Pencil } from "lucide-react"
 import { DashboardLayout, PageActions, PageSection } from "@/components/layout"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -14,12 +14,14 @@ import {
 } from "@/components/ui/table"
 import { TableContainer } from "@/components/ui/table-container"
 import { TableEmptyState } from "@/components/ui/table-empty-state"
+import { TablePagination } from "@/components/ui/table-pagination"
 import { Badge } from "@/components/ui/badge"
 import { toast } from "sonner"
 import {
   TableActionButton,
   TableActions,
 } from "@/components/ui/table-actions"
+import { DEFAULT_PAGE_SIZE, readPaginatedJson } from "@/lib/shared/pagination"
 import {
   AddKategoriDialog,
   EditKategoriDialog,
@@ -29,20 +31,38 @@ import {
 export default function ItKategoriPage() {
   const [kategori, setKategori] = useState<ItKategoriItem[]>([])
   const [loading, setLoading] = useState(true)
+  const [page, setPage] = useState(1)
+  const [total, setTotal] = useState(0)
+  const [totalPages, setTotalPages] = useState(1)
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE)
   const [editOpen, setEditOpen] = useState(false)
   const [editItem, setEditItem] = useState<ItKategoriItem | null>(null)
 
-  const load = () => {
-    fetch("/api/it/kategori?aktif=false")
+  const load = useCallback(() => {
+    setLoading(true)
+    const params = new URLSearchParams()
+    params.set("aktif", "false")
+    params.set("page", String(page))
+    fetch(`/api/it/kategori?${params.toString()}`)
       .then((r) => r.json())
-      .then((data) => setKategori(Array.isArray(data) ? data : []))
-      .catch(() => setKategori([]))
+      .then((json) => {
+        const result = readPaginatedJson<ItKategoriItem>(json)
+        setKategori(result.data)
+        setTotal(result.total)
+        setTotalPages(result.totalPages)
+        setPageSize(result.pageSize)
+      })
+      .catch(() => {
+        setKategori([])
+        setTotal(0)
+        setTotalPages(1)
+      })
       .finally(() => setLoading(false))
-  }
+  }, [page])
 
   useEffect(() => {
     load()
-  }, [])
+  }, [load])
 
   const handleAdd = async (nama: string): Promise<boolean> => {
     try {
@@ -107,52 +127,62 @@ export default function ItKategoriPage() {
         {loading ? (
           <Skeleton className="h-32 w-full" />
         ) : (
-          <TableContainer>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Nama</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Aksi</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {kategori.length === 0 ? (
-                  <TableEmptyState colSpan={3} title="Tidak ada kategori" />
-                ) : (
-                  kategori.map((k) => (
-                    <TableRow key={k.idKategori}>
-                      <TableCell>{k.nama}</TableCell>
-                      <TableCell>
-                        {k.aktif ? (
-                          <Badge>Aktif</Badge>
-                        ) : (
-                          <Badge variant="secondary">Nonaktif</Badge>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <TableActions>
-                          <TableActionButton
-                            label="Edit"
-                            icon={Pencil}
-                            onClick={() => handleEditClick(k)}
-                          />
+          <div className="space-y-4">
+            <TableContainer>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Nama</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Aksi</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {kategori.length === 0 ? (
+                    <TableEmptyState colSpan={3} title="Tidak ada kategori" />
+                  ) : (
+                    kategori.map((k) => (
+                      <TableRow key={k.idKategori}>
+                        <TableCell>{k.nama}</TableCell>
+                        <TableCell>
                           {k.aktif ? (
+                            <Badge>Aktif</Badge>
+                          ) : (
+                            <Badge variant="secondary">Nonaktif</Badge>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <TableActions>
                             <TableActionButton
-                              label="Nonaktifkan"
-                              icon={Ban}
-                              className="text-destructive hover:text-destructive"
-                              onClick={() => handleDeactivate(k.idKategori)}
+                              label="Edit"
+                              icon={Pencil}
+                              onClick={() => handleEditClick(k)}
                             />
-                          ) : null}
-                        </TableActions>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </TableContainer>
+                            {k.aktif ? (
+                              <TableActionButton
+                                label="Nonaktifkan"
+                                icon={Ban}
+                                className="text-destructive hover:text-destructive"
+                                onClick={() => handleDeactivate(k.idKategori)}
+                              />
+                            ) : null}
+                          </TableActions>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
+            <TablePagination
+              page={page}
+              totalPages={totalPages}
+              total={total}
+              pageSize={pageSize}
+              onPageChange={setPage}
+              itemLabel="kategori"
+            />
+          </div>
         )}
       </PageSection>
 

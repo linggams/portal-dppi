@@ -3,7 +3,7 @@
 import { format } from "date-fns"
 import { id } from "date-fns/locale"
 import { Eye } from "lucide-react"
-import { TableActionLink } from "@/components/ui/table-actions"
+import { TableActionLink, TableActions } from "@/components/ui/table-actions"
 import {
   Table,
   TableBody,
@@ -67,11 +67,13 @@ export function PermintaanGroupTable({ groups, page, pageSize }: Props) {
                 </TableCell>
                 <TableCell>{getGroupStatusBadge(group)}</TableCell>
                 <TableCell className="text-right">
-                  <TableActionLink
-                    label={group.hasPending ? "Detail & Approve" : "Detail"}
-                    icon={Eye}
-                    href={detailHref}
-                  />
+                  <TableActions>
+                    <TableActionLink
+                      label={group.hasPending ? "Detail & Approve" : "Detail"}
+                      icon={Eye}
+                      href={detailHref}
+                    />
+                  </TableActions>
                 </TableCell>
               </TableRow>
             )

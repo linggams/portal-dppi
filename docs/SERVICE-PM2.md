@@ -112,4 +112,5 @@ pnpm pm2:save
 
 - `ecosystem.config.cjs` — konfigurasi proses `dppi`
 - `scripts/pm2-setup.bat` — build + start + save
+- `scripts/pm2-stop.bat` — stop proses `dppi`
 - `scripts/pm2-startup-install.bat` — panduan `pm2 startup` (admin)

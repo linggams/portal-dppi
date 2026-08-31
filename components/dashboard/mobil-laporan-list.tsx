@@ -4,7 +4,7 @@ import { format } from "date-fns"
 import { id } from "date-fns/locale"
 import { ContentEmpty } from "@/components/layout/content-empty"
 import { Button } from "@/components/ui/button"
-import { TableActionLink } from "@/components/ui/table-actions"
+import { TableActionLink, TableActions } from "@/components/ui/table-actions"
 import {
   Table,
   TableBody,
@@ -73,11 +73,13 @@ export function DashboardMobilLaporanList({ items }: Props) {
                   {formatRupiah(item.balanceUangJalan)}
                 </TableCell>
                 <TableCell className="text-right">
-                  <TableActionLink
-                    label="Detail"
-                    icon={Eye}
-                    href={`/mobil/admin/laporan/${item.idLaporan}`}
-                  />
+                  <TableActions>
+                    <TableActionLink
+                      label="Detail"
+                      icon={Eye}
+                      href={`/mobil/admin/laporan/${item.idLaporan}`}
+                    />
+                  </TableActions>
                 </TableCell>
               </TableRow>
             ))}

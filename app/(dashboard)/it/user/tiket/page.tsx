@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import Link from "next/link"
 import { Eye, XCircle } from "lucide-react"
 import { toast } from "sonner"
@@ -12,6 +12,7 @@ import {
   TableActionLink,
   TableActions,
 } from "@/components/ui/table-actions"
+import { TablePagination } from "@/components/ui/table-pagination"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -37,6 +38,7 @@ import {
   formatTiketDate,
   getStatusBadge,
 } from "@/lib/it/utils"
+import { DEFAULT_PAGE_SIZE, readPaginatedJson } from "@/lib/shared/pagination"
 
 interface TiketRow {
   idTiket: number
@@ -60,57 +62,70 @@ export default function UserTiketPage() {
   const [loading, setLoading] = useState(true)
   const [cancelTarget, setCancelTarget] = useState<TiketRow | null>(null)
   const [cancelling, setCancelling] = useState(false)
+  const [page, setPage] = useState(1)
+  const [total, setTotal] = useState(0)
+  const [totalPages, setTotalPages] = useState(1)
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE)
 
-  const loadTiket = async () => {
-      try {
-        const [mineRes, antrianRes] = await Promise.all([
-          fetch("/api/it/tiket?mine=true"),
-          fetch("/api/it/tiket/antrian"),
-        ])
+  const loadTiket = useCallback(async () => {
+    try {
+      const params = new URLSearchParams({ mine: "true", page: String(page) })
+      const [mineRes, antrianRes] = await Promise.all([
+        fetch(`/api/it/tiket?${params.toString()}`),
+        fetch("/api/it/tiket/antrian"),
+      ])
 
-        let rows: TiketRow[] = []
-        if (mineRes.ok) {
-          const ct = mineRes.headers.get("content-type") ?? ""
-          if (ct.includes("application/json")) {
-            const data = await mineRes.json()
-            rows = Array.isArray(data) ? data : []
-          }
+      let rows: TiketRow[] = []
+      if (mineRes.ok) {
+        const ct = mineRes.headers.get("content-type") ?? ""
+        if (ct.includes("application/json")) {
+          const result = readPaginatedJson<TiketRow>(await mineRes.json())
+          rows = result.data
+          setTotal(result.total)
+          setTotalPages(result.totalPages)
+          setPageSize(result.pageSize)
         }
-
-        if (antrianRes.ok) {
-          const ct = antrianRes.headers.get("content-type") ?? ""
-          if (ct.includes("application/json")) {
-            const antrian = await antrianRes.json()
-            const map = new Map<number, AntrianQueueItem>(
-              (antrian.antrianSaya ?? []).map((a: AntrianQueueItem) => [
-                a.idTiket,
-                a,
-              ])
-            )
-            rows = rows.map((t) => {
-              const q = map.get(t.idTiket)
-              if (!q) return t
-              return {
-                ...t,
-                posisiAntrian: q.posisiAntrian,
-                totalAntrian: q.totalAntrian,
-              }
-            })
-          }
-        }
-
-        setTiket(rows)
-      } catch {
-        setTiket([])
-      } finally {
-        setLoading(false)
+      } else {
+        setTotal(0)
+        setTotalPages(1)
       }
-  }
+
+      if (antrianRes.ok) {
+        const ct = antrianRes.headers.get("content-type") ?? ""
+        if (ct.includes("application/json")) {
+          const antrian = await antrianRes.json()
+          const map = new Map<number, AntrianQueueItem>(
+            (antrian.antrianSaya ?? []).map((a: AntrianQueueItem) => [
+              a.idTiket,
+              a,
+            ])
+          )
+          rows = rows.map((t) => {
+            const q = map.get(t.idTiket)
+            if (!q) return t
+            return {
+              ...t,
+              posisiAntrian: q.posisiAntrian,
+              totalAntrian: q.totalAntrian,
+            }
+          })
+        }
+      }
+
+      setTiket(rows)
+    } catch {
+      setTiket([])
+      setTotal(0)
+      setTotalPages(1)
+    } finally {
+      setLoading(false)
+    }
+  }, [page])
 
   useEffect(() => {
     setLoading(true)
     loadTiket()
-  }, [])
+  }, [loadTiket])
 
   const handleCancel = async () => {
     if (!cancelTarget) return
@@ -153,59 +168,69 @@ export default function UserTiketPage() {
           description="Buat tiket baru jika Anda membutuhkan bantuan IT"
         />
       ) : (
-        <TableContainer>
+        <div className="space-y-4">
+          <TableContainer>
             <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>No. Tiket</TableHead>
-                <TableHead>Judul</TableHead>
-                <TableHead>Kategori</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Antrian</TableHead>
-                <TableHead>Tanggal</TableHead>
-                <TableHead className="text-right">Aksi</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {tiket.map((t) => (
-                <TableRow key={t.idTiket}>
-                  <TableCell className="font-medium">{t.nomorTiket}</TableCell>
-                  <TableCell>{t.judul}</TableCell>
-                  <TableCell>{t.kategori.nama}</TableCell>
-                  <TableCell>{getStatusBadge(t.status)}</TableCell>
-                  <TableCell>
-                    {t.posisiAntrian != null && t.totalAntrian != null ? (
-                      <Badge variant="outline" className="font-mono text-xs">
-                        Ke-{t.posisiAntrian}/{t.totalAntrian}
-                      </Badge>
-                    ) : (
-                      <span className="text-muted-foreground">—</span>
-                    )}
-                  </TableCell>
-                  <TableCell>{formatTiketDate(t.tglDibuat)}</TableCell>
-                  <TableCell className="text-right">
-                    <TableActions>
-                      <TableActionLink
-                        label="Detail"
-                        icon={Eye}
-                        href={`/it/user/tiket/${t.idTiket}`}
-                      />
-                      {canUserCancelTiket(t.status) ? (
-                        <TableActionButton
-                          label="Batalkan"
-                          icon={XCircle}
-                          variant="ghost"
-                          className="text-destructive hover:text-destructive"
-                          onClick={() => setCancelTarget(t)}
-                        />
-                      ) : null}
-                    </TableActions>
-                  </TableCell>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>No. Tiket</TableHead>
+                  <TableHead>Judul</TableHead>
+                  <TableHead>Kategori</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Antrian</TableHead>
+                  <TableHead>Tanggal</TableHead>
+                  <TableHead className="text-right">Aksi</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
+              </TableHeader>
+              <TableBody>
+                {tiket.map((t) => (
+                  <TableRow key={t.idTiket}>
+                    <TableCell className="font-medium">{t.nomorTiket}</TableCell>
+                    <TableCell>{t.judul}</TableCell>
+                    <TableCell>{t.kategori.nama}</TableCell>
+                    <TableCell>{getStatusBadge(t.status)}</TableCell>
+                    <TableCell>
+                      {t.posisiAntrian != null && t.totalAntrian != null ? (
+                        <Badge variant="outline" className="font-mono text-xs">
+                          Ke-{t.posisiAntrian}/{t.totalAntrian}
+                        </Badge>
+                      ) : (
+                        <span className="text-muted-foreground">—</span>
+                      )}
+                    </TableCell>
+                    <TableCell>{formatTiketDate(t.tglDibuat)}</TableCell>
+                    <TableCell className="text-right">
+                      <TableActions>
+                        <TableActionLink
+                          label="Detail"
+                          icon={Eye}
+                          href={`/it/user/tiket/${t.idTiket}`}
+                        />
+                        {canUserCancelTiket(t.status) ? (
+                          <TableActionButton
+                            label="Batalkan"
+                            icon={XCircle}
+                            variant="ghost"
+                            className="text-destructive hover:text-destructive"
+                            onClick={() => setCancelTarget(t)}
+                          />
+                        ) : null}
+                      </TableActions>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
             </Table>
-        </TableContainer>
+          </TableContainer>
+          <TablePagination
+            page={page}
+            totalPages={totalPages}
+            total={total}
+            pageSize={pageSize}
+            onPageChange={setPage}
+            itemLabel="tiket"
+          />
+        </div>
       )}
 
       <AlertDialog

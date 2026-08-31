@@ -31,7 +31,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { TableActionButton } from "@/components/ui/table-actions"
+import { TableActionButton, TableActions } from "@/components/ui/table-actions"
+import { MAX_PAGE_SIZE, readPaginatedJson } from "@/lib/shared/pagination"
 
 interface PengajuanSementara {
   idPengajuanSementara: number
@@ -124,10 +125,14 @@ export default function PengajuanPage() {
 
   const fetchStokBarang = async (idJenis: number) => {
     try {
-      const response = await fetch(`/api/purchasing/stok?id_jenis=${idJenis}`)
+      const params = new URLSearchParams()
+      params.set("id_jenis", String(idJenis))
+      params.set("page", "1")
+      params.set("page_size", String(MAX_PAGE_SIZE))
+      const response = await fetch(`/api/purchasing/stok?${params.toString()}`)
       if (response.ok) {
-        const data = await response.json()
-        setStokBarang(data)
+        const result = readPaginatedJson<StokBarang>(await response.json())
+        setStokBarang(result.data)
       }
     } catch {
       toast.error("Gagal memuat data stok barang")
@@ -439,14 +444,16 @@ export default function PengajuanPage() {
                           <TableCell>{formatRupiah(item.hargabarang)}</TableCell>
                           <TableCell>{formatRupiah(item.total)}</TableCell>
                           <TableCell className="text-right">
-                            <TableActionButton
-                              label="Hapus"
-                              icon={Trash2}
-                              className="text-destructive hover:text-destructive"
-                              onClick={() =>
-                                handleDelete(item.idPengajuanSementara)
-                              }
-                            />
+                            <TableActions>
+                              <TableActionButton
+                                label="Hapus"
+                                icon={Trash2}
+                                className="text-destructive hover:text-destructive"
+                                onClick={() =>
+                                  handleDelete(item.idPengajuanSementara)
+                                }
+                              />
+                            </TableActions>
                           </TableCell>
                         </TableRow>
                       ))}

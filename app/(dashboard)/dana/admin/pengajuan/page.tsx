@@ -16,6 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Skeleton } from "@/components/ui/skeleton"
+import { TablePagination } from "@/components/ui/table-pagination"
 import { KembalianDialog } from "@/components/dana/KembalianDialog"
 import { PengajuanTable } from "@/components/dana/PengajuanTable"
 import { DANA_STATUS_LABEL } from "@/lib/dana/constants"
@@ -31,6 +32,11 @@ export default function AdminListPengajuanDanaPage() {
     setStatusFilter,
     query,
     setQuery,
+    page,
+    setPage,
+    total,
+    totalPages,
+    pageSize,
     saveKembalian,
   } = usePengajuanDana()
   const [kembalianTarget, setKembalianTarget] = useState<DanaPengajuan | null>(
@@ -67,13 +73,23 @@ export default function AdminListPengajuanDanaPage() {
         ) : rows.length === 0 ? (
           <ContentEmpty title="Tidak ada pengajuan dana" />
         ) : (
-          <PengajuanTable
-            rows={rows}
-            showPemohon
-            detailHref={(row) => `/dana/admin/antrian/${row.idPengajuan}`}
-            onKembalian={setKembalianTarget}
-            onPrint={downloadPengajuanDanaPdf}
-          />
+          <div className="space-y-4">
+            <PengajuanTable
+              rows={rows}
+              showPemohon
+              detailHref={(row) => `/dana/admin/antrian/${row.idPengajuan}`}
+              onKembalian={setKembalianTarget}
+              onPrint={downloadPengajuanDanaPdf}
+            />
+            <TablePagination
+              page={page}
+              totalPages={totalPages}
+              total={total}
+              pageSize={pageSize}
+              onPageChange={setPage}
+              itemLabel="pengajuan"
+            />
+          </div>
         )}
       </PageSection>
 

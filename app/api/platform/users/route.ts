@@ -5,6 +5,10 @@ import { legacyLevelFromRole } from "@/lib/auth/capabilities"
 import { applicantModulesForRole } from "@/lib/auth/applicant-modules"
 import { managerModulesForRole } from "@/lib/auth/manager-modules"
 import { prisma } from "@/lib/db/prisma"
+import {
+  parsePaginationParams,
+  toPaginatedResult,
+} from "@/lib/shared/pagination"
 import bcrypt from "bcryptjs"
 import { z } from "zod"
 
@@ -62,16 +66,27 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const users = await prisma.user.findMany({
-      orderBy: { idUser: "desc" },
-      include: {
-        role: {
-          select: { idRole: true, code: true, name: true },
-        },
-      },
-    })
+    const { page, pageSize, skip } = parsePaginationParams(
+      request.nextUrl.searchParams
+    )
 
-    return NextResponse.json(users.map(serializeUser))
+    const [total, users] = await Promise.all([
+      prisma.user.count(),
+      prisma.user.findMany({
+        orderBy: { idUser: "desc" },
+        skip,
+        take: pageSize,
+        include: {
+          role: {
+            select: { idRole: true, code: true, name: true },
+          },
+        },
+      }),
+    ])
+
+    return NextResponse.json(
+      toPaginatedResult(users.map(serializeUser), total, page, pageSize)
+    )
   } catch (error) {
     console.error("Error fetching users:", error)
     return NextResponse.json(

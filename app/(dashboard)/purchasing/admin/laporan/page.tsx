@@ -14,6 +14,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { TablePagination } from "@/components/ui/table-pagination"
 import { useLaporan } from "./hooks/useLaporan"
 import {
   LaporanFiltersComponent,
@@ -31,6 +32,11 @@ export default function LaporanPage() {
     setFilters,
     data,
     summary,
+    page,
+    setPage,
+    total,
+    totalPages,
+    pageSize,
     fetchData,
     handleExport,
   } = useLaporan()
@@ -67,216 +73,268 @@ export default function LaporanPage() {
           </TabsList>
 
           <TabsContent value="permintaan">
-            <LaporanTabCard
-              title="Laporan Permintaan Barang"
-              loading={loading}
-              hasData={data.length > 0}
-            >
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Tanggal</TableHead>
-                    <TableHead>Unit</TableHead>
-                    <TableHead>Nama Barang</TableHead>
-                    <TableHead>Jumlah</TableHead>
-                    <TableHead>Satuan</TableHead>
-                    <TableHead>Status</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {data.map((item: Record<string, unknown>) => (
-                    <TableRow key={Number(item.idPermintaan)}>
-                      <TableCell>
-                        {formatDate(String(item.tglPermintaan ?? ""))}
-                      </TableCell>
-                      <TableCell className="font-medium">
-                        {String(item.unit)}
-                      </TableCell>
-                      <TableCell>
-                        {(item.stokbarang as { namaBrg?: string })?.namaBrg ?? ""}
-                      </TableCell>
-                      <TableCell>{String(item.jumlah)}</TableCell>
-                      <TableCell>
-                        {(item.stokbarang as { satuan?: string })?.satuan ?? ""}
-                      </TableCell>
-                      <TableCell>
-                        {getStatusBadge(Number(item.status ?? 0))}
-                      </TableCell>
+            <div className="space-y-4">
+              <LaporanTabCard
+                title="Laporan Permintaan Barang"
+                loading={loading}
+                hasData={data.length > 0}
+              >
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Tanggal</TableHead>
+                      <TableHead>Unit</TableHead>
+                      <TableHead>Nama Barang</TableHead>
+                      <TableHead>Jumlah</TableHead>
+                      <TableHead>Satuan</TableHead>
+                      <TableHead>Status</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </LaporanTabCard>
+                  </TableHeader>
+                  <TableBody>
+                    {data.map((item: Record<string, unknown>) => (
+                      <TableRow key={Number(item.idPermintaan)}>
+                        <TableCell>
+                          {formatDate(String(item.tglPermintaan ?? ""))}
+                        </TableCell>
+                        <TableCell className="font-medium">
+                          {String(item.unit)}
+                        </TableCell>
+                        <TableCell>
+                          {(item.stokbarang as { namaBrg?: string })?.namaBrg ??
+                            ""}
+                        </TableCell>
+                        <TableCell>{String(item.jumlah)}</TableCell>
+                        <TableCell>
+                          {(item.stokbarang as { satuan?: string })?.satuan ??
+                            ""}
+                        </TableCell>
+                        <TableCell>
+                          {getStatusBadge(Number(item.status ?? 0))}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </LaporanTabCard>
+              <TablePagination
+                page={page}
+                totalPages={totalPages}
+                total={total}
+                pageSize={pageSize}
+                onPageChange={setPage}
+              />
+            </div>
           </TabsContent>
 
           <TabsContent value="pengajuan">
-            <LaporanTabCard
-              title="Laporan Pengajuan Barang"
-              loading={loading}
-              hasData={data.length > 0}
-            >
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Tanggal</TableHead>
-                    <TableHead>Unit</TableHead>
-                    <TableHead>Nama Barang</TableHead>
-                    <TableHead>Jumlah</TableHead>
-                    <TableHead>Satuan</TableHead>
-                    <TableHead>Harga</TableHead>
-                    <TableHead>Total</TableHead>
-                    <TableHead>Status</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {data.map((item: Record<string, unknown>) => (
-                    <TableRow key={Number(item.idPengajuan)}>
-                      <TableCell>
-                        {formatDate(String(item.tglPengajuan ?? ""))}
-                      </TableCell>
-                      <TableCell className="font-medium">
-                        {String(item.unit)}
-                      </TableCell>
-                      <TableCell>
-                        {(item.stokbarang as { namaBrg?: string })?.namaBrg ?? ""}
-                      </TableCell>
-                      <TableCell>{String(item.jumlah)}</TableCell>
-                      <TableCell>{String(item.satuan)}</TableCell>
-                      <TableCell>
-                        {formatRupiah(Number(item.hargabarang ?? 0))}
-                      </TableCell>
-                      <TableCell className="font-medium">
-                        {formatRupiah(Number(item.total ?? 0))}
-                      </TableCell>
-                      <TableCell>
-                        {getStatusBadge(Number(item.status ?? 0))}
-                      </TableCell>
+            <div className="space-y-4">
+              <LaporanTabCard
+                title="Laporan Pengajuan Barang"
+                loading={loading}
+                hasData={data.length > 0}
+              >
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Tanggal</TableHead>
+                      <TableHead>Unit</TableHead>
+                      <TableHead>Nama Barang</TableHead>
+                      <TableHead>Jumlah</TableHead>
+                      <TableHead>Satuan</TableHead>
+                      <TableHead>Harga</TableHead>
+                      <TableHead>Total</TableHead>
+                      <TableHead>Status</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </LaporanTabCard>
+                  </TableHeader>
+                  <TableBody>
+                    {data.map((item: Record<string, unknown>) => (
+                      <TableRow key={Number(item.idPengajuan)}>
+                        <TableCell>
+                          {formatDate(String(item.tglPengajuan ?? ""))}
+                        </TableCell>
+                        <TableCell className="font-medium">
+                          {String(item.unit)}
+                        </TableCell>
+                        <TableCell>
+                          {(item.stokbarang as { namaBrg?: string })?.namaBrg ??
+                            ""}
+                        </TableCell>
+                        <TableCell>{String(item.jumlah)}</TableCell>
+                        <TableCell>{String(item.satuan)}</TableCell>
+                        <TableCell>
+                          {formatRupiah(Number(item.hargabarang ?? 0))}
+                        </TableCell>
+                        <TableCell className="font-medium">
+                          {formatRupiah(Number(item.total ?? 0))}
+                        </TableCell>
+                        <TableCell>
+                          {getStatusBadge(Number(item.status ?? 0))}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </LaporanTabCard>
+              <TablePagination
+                page={page}
+                totalPages={totalPages}
+                total={total}
+                pageSize={pageSize}
+                onPageChange={setPage}
+              />
+            </div>
           </TabsContent>
 
           <TabsContent value="pemasukan">
-            <LaporanTabCard
-              title="Laporan Pemasukan Barang"
-              loading={loading}
-              hasData={data.length > 0}
-            >
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Tanggal</TableHead>
-                    <TableHead>Unit</TableHead>
-                    <TableHead>Nama Barang</TableHead>
-                    <TableHead>Jumlah</TableHead>
-                    <TableHead>Satuan</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {data.map((item: Record<string, unknown>, index: number) => (
-                    <TableRow key={`pemasukan-${index}`}>
-                      <TableCell>
-                        {formatDate(String(item.tglMasuk ?? ""))}
-                      </TableCell>
-                      <TableCell className="font-medium">
-                        {String(item.unit)}
-                      </TableCell>
-                      <TableCell>
-                        {(item.stokbarang as { namaBrg?: string })?.namaBrg ?? ""}
-                      </TableCell>
-                      <TableCell>{String(item.jumlah)}</TableCell>
-                      <TableCell>
-                        {(item.stokbarang as { satuan?: string })?.satuan ?? ""}
-                      </TableCell>
+            <div className="space-y-4">
+              <LaporanTabCard
+                title="Laporan Pemasukan Barang"
+                loading={loading}
+                hasData={data.length > 0}
+              >
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Tanggal</TableHead>
+                      <TableHead>Unit</TableHead>
+                      <TableHead>Nama Barang</TableHead>
+                      <TableHead>Jumlah</TableHead>
+                      <TableHead>Satuan</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </LaporanTabCard>
+                  </TableHeader>
+                  <TableBody>
+                    {data.map((item: Record<string, unknown>, index: number) => (
+                      <TableRow key={`pemasukan-${index}`}>
+                        <TableCell>
+                          {formatDate(String(item.tglMasuk ?? ""))}
+                        </TableCell>
+                        <TableCell className="font-medium">
+                          {String(item.unit)}
+                        </TableCell>
+                        <TableCell>
+                          {(item.stokbarang as { namaBrg?: string })?.namaBrg ??
+                            ""}
+                        </TableCell>
+                        <TableCell>{String(item.jumlah)}</TableCell>
+                        <TableCell>
+                          {(item.stokbarang as { satuan?: string })?.satuan ??
+                            ""}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </LaporanTabCard>
+              <TablePagination
+                page={page}
+                totalPages={totalPages}
+                total={total}
+                pageSize={pageSize}
+                onPageChange={setPage}
+              />
+            </div>
           </TabsContent>
 
           <TabsContent value="pengeluaran">
-            <LaporanTabCard
-              title="Laporan Pengeluaran Barang"
-              loading={loading}
-              hasData={data.length > 0}
-            >
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Tanggal</TableHead>
-                    <TableHead>Unit</TableHead>
-                    <TableHead>Nama Barang</TableHead>
-                    <TableHead>Jumlah</TableHead>
-                    <TableHead>Satuan</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {data.map((item: Record<string, unknown>, index: number) => (
-                    <TableRow key={`pengeluaran-${index}`}>
-                      <TableCell>
-                        {formatDate(String(item.tglKeluar ?? ""))}
-                      </TableCell>
-                      <TableCell className="font-medium">
-                        {String(item.unit)}
-                      </TableCell>
-                      <TableCell>
-                        {(item.stokbarang as { namaBrg?: string })?.namaBrg ?? ""}
-                      </TableCell>
-                      <TableCell>{String(item.jumlah)}</TableCell>
-                      <TableCell>
-                        {(item.stokbarang as { satuan?: string })?.satuan ?? ""}
-                      </TableCell>
+            <div className="space-y-4">
+              <LaporanTabCard
+                title="Laporan Pengeluaran Barang"
+                loading={loading}
+                hasData={data.length > 0}
+              >
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Tanggal</TableHead>
+                      <TableHead>Unit</TableHead>
+                      <TableHead>Nama Barang</TableHead>
+                      <TableHead>Jumlah</TableHead>
+                      <TableHead>Satuan</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </LaporanTabCard>
+                  </TableHeader>
+                  <TableBody>
+                    {data.map((item: Record<string, unknown>, index: number) => (
+                      <TableRow key={`pengeluaran-${index}`}>
+                        <TableCell>
+                          {formatDate(String(item.tglKeluar ?? ""))}
+                        </TableCell>
+                        <TableCell className="font-medium">
+                          {String(item.unit)}
+                        </TableCell>
+                        <TableCell>
+                          {(item.stokbarang as { namaBrg?: string })?.namaBrg ??
+                            ""}
+                        </TableCell>
+                        <TableCell>{String(item.jumlah)}</TableCell>
+                        <TableCell>
+                          {(item.stokbarang as { satuan?: string })?.satuan ??
+                            ""}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </LaporanTabCard>
+              <TablePagination
+                page={page}
+                totalPages={totalPages}
+                total={total}
+                pageSize={pageSize}
+                onPageChange={setPage}
+              />
+            </div>
           </TabsContent>
 
           <TabsContent value="stok">
-            <LaporanTabCard
-              title="Laporan Stok Barang"
-              loading={loading}
-              hasData={data.length > 0}
-            >
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Kode Barang</TableHead>
-                    <TableHead>Nama Barang</TableHead>
-                    <TableHead>Stok</TableHead>
-                    <TableHead>Keluar</TableHead>
-                    <TableHead>Sisa</TableHead>
-                    <TableHead>Satuan</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {data.map((item: Record<string, unknown>) => (
-                    <TableRow key={Number(item.idKodeBrg)}>
-                      <TableCell>{String(item.kodeBrg)}</TableCell>
-                      <TableCell className="font-medium">
-                        {String(item.namaBrg)}
-                      </TableCell>
-                      <TableCell>{String(item.stok)}</TableCell>
-                      <TableCell>{String(item.keluar)}</TableCell>
-                      <TableCell
-                        className={
-                          (item.sisa as number) <= 10
-                            ? "text-destructive font-semibold"
-                            : "font-medium"
-                        }
-                      >
-                        {String(item.sisa)}
-                      </TableCell>
-                      <TableCell>{String(item.satuan)}</TableCell>
+            <div className="space-y-4">
+              <LaporanTabCard
+                title="Laporan Stok Barang"
+                loading={loading}
+                hasData={data.length > 0}
+              >
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Kode Barang</TableHead>
+                      <TableHead>Nama Barang</TableHead>
+                      <TableHead>Stok</TableHead>
+                      <TableHead>Keluar</TableHead>
+                      <TableHead>Sisa</TableHead>
+                      <TableHead>Satuan</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </LaporanTabCard>
+                  </TableHeader>
+                  <TableBody>
+                    {data.map((item: Record<string, unknown>) => (
+                      <TableRow key={Number(item.idKodeBrg)}>
+                        <TableCell>{String(item.kodeBrg)}</TableCell>
+                        <TableCell className="font-medium">
+                          {String(item.namaBrg)}
+                        </TableCell>
+                        <TableCell>{String(item.stok)}</TableCell>
+                        <TableCell>{String(item.keluar)}</TableCell>
+                        <TableCell
+                          className={
+                            (item.sisa as number) <= 10
+                              ? "text-destructive font-semibold"
+                              : "font-medium"
+                          }
+                        >
+                          {String(item.sisa)}
+                        </TableCell>
+                        <TableCell>{String(item.satuan)}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </LaporanTabCard>
+              <TablePagination
+                page={page}
+                totalPages={totalPages}
+                total={total}
+                pageSize={pageSize}
+                onPageChange={setPage}
+              />
+            </div>
           </TabsContent>
         </Tabs>
       </div>

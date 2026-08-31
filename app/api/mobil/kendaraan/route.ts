@@ -7,6 +7,11 @@ import {
 } from "@/lib/auth/permissions"
 import { prisma } from "@/lib/db/prisma"
 import { toMobilKendaraan } from "@/lib/mobil/map"
+import {
+  parsePaginationParams,
+  toPaginatedResult,
+  wantsPagination,
+} from "@/lib/shared/pagination"
 
 const schema = z.object({
   nopol: z.string().trim().min(3).max(20),
@@ -31,9 +36,29 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const aktifOnly = request.nextUrl.searchParams.get("aktif") === "true"
+    const searchParams = request.nextUrl.searchParams
+    const aktifOnly = searchParams.get("aktif") === "true"
+    const where = aktifOnly ? { aktif: true } : undefined
+
+    if (wantsPagination(searchParams)) {
+      const { page, pageSize, skip } = parsePaginationParams(searchParams)
+      const [total, rows] = await Promise.all([
+        prisma.mobilKendaraan.count({ where }),
+        prisma.mobilKendaraan.findMany({
+          where,
+          include: includeKendaraan,
+          orderBy: { nopol: "asc" },
+          skip,
+          take: pageSize,
+        }),
+      ])
+      return NextResponse.json(
+        toPaginatedResult(rows.map(toMobilKendaraan), total, page, pageSize)
+      )
+    }
+
     const rows = await prisma.mobilKendaraan.findMany({
-      where: aktifOnly ? { aktif: true } : undefined,
+      where,
       include: includeKendaraan,
       orderBy: { nopol: "asc" },
     })

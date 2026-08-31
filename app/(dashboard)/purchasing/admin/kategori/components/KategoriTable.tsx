@@ -12,7 +12,7 @@ import {
 import { TableContainer } from "@/components/ui/table-container"
 import { TableEmptyState } from "@/components/ui/table-empty-state"
 import type { Kategori } from "../types"
-import { TableActionButton } from "@/components/ui/table-actions"
+import { TableActionButton, TableActions } from "@/components/ui/table-actions"
 
 interface KategoriTableProps {
   data: Kategori[]
@@ -39,7 +39,9 @@ export function KategoriTable({ data, onDelete }: KategoriTableProps) {
                 <TableCell>{item.idJenis}</TableCell>
                 <TableCell>{item.jenisBrg}</TableCell>
                 <TableCell className="text-right">
-                  <TableActionButton label="Hapus" icon={Trash2} variant="ghost" className="text-destructive hover:text-destructive" onClick={() => onDelete(item)} />
+                  <TableActions>
+                    <TableActionButton label="Hapus" icon={Trash2} variant="ghost" className="text-destructive hover:text-destructive" onClick={() => onDelete(item)} />
+                  </TableActions>
                 </TableCell>
               </TableRow>
             ))

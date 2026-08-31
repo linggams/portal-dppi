@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { toast } from "sonner"
-import { getDefaultPermintaanGroupDateRange } from "@/lib/purchasing/permintaan-group-types"
+import { getDefaultPermintaanGroupDateRange, PERMINTAAN_GROUP_PAGE_SIZE } from "@/lib/purchasing/permintaan-group-types"
 import type {
   PermintaanGroupFilters,
   PermintaanGroupRow,
@@ -33,7 +33,7 @@ export function usePermintaanGroups() {
   const [summary, setSummary] = useState<PermintaanGroupsSummary>(emptySummary)
   const [total, setTotal] = useState(0)
   const [totalPages, setTotalPages] = useState(1)
-  const [pageSize, setPageSize] = useState(20)
+  const [pageSize, setPageSize] = useState(PERMINTAAN_GROUP_PAGE_SIZE)
   const [loading, setLoading] = useState(true)
 
   const fetchGroups = useCallback(async () => {
@@ -64,7 +64,7 @@ export function usePermintaanGroups() {
       setSummary(result.summary ?? emptySummary)
       setTotal(result.total ?? 0)
       setTotalPages(result.totalPages ?? 1)
-      setPageSize(result.pageSize ?? 20)
+      setPageSize(result.pageSize ?? PERMINTAAN_GROUP_PAGE_SIZE)
     } catch {
       toast.error("Terjadi kesalahan saat memuat data")
     } finally {

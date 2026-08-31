@@ -33,10 +33,15 @@ import {
 } from "@/components/ui/table"
 import { TableContainer } from "@/components/ui/table-container"
 import { TableEmptyState } from "@/components/ui/table-empty-state"
+import { TablePagination } from "@/components/ui/table-pagination"
 import {
   TableActionButton,
   TableActions,
 } from "@/components/ui/table-actions"
+import {
+  DEFAULT_PAGE_SIZE,
+  readPaginatedJson,
+} from "@/lib/shared/pagination"
 import type { MobilJenis, MobilKendaraan } from "@/lib/mobil/mobil-types"
 
 type FormState = {
@@ -57,34 +62,63 @@ export default function MobilKendaraanPage() {
   const [rows, setRows] = useState<MobilKendaraan[]>([])
   const [jenis, setJenis] = useState<MobilJenis[]>([])
   const [loading, setLoading] = useState(true)
+  const [page, setPage] = useState(1)
+  const [total, setTotal] = useState(0)
+  const [totalPages, setTotalPages] = useState(1)
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE)
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState<MobilKendaraan | null>(null)
   const [form, setForm] = useState<FormState>(emptyForm)
   const [saving, setSaving] = useState(false)
 
-  const fetchAll = useCallback(async () => {
+  const fetchJenis = useCallback(async () => {
+    const jenisRes = await fetch("/api/mobil/jenis")
+    if (!jenisRes.ok) throw new Error("Gagal memuat data jenis")
+    const data = await jenisRes.json()
+    setJenis(Array.isArray(data) ? data : [])
+  }, [])
+
+  const fetchRows = useCallback(async () => {
     setLoading(true)
     try {
-      const [kendaraanRes, jenisRes] = await Promise.all([
-        fetch("/api/mobil/kendaraan"),
-        fetch("/api/mobil/jenis"),
-      ])
-      if (!kendaraanRes.ok || !jenisRes.ok) {
+      const params = new URLSearchParams()
+      params.set("page", String(page))
+      const kendaraanRes = await fetch(
+        `/api/mobil/kendaraan?${params.toString()}`
+      )
+      if (!kendaraanRes.ok) {
         throw new Error("Gagal memuat data kendaraan")
       }
-      setRows(await kendaraanRes.json())
-      setJenis(await jenisRes.json())
+      const result = readPaginatedJson<MobilKendaraan>(
+        await kendaraanRes.json()
+      )
+      setRows(result.data)
+      setTotal(result.total)
+      setTotalPages(result.totalPages)
+      setPageSize(result.pageSize)
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Gagal memuat")
       setRows([])
+      setTotal(0)
+      setTotalPages(1)
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [page])
 
   useEffect(() => {
-    fetchAll()
-  }, [fetchAll])
+    fetchJenis().catch((error) => {
+      toast.error(error instanceof Error ? error.message : "Gagal memuat")
+    })
+  }, [fetchJenis])
+
+  useEffect(() => {
+    fetchRows()
+  }, [fetchRows])
+
+  const refresh = async () => {
+    await fetchRows()
+  }
 
   const openCreate = () => {
     setEditing(null)
@@ -131,7 +165,7 @@ export default function MobilKendaraanPage() {
       }
       toast.success(editing ? "Kendaraan diperbarui" : "Kendaraan ditambahkan")
       setOpen(false)
-      await fetchAll()
+      await refresh()
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Gagal menyimpan")
     } finally {
@@ -150,7 +184,7 @@ export default function MobilKendaraanPage() {
       return
     }
     toast.success("Kendaraan dihapus")
-    await fetchAll()
+    await refresh()
   }
 
   return (
@@ -167,54 +201,64 @@ export default function MobilKendaraanPage() {
           ))}
         </div>
       ) : (
-        <TableContainer>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Nopol</TableHead>
-                <TableHead>Jenis</TableHead>
-                <TableHead className="text-right">KM terakhir</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Aksi</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {rows.length === 0 ? (
-                <TableEmptyState colSpan={5} title="Belum ada kendaraan" />
-              ) : (
-                rows.map((row) => (
-                  <TableRow key={row.idKendaraan}>
-                    <TableCell className="font-medium">{row.nopol}</TableCell>
-                    <TableCell>{row.jenis?.nama ?? "—"}</TableCell>
-                    <TableCell className="text-right">
-                      {(row.kmTerakhir ?? row.kmAwal).toLocaleString("id-ID")}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={row.aktif ? "default" : "secondary"}>
-                        {row.aktif ? "Aktif" : "Nonaktif"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <TableActions>
-                        <TableActionButton
-                          label="Edit"
-                          icon={Pencil}
-                          onClick={() => openEdit(row)}
-                        />
-                        <TableActionButton
-                          label="Hapus"
-                          icon={Trash2}
-                          className="text-destructive hover:text-destructive"
-                          onClick={() => handleDelete(row)}
-                        />
-                      </TableActions>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
+        <div className="space-y-4">
+          <TableContainer>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nopol</TableHead>
+                  <TableHead>Jenis</TableHead>
+                  <TableHead className="text-right">KM terakhir</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Aksi</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {rows.length === 0 ? (
+                  <TableEmptyState colSpan={5} title="Belum ada kendaraan" />
+                ) : (
+                  rows.map((row) => (
+                    <TableRow key={row.idKendaraan}>
+                      <TableCell className="font-medium">{row.nopol}</TableCell>
+                      <TableCell>{row.jenis?.nama ?? "—"}</TableCell>
+                      <TableCell className="text-right">
+                        {(row.kmTerakhir ?? row.kmAwal).toLocaleString("id-ID")}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={row.aktif ? "default" : "secondary"}>
+                          {row.aktif ? "Aktif" : "Nonaktif"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <TableActions>
+                          <TableActionButton
+                            label="Edit"
+                            icon={Pencil}
+                            onClick={() => openEdit(row)}
+                          />
+                          <TableActionButton
+                            label="Hapus"
+                            icon={Trash2}
+                            className="text-destructive hover:text-destructive"
+                            onClick={() => handleDelete(row)}
+                          />
+                        </TableActions>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+          <TablePagination
+            page={page}
+            totalPages={totalPages}
+            total={total}
+            pageSize={pageSize}
+            onPageChange={setPage}
+            itemLabel="kendaraan"
+          />
+        </div>
       )}
 
       <Dialog open={open} onOpenChange={setOpen}>

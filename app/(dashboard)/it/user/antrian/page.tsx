@@ -13,7 +13,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
-import { TableActionLink } from "@/components/ui/table-actions"
+import { TableActionLink, TableActions } from "@/components/ui/table-actions"
 import {
   Table,
   TableBody,
@@ -23,6 +23,8 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { TableContainer } from "@/components/ui/table-container"
+import { TablePagination } from "@/components/ui/table-pagination"
+import { DEFAULT_PAGE_SIZE, paginateArray } from "@/lib/shared/pagination"
 import { cn } from "@/lib/utils"
 import {
   formatTiketDate,
@@ -53,6 +55,7 @@ interface AntrianResponse {
 export default function UserAntrianPage() {
   const [data, setData] = useState<AntrianResponse | null>(null)
   const [loading, setLoading] = useState(true)
+  const [page, setPage] = useState(1)
 
   useEffect(() => {
     fetch("/api/it/tiket/antrian")
@@ -78,6 +81,11 @@ export default function UserAntrianPage() {
           new Date(b.tglDibuat).getTime() - new Date(a.tglDibuat).getTime()
       ),
     [antrianGlobal]
+  )
+
+  const paginatedAntrian = useMemo(
+    () => paginateArray(antrianGlobalTabel, page, DEFAULT_PAGE_SIZE),
+    [antrianGlobalTabel, page]
   )
 
   return (
@@ -131,71 +139,83 @@ export default function UserAntrianPage() {
                 description="Belum ada tiket yang menunggu penanganan tim IT"
               />
             ) : (
-              <TableContainer>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-12">#</TableHead>
-                      <TableHead>No. Tiket</TableHead>
-                      <TableHead>Judul</TableHead>
-                      <TableHead>Pemohon</TableHead>
-                      <TableHead>Kategori</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Ditugaskan</TableHead>
-                      <TableHead>Tanggal</TableHead>
-                      <TableHead className="text-right">Aksi</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {antrianGlobalTabel.map((t) => (
-                      <TableRow
-                        key={t.idTiket}
-                        className={cn(
-                          t.isMine &&
-                            "bg-primary/5 border-l-2 border-l-primary"
-                        )}
-                      >
-                        <TableCell className="font-mono text-sm font-medium">
-                          {t.posisiAntrian}
-                        </TableCell>
-                        <TableCell className="font-medium">
-                          <span className="flex flex-wrap items-center gap-2">
-                            {t.nomorTiket}
-                            {t.isMine ? (
-                              <Badge variant="default" className="text-[10px]">
-                                Anda
-                              </Badge>
-                            ) : null}
-                          </span>
-                        </TableCell>
-                        <TableCell className="max-w-[200px] truncate">
-                          {t.judul}
-                        </TableCell>
-                        <TableCell>{t.username}</TableCell>
-                        <TableCell>{t.kategori.nama}</TableCell>
-                        <TableCell>{getStatusBadge(t.status)}</TableCell>
-                        <TableCell>{t.ditugaskanKe ?? "-"}</TableCell>
-                        <TableCell className="whitespace-nowrap text-sm">
-                          {formatTiketDate(t.tglDibuat)}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          {t.isMine ? (
-                            <TableActionLink
-                              label="Detail"
-                              icon={Eye}
-                              href={`/it/user/tiket/${t.idTiket}`}
-                            />
-                          ) : (
-                            <span className="text-xs text-muted-foreground">
-                              —
-                            </span>
-                          )}
-                        </TableCell>
+              <div className="space-y-4">
+                <TableContainer>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-12">#</TableHead>
+                        <TableHead>No. Tiket</TableHead>
+                        <TableHead>Judul</TableHead>
+                        <TableHead>Pemohon</TableHead>
+                        <TableHead>Kategori</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Ditugaskan</TableHead>
+                        <TableHead>Tanggal</TableHead>
+                        <TableHead className="text-right">Aksi</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
+                    </TableHeader>
+                    <TableBody>
+                      {paginatedAntrian.data.map((t) => (
+                        <TableRow
+                          key={t.idTiket}
+                          className={cn(
+                            t.isMine &&
+                              "bg-primary/5 border-l-2 border-l-primary"
+                          )}
+                        >
+                          <TableCell className="font-mono text-sm font-medium">
+                            {t.posisiAntrian}
+                          </TableCell>
+                          <TableCell className="font-medium">
+                            <span className="flex flex-wrap items-center gap-2">
+                              {t.nomorTiket}
+                              {t.isMine ? (
+                                <Badge variant="default" className="text-[10px]">
+                                  Anda
+                                </Badge>
+                              ) : null}
+                            </span>
+                          </TableCell>
+                          <TableCell className="max-w-[200px] truncate">
+                            {t.judul}
+                          </TableCell>
+                          <TableCell>{t.username}</TableCell>
+                          <TableCell>{t.kategori.nama}</TableCell>
+                          <TableCell>{getStatusBadge(t.status)}</TableCell>
+                          <TableCell>{t.ditugaskanKe ?? "-"}</TableCell>
+                          <TableCell className="whitespace-nowrap text-sm">
+                            {formatTiketDate(t.tglDibuat)}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            {t.isMine ? (
+                              <TableActions>
+                                <TableActionLink
+                                  label="Detail"
+                                  icon={Eye}
+                                  href={`/it/user/tiket/${t.idTiket}`}
+                                />
+                              </TableActions>
+                            ) : (
+                              <span className="text-xs text-muted-foreground">
+                                —
+                              </span>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+                <TablePagination
+                  page={paginatedAntrian.page}
+                  totalPages={paginatedAntrian.totalPages}
+                  total={paginatedAntrian.total}
+                  pageSize={paginatedAntrian.pageSize}
+                  onPageChange={setPage}
+                  itemLabel="tiket"
+                />
+              </div>
             )}
           </PageSection>
 

@@ -43,19 +43,19 @@ export function DashboardLayout({
   }
 
   return (
-    <SidebarProvider className="flex-col">
+    <SidebarProvider className="flex h-svh flex-col overflow-hidden">
       <PageTitleProvider>
         <PageActionsProvider>
           {title ? <SetPageTitle title={title} /> : null}
           <Header roleName={user.roleName || user.level} />
-          <div className="flex min-h-0 w-full flex-1">
+          <div className="flex min-h-0 w-full flex-1 overflow-hidden">
             <Suspense fallback={null}>
               <AppSidebar />
             </Suspense>
-            <SidebarInset>
+            <SidebarInset className="min-h-0 overflow-hidden">
               <PageActionsBar />
-              <div className="relative flex-1 overflow-y-auto focus:outline-none">
-                <div className="w-full space-y-6 px-4 py-6 sm:px-6 lg:px-8">
+              <div className="relative min-h-0 flex-1 overflow-y-auto [scrollbar-gutter:stable] focus:outline-none">
+                <div className="w-full space-y-6 px-4 py-6">
                   {children}
                 </div>
               </div>

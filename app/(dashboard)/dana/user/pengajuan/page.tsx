@@ -27,6 +27,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Skeleton } from "@/components/ui/skeleton"
+import { TablePagination } from "@/components/ui/table-pagination"
 import { PengajuanFormDialog } from "@/components/dana/PengajuanFormDialog"
 import { PengajuanTable } from "@/components/dana/PengajuanTable"
 import { DANA_STATUS_LABEL } from "@/lib/dana/constants"
@@ -42,6 +43,11 @@ export default function UserPengajuanDanaPage() {
     setStatusFilter,
     query,
     setQuery,
+    page,
+    setPage,
+    total,
+    totalPages,
+    pageSize,
     createPengajuan,
     revisePengajuan,
     cancelPengajuan,
@@ -89,16 +95,26 @@ export default function UserPengajuanDanaPage() {
         ) : rows.length === 0 ? (
           <ContentEmpty title="Belum ada pengajuan dana" />
         ) : (
-          <PengajuanTable
-            rows={rows}
-            detailHref={(row) => `/dana/user/pengajuan/${row.idPengajuan}`}
-            onRevise={(row) => {
-              setEditing(row)
-              setFormOpen(true)
-            }}
-            onCancel={setCancelTarget}
-            onPrint={downloadPengajuanDanaPdf}
-          />
+          <div className="space-y-4">
+            <PengajuanTable
+              rows={rows}
+              detailHref={(row) => `/dana/user/pengajuan/${row.idPengajuan}`}
+              onRevise={(row) => {
+                setEditing(row)
+                setFormOpen(true)
+              }}
+              onCancel={setCancelTarget}
+              onPrint={downloadPengajuanDanaPdf}
+            />
+            <TablePagination
+              page={page}
+              totalPages={totalPages}
+              total={total}
+              pageSize={pageSize}
+              onPageChange={setPage}
+              itemLabel="pengajuan"
+            />
+          </div>
         )}
       </PageSection>
 

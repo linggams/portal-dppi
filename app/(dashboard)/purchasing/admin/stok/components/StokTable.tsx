@@ -20,11 +20,17 @@ import {
 
 interface StokTableProps {
   data: StokBarang[]
+  rowOffset?: number
   onEdit: (stok: StokBarang) => void
   onDelete: (stok: StokBarang) => void
 }
 
-export function StokTable({ data, onEdit, onDelete }: StokTableProps) {
+export function StokTable({
+  data,
+  rowOffset = 0,
+  onEdit,
+  onDelete,
+}: StokTableProps) {
   return (
     <TableContainer>
       <Table>
@@ -47,7 +53,7 @@ export function StokTable({ data, onEdit, onDelete }: StokTableProps) {
           ) : (
             data.map((stok, index) => (
               <TableRow key={stok.idKodeBrg}>
-                <TableCell>{index + 1}</TableCell>
+                <TableCell>{rowOffset + index + 1}</TableCell>
                 <TableCell>{stok.kodeBrg}</TableCell>
                 <TableCell>{stok.namaBrg}</TableCell>
                 <TableCell>{formatRupiah(stok.hargabarang)}</TableCell>

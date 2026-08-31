@@ -2,10 +2,15 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { toast } from "sonner"
-import { downloadPdf } from "@/lib/makepdf"
+import { downloadPdf } from "@/lib/shared/makepdf"
 import { IT_TIKET_STATUS_LABEL } from "@/lib/it/constants"
 import { formatJamAtauHari } from "@/lib/it/laporan"
 import { getMonthToDateRangeWIB } from "@/lib/purchasing/permintaan-daily-limit-types"
+import {
+  DEFAULT_PAGE_SIZE,
+  MAX_PAGE_SIZE,
+  readPaginatedJson,
+} from "@/lib/shared/pagination"
 import type {
   ItLaporanFilters,
   ItLaporanSummary,
@@ -18,8 +23,8 @@ import { formatTiketDate } from "@/lib/it/utils"
 
 export function useItLaporan() {
   const [loading, setLoading] = useState(false)
-  const [activeTab, setActiveTab] = useState<ItLaporanTab>("tiket")
-  const [filters, setFilters] = useState<ItLaporanFilters>(() => ({
+  const [activeTab, setActiveTabState] = useState<ItLaporanTab>("tiket")
+  const [filters, setFiltersState] = useState<ItLaporanFilters>(() => ({
     ...getMonthToDateRangeWIB(),
     status: "all",
     kategoriId: "all",
@@ -31,9 +36,23 @@ export function useItLaporan() {
   const [kategoriData, setKategoriData] = useState<KategoriLaporanItem[]>([])
   const [teknisiData, setTeknisiData] = useState<TeknisiLaporanItem[]>([])
   const [summary, setSummary] = useState<ItLaporanSummary | null>(null)
+  const [page, setPage] = useState(1)
+  const [total, setTotal] = useState(0)
+  const [totalPages, setTotalPages] = useState(1)
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE)
+
+  const setActiveTab = useCallback((tab: ItLaporanTab) => {
+    setPage(1)
+    setActiveTabState(tab)
+  }, [])
+
+  const setFilters = useCallback((next: ItLaporanFilters) => {
+    setPage(1)
+    setFiltersState(next)
+  }, [])
 
   const buildParams = useCallback(
-    (tab: ItLaporanTab) => {
+    (tab: ItLaporanTab, currentPage: number, size?: number) => {
       const params = new URLSearchParams({ tab })
       if (filters.startDate) params.append("start_date", filters.startDate)
       if (filters.endDate) params.append("end_date", filters.endDate)
@@ -46,40 +65,103 @@ export function useItLaporan() {
         params.append("ditugaskan_ke", filters.ditugaskanKe.trim())
       if (filters.dateField === "selesai")
         params.append("date_field", "selesai")
+      params.set("page", String(currentPage))
+      if (size) params.set("page_size", String(size))
       return params
     },
     [filters]
   )
 
-  const fetchData = useCallback(async () => {
-    setLoading(true)
-    try {
-      const params = buildParams(activeTab)
-      const response = await fetch(`/api/it/laporan?${params.toString()}`)
-      if (!response.ok) {
-        toast.error("Gagal memuat data laporan")
-        return
-      }
-      const result = await response.json()
-      setSummary(result.summary ?? null)
+  const fetchData = useCallback(
+    async (pageOverride?: number) => {
+      const currentPage = pageOverride ?? page
+      setLoading(true)
+      try {
+        const params = buildParams(activeTab, currentPage)
+        const response = await fetch(`/api/it/laporan?${params.toString()}`)
+        if (!response.ok) {
+          toast.error("Gagal memuat data laporan")
+          return
+        }
+        const json = await response.json()
+        setSummary(json.summary ?? null)
 
-      if (activeTab === "tiket") {
-        setTiketData(result.data ?? [])
-      } else if (activeTab === "kategori") {
-        setKategoriData(result.data ?? [])
-      } else {
-        setTeknisiData(result.data ?? [])
+        if (activeTab === "tiket") {
+          const result = readPaginatedJson<TiketLaporanItem>(json)
+          setTiketData(result.data)
+          setTotal(result.total)
+          setTotalPages(result.totalPages)
+          setPageSize(result.pageSize)
+        } else if (activeTab === "kategori") {
+          const result = readPaginatedJson<KategoriLaporanItem>(json)
+          setKategoriData(result.data)
+          setTotal(result.total)
+          setTotalPages(result.totalPages)
+          setPageSize(result.pageSize)
+        } else {
+          const result = readPaginatedJson<TeknisiLaporanItem>(json)
+          setTeknisiData(result.data)
+          setTotal(result.total)
+          setTotalPages(result.totalPages)
+          setPageSize(result.pageSize)
+        }
+      } catch {
+        toast.error("Terjadi kesalahan saat memuat data")
+      } finally {
+        setLoading(false)
       }
-    } catch {
-      toast.error("Terjadi kesalahan saat memuat data")
-    } finally {
-      setLoading(false)
-    }
-  }, [activeTab, buildParams])
+    },
+    [activeTab, buildParams, page]
+  )
+
+  const handleFetch = useCallback(() => {
+    setPage(1)
+    void fetchData(1)
+  }, [fetchData])
 
   useEffect(() => {
     fetchData()
   }, [fetchData])
+
+  const rowDataFromItems = useCallback(
+    (
+      tab: ItLaporanTab,
+      tiket: TiketLaporanItem[],
+      kategori: KategoriLaporanItem[],
+      teknisi: TeknisiLaporanItem[]
+    ): string[][] => {
+      switch (tab) {
+        case "tiket":
+          return tiket.map((t) => [
+            t.nomorTiket,
+            t.judul,
+            t.username,
+            t.kategori.nama,
+            IT_TIKET_STATUS_LABEL[t.status] ?? String(t.status),
+            t.ditugaskanKe ?? "-",
+            formatTiketDate(t.tglDibuat),
+            t.tglSelesai ? formatTiketDate(t.tglSelesai) : "-",
+          ])
+        case "kategori":
+          return kategori.map((k) => [
+            k.kategoriNama,
+            String(k.total),
+            String(k.dalamAntrian),
+            String(k.selesai),
+            formatJamAtauHari(k.rataRataJamSelesai),
+          ])
+        case "teknisi":
+          return teknisi.map((t) => [
+            t.ditugaskanKe,
+            String(t.total),
+            String(t.dalamAntrian),
+            String(t.selesai),
+            formatJamAtauHari(t.rataRataJamSelesai),
+          ])
+      }
+    },
+    []
+  )
 
   const getHeaders = (tab: ItLaporanTab): string[] => {
     switch (tab) {
@@ -113,42 +195,46 @@ export function useItLaporan() {
     }
   }
 
-  const getRowData = (tab: ItLaporanTab): string[][] => {
-    switch (tab) {
-      case "tiket":
-        return tiketData.map((t) => [
-          t.nomorTiket,
-          t.judul,
-          t.username,
-          t.kategori.nama,
-          IT_TIKET_STATUS_LABEL[t.status] ?? String(t.status),
-          t.ditugaskanKe ?? "-",
-          formatTiketDate(t.tglDibuat),
-          t.tglSelesai ? formatTiketDate(t.tglSelesai) : "-",
-        ])
-      case "kategori":
-        return kategoriData.map((k) => [
-          k.kategoriNama,
-          String(k.total),
-          String(k.dalamAntrian),
-          String(k.selesai),
-          formatJamAtauHari(k.rataRataJamSelesai),
-        ])
-      case "teknisi":
-        return teknisiData.map((t) => [
-          t.ditugaskanKe,
-          String(t.total),
-          String(t.dalamAntrian),
-          String(t.selesai),
-          formatJamAtauHari(t.rataRataJamSelesai),
-        ])
-    }
-  }
-
   const handleExport = useCallback(async () => {
     try {
+      const allTiket: TiketLaporanItem[] = []
+      const allKategori: KategoriLaporanItem[] = []
+      const allTeknisi: TeknisiLaporanItem[] = []
+      let exportPage = 1
+      let exportTotalPages = 1
+      do {
+        const params = buildParams(activeTab, exportPage, MAX_PAGE_SIZE)
+        const response = await fetch(`/api/it/laporan?${params.toString()}`)
+        if (!response.ok) throw new Error("Gagal memuat data ekspor")
+        const json = await response.json()
+        if (activeTab === "tiket") {
+          const result = readPaginatedJson<TiketLaporanItem>(json)
+          allTiket.push(...result.data)
+          exportTotalPages = result.totalPages
+        } else if (activeTab === "kategori") {
+          const result = readPaginatedJson<KategoriLaporanItem>(json)
+          allKategori.push(...result.data)
+          exportTotalPages = result.totalPages
+        } else {
+          const result = readPaginatedJson<TeknisiLaporanItem>(json)
+          allTeknisi.push(...result.data)
+          exportTotalPages = result.totalPages
+        }
+        exportPage += 1
+      } while (exportPage <= exportTotalPages)
+
+      const tableRows = rowDataFromItems(
+        activeTab,
+        allTiket,
+        allKategori,
+        allTeknisi
+      )
+      if (tableRows.length === 0) {
+        toast.error("Tidak ada data untuk diekspor")
+        return
+      }
+
       const headers = getHeaders(activeTab)
-      const tableRows = getRowData(activeTab)
       const filename = `laporan-it-${activeTab}-${new Date().toISOString().split("T")[0]}.pdf`
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -183,7 +269,9 @@ export function useItLaporan() {
             margin: [0, 4, 0, 8],
           },
           {
-            canvas: [{ type: "line", x1: 0, y1: 0, x2: 760, y2: 0, lineWidth: 1 }],
+            canvas: [
+              { type: "line", x1: 0, y1: 0, x2: 760, y2: 0, lineWidth: 1 },
+            ],
             margin: [0, 0, 0, 10],
           },
           {
@@ -221,7 +309,7 @@ export function useItLaporan() {
     } catch {
       toast.error("Gagal mengunduh PDF")
     }
-  }, [activeTab, tiketData, kategoriData, teknisiData])
+  }, [activeTab, buildParams, rowDataFromItems])
 
   const currentData =
     activeTab === "tiket"
@@ -240,7 +328,12 @@ export function useItLaporan() {
     kategoriData,
     teknisiData,
     summary,
-    fetchData,
+    page,
+    setPage,
+    total,
+    totalPages,
+    pageSize,
+    fetchData: handleFetch,
     handleExport,
     hasData: currentData.length > 0,
   }

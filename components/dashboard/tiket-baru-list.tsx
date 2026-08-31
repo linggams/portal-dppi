@@ -2,7 +2,7 @@ import Link from "next/link"
 import { Eye } from "lucide-react"
 import { ContentEmpty } from "@/components/layout/content-empty"
 import { Button } from "@/components/ui/button"
-import { TableActionLink } from "@/components/ui/table-actions"
+import { TableActionLink, TableActions } from "@/components/ui/table-actions"
 import {
   Table,
   TableBody,
@@ -53,11 +53,13 @@ export function DashboardTiketBaruList({ items }: Props) {
                   {IT_TIKET_STATUS_LABEL[item.status] ?? item.status}
                 </TableCell>
                 <TableCell className="text-right">
-                  <TableActionLink
-                    label="Detail"
-                    icon={Eye}
-                    href={`/it/staff/tiket/${item.idTiket}`}
-                  />
+                  <TableActions>
+                    <TableActionLink
+                      label="Detail"
+                      icon={Eye}
+                      href={`/it/staff/tiket/${item.idTiket}`}
+                    />
+                  </TableActions>
                 </TableCell>
               </TableRow>
             ))}
