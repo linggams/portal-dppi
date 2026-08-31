@@ -280,7 +280,9 @@ async function fetchMobilStats(): Promise<DashboardMobilStats> {
           username: true,
           kmAwal: true,
           kmAkhir: true,
+          uangJalan: true,
           kendaraan: { select: { nopol: true } },
+          perjalanan: { select: { tol: true } },
         },
       }),
     ])
@@ -294,13 +296,18 @@ async function fetchMobilStats(): Promise<DashboardMobilStats> {
     laporanHariIni,
     kmBulan,
     kendaraanAktif,
-    laporanTerbaru: laporanTerbaru.map((row) => ({
-      idLaporan: row.idLaporan,
-      tanggal: formatDateOnly(row.tanggal),
-      username: row.username,
-      nopol: row.kendaraan.nopol,
-      pemakaian: Math.max(0, row.kmAkhir - row.kmAwal),
-    })),
+    laporanTerbaru: laporanTerbaru.map((row) => {
+      const totalTol = row.perjalanan.reduce((sum, trip) => sum + trip.tol, 0)
+      return {
+        idLaporan: row.idLaporan,
+        tanggal: formatDateOnly(row.tanggal),
+        username: row.username,
+        nopol: row.kendaraan.nopol,
+        pemakaian: Math.max(0, row.kmAkhir - row.kmAwal),
+        uangJalan: row.uangJalan,
+        balanceUangJalan: row.uangJalan - totalTol,
+      }
+    }),
   }
 }
 

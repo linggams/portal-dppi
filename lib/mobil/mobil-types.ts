@@ -40,6 +40,8 @@ export type MobilLaporanKm = {
   pemakaian: number
   jumlahPerjalanan: number
   totalTol: number
+  uangJalan: number
+  balanceUangJalan: number
   tglDibuat: string
   tglDiupdate: string
   perjalanan: MobilLaporanPerjalanan[]
@@ -50,6 +52,3 @@ export type MobilLaporanKm = {
   }
 }
 
-export function pemakaianKm(kmAwal: number, kmAkhir: number) {
-  return Math.max(0, kmAkhir - kmAwal)
-}

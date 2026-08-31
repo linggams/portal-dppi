@@ -14,6 +14,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { TableContainer } from "@/components/ui/table-container"
+import { formatRupiah } from "@/lib/dana/format"
 import type { DashboardMobilLaporanItem } from "@/lib/platform/dashboard-types"
 
 interface Props {
@@ -49,6 +50,8 @@ export function DashboardMobilLaporanList({ items }: Props) {
               <TableHead>Nopol</TableHead>
               <TableHead>Pelapor</TableHead>
               <TableHead className="text-right">Pemakaian</TableHead>
+              <TableHead className="text-right">Uang jalan</TableHead>
+              <TableHead className="text-right">Balance</TableHead>
               <TableHead className="text-right">Aksi</TableHead>
             </TableRow>
           </TableHeader>
@@ -62,6 +65,12 @@ export function DashboardMobilLaporanList({ items }: Props) {
                 <TableCell>{item.username}</TableCell>
                 <TableCell className="text-right tabular-nums">
                   {item.pemakaian.toLocaleString("id-ID")} KM
+                </TableCell>
+                <TableCell className="text-right tabular-nums">
+                  {formatRupiah(item.uangJalan)}
+                </TableCell>
+                <TableCell className="text-right tabular-nums">
+                  {formatRupiah(item.balanceUangJalan)}
                 </TableCell>
                 <TableCell className="text-right">
                   <TableActionLink

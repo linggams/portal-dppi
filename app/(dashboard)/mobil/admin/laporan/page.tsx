@@ -7,8 +7,6 @@ import { toast } from "sonner"
 import {
   DashboardLayout,
   PageActions,
-  SummaryMetric,
-  CompactSummaryGrid,
 } from "@/components/layout"
 import { Button } from "@/components/ui/button"
 import { DatePicker } from "@/components/ui/date-picker"
@@ -38,6 +36,7 @@ import {
 } from "@/components/ui/table-actions"
 import type { MobilKendaraan, MobilLaporanKm } from "@/lib/mobil/mobil-types"
 import { downloadMobilLaporanListExcel } from "@/lib/mobil/export-laporan"
+import { formatRupiah } from "@/lib/dana/format"
 import { getMonthToDateRangeWIB } from "@/lib/purchasing/permintaan-daily-limit-types"
 
 export default function MobilAdminLaporanPage() {
@@ -83,7 +82,17 @@ export default function MobilAdminLaporanPage() {
   const summary = useMemo(() => {
     const totalPemakaian = rows.reduce((sum, r) => sum + r.pemakaian, 0)
     const totalTrip = rows.reduce((sum, r) => sum + r.jumlahPerjalanan, 0)
-    return { total: rows.length, totalPemakaian, totalTrip }
+    const totalUangJalan = rows.reduce((sum, r) => sum + r.uangJalan, 0)
+    const totalBiayaPerjalanan = rows.reduce((sum, r) => sum + r.totalTol, 0)
+    const totalBalance = rows.reduce((sum, r) => sum + r.balanceUangJalan, 0)
+    return {
+      total: rows.length,
+      totalPemakaian,
+      totalTrip,
+      totalUangJalan,
+      totalBiayaPerjalanan,
+      totalBalance,
+    }
   }, [rows])
 
   const handleDelete = async (row: MobilLaporanKm) => {
@@ -178,14 +187,38 @@ export default function MobilAdminLaporanPage() {
       </PageActions>
 
       <div className="space-y-4">
-        <CompactSummaryGrid>
-          <SummaryMetric label="Total laporan" value={summary.total} />
-          <SummaryMetric label="Total perjalanan" value={summary.totalTrip} />
-          <SummaryMetric
-            label="Total KM pemakaian"
-            value={summary.totalPemakaian.toLocaleString("id-ID")}
-          />
-        </CompactSummaryGrid>
+        <TableContainer>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Total laporan</TableHead>
+                <TableHead>Total perjalanan</TableHead>
+                <TableHead className="text-right">Total KM pemakaian</TableHead>
+                <TableHead className="text-right">Total uang jalan</TableHead>
+                <TableHead className="text-right">Total biaya perjalanan</TableHead>
+                <TableHead className="text-right">Total balance</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              <TableRow>
+                <TableCell className="tabular-nums">{summary.total}</TableCell>
+                <TableCell className="tabular-nums">{summary.totalTrip}</TableCell>
+                <TableCell className="text-right tabular-nums">
+                  {summary.totalPemakaian.toLocaleString("id-ID")}
+                </TableCell>
+                <TableCell className="text-right tabular-nums">
+                  {formatRupiah(summary.totalUangJalan)}
+                </TableCell>
+                <TableCell className="text-right tabular-nums">
+                  {formatRupiah(summary.totalBiayaPerjalanan)}
+                </TableCell>
+                <TableCell className="text-right tabular-nums">
+                  {formatRupiah(summary.totalBalance)}
+                </TableCell>
+              </TableRow>
+            </TableBody>
+          </Table>
+        </TableContainer>
 
         {loading ? (
           <div className="space-y-3 rounded-md border p-4">
@@ -206,12 +239,15 @@ export default function MobilAdminLaporanPage() {
                   <TableHead className="text-right">KM akhir</TableHead>
                   <TableHead className="text-right">Pemakaian</TableHead>
                   <TableHead className="text-right">Trip</TableHead>
+                  <TableHead className="text-right">Uang jalan</TableHead>
+                  <TableHead className="text-right">Biaya perjalanan</TableHead>
+                  <TableHead className="text-right">Balance</TableHead>
                   <TableHead className="text-right">Aksi</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {rows.length === 0 ? (
-                  <TableEmptyState colSpan={8} title="Tidak ada laporan" />
+                  <TableEmptyState colSpan={11} title="Tidak ada laporan" />
                 ) : (
                   rows.map((row) => (
                     <TableRow key={row.idLaporan}>
@@ -231,6 +267,15 @@ export default function MobilAdminLaporanPage() {
                       </TableCell>
                       <TableCell className="text-right">
                         {row.jumlahPerjalanan}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {formatRupiah(row.uangJalan)}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {formatRupiah(row.totalTol)}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {formatRupiah(row.balanceUangJalan)}
                       </TableCell>
                       <TableCell className="text-right">
                         <TableActions>

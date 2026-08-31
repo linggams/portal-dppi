@@ -317,6 +317,7 @@ model MobilLaporanKm {
   tanggal     DateTime @db.Date
   kmAwal      Int      @map("km_awal")
   kmAkhir     Int      @map("km_akhir")
+  uangJalan   Int      @default(0) @map("uang_jalan")
   tglDibuat   DateTime @default(now()) @map("tgl_dibuat")
   tglDiupdate DateTime @updatedAt @map("tgl_diupdate")
 

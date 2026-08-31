@@ -56,6 +56,13 @@ function parsePerjalanan(raw: string): TripInput[] | null {
   }
 }
 
+function parseUangJalan(raw: FormDataEntryValue | null): number | null {
+  if (raw === undefined || raw === null || String(raw) === "") return 0
+  const value = Number(raw)
+  if (!Number.isInteger(value) || value < 0) return null
+  return value
+}
+
 export async function GET(request: NextRequest) {
   try {
     const session = await getSessionFromRequest(request)
@@ -134,6 +141,7 @@ export async function POST(request: NextRequest) {
     const idKendaraan = parseInt(String(form.get("idKendaraan") ?? ""), 10)
     const tanggalRaw = String(form.get("tanggal") ?? "")
     const trips = parsePerjalanan(String(form.get("perjalanan") ?? ""))
+    const uangJalan = parseUangJalan(form.get("uangJalan"))
 
     if (!idKendaraan || Number.isNaN(idKendaraan)) {
       return NextResponse.json({ error: "Kendaraan wajib dipilih" }, { status: 400 })
@@ -147,6 +155,9 @@ export async function POST(request: NextRequest) {
         { error: "Minimal satu perjalanan (dari, jam, ke, km > 0)" },
         { status: 400 }
       )
+    }
+    if (uangJalan === null) {
+      return NextResponse.json({ error: "Uang jalan tidak valid" }, { status: 400 })
     }
 
     const kendaraan = await prisma.mobilKendaraan.findUnique({
@@ -211,6 +222,7 @@ export async function POST(request: NextRequest) {
           tanggal,
           kmAwal,
           kmAkhir,
+          uangJalan,
           perjalanan: {
             create: trips.map((trip, index) => ({
               urutan: index + 1,

@@ -85,6 +85,8 @@ export interface DashboardMobilLaporanItem {
   username: string
   nopol: string
   pemakaian: number
+  uangJalan: number
+  balanceUangJalan: number
 }
 
 export interface DashboardMobilStats {

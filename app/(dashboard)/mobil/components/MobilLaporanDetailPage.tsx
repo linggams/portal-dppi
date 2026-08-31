@@ -26,10 +26,8 @@ import {
 import { TableContainer } from "@/components/ui/table-container"
 import { TableEmptyState } from "@/components/ui/table-empty-state"
 import { formatRupiah, parseRupiahInput } from "@/lib/dana/format"
-import { MOBIL_BUKTI_MAX_BYTES } from "@/lib/mobil/upload-limits"
+import { MOBIL_BUKTI_MAX_BYTES, MOBIL_BUKTI_MAX_MB, MOBIL_BUKTI_PLACEHOLDER } from "@/lib/mobil/upload-limits"
 import type { MobilLaporanKm } from "@/lib/mobil/mobil-types"
-
-const MAX_MB = MOBIL_BUKTI_MAX_BYTES / (1024 * 1024)
 
 function validateJpg(file: File): string | null {
   const name = file.name.toLowerCase()
@@ -40,7 +38,7 @@ function validateJpg(file: File): string | null {
     name.endsWith(".jpg") ||
     name.endsWith(".jpeg")
   if (!isJpg) return "File harus JPG"
-  if (file.size > MOBIL_BUKTI_MAX_BYTES) return `Ukuran foto maksimal ${MAX_MB} MB`
+  if (file.size > MOBIL_BUKTI_MAX_BYTES) return `Ukuran foto maksimal ${MOBIL_BUKTI_MAX_MB} MB`
   return null
 }
 
@@ -201,6 +199,16 @@ export function MobilLaporanDetailPage({
                 Total tol:{" "}
                 <span className="font-medium">{formatRupiah(item.totalTol)}</span>
               </p>
+              <p>
+                Uang jalan:{" "}
+                <span className="font-medium">{formatRupiah(item.uangJalan)}</span>
+              </p>
+              <p>
+                Balance:{" "}
+                <span className="font-medium">
+                  {formatRupiah(item.balanceUangJalan)}
+                </span>
+              </p>
             </div>
           </SectionCard>
 
@@ -350,11 +358,12 @@ export function MobilLaporanDetailPage({
               </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="bukti">Bukti (JPG, maks {MAX_MB} MB)</Label>
+              <Label htmlFor="bukti">Bukti</Label>
               <Input
                 id="bukti"
                 type="file"
                 accept=".jpg,.jpeg,image/jpeg"
+                placeholder={MOBIL_BUKTI_PLACEHOLDER}
                 onChange={(e) => {
                   const file = e.target.files?.[0] ?? null
                   if (!file) {

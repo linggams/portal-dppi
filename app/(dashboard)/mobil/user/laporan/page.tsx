@@ -26,6 +26,7 @@ import { TableContainer } from "@/components/ui/table-container"
 import { TableEmptyState } from "@/components/ui/table-empty-state"
 import { TableActionLink, TableActions } from "@/components/ui/table-actions"
 import type { MobilKendaraan, MobilLaporanKm } from "@/lib/mobil/mobil-types"
+import { formatRupiah } from "@/lib/dana/format"
 
 export default function MobilUserLaporanPage() {
   const [rows, setRows] = useState<MobilLaporanKm[]>([])
@@ -70,8 +71,11 @@ export default function MobilUserLaporanPage() {
     const latest = rows[0]
     return {
       nopol: selected?.nopol ?? "—",
-      balance: latest?.kmAkhir ?? selected?.kmTerakhir ?? selected?.kmAwal ?? 0,
-      pemakaianBulan: rows.reduce((s, r) => s + r.pemakaian, 0),
+      kmTerakhir: latest?.kmAkhir ?? selected?.kmTerakhir ?? selected?.kmAwal ?? 0,
+      pemakaianDaftar: rows.reduce((s, r) => s + r.pemakaian, 0),
+      totalUangJalan: rows.reduce((s, r) => s + r.uangJalan, 0),
+      totalBiayaPerjalanan: rows.reduce((s, r) => s + r.totalTol, 0),
+      totalBalance: rows.reduce((s, r) => s + r.balanceUangJalan, 0),
     }
   }, [filterKendaraan, kendaraan, rows])
 
@@ -107,14 +111,29 @@ export default function MobilUserLaporanPage() {
         <div className="rounded-md border px-4 py-3 text-sm">
           <span className="font-medium">{balanceSummary.nopol}</span>
           {" · "}
-          Balance{" "}
+          KM terakhir{" "}
           <span className="font-medium">
-            {balanceSummary.balance.toLocaleString("id-ID")} KM
+            {balanceSummary.kmTerakhir.toLocaleString("id-ID")} KM
           </span>
           {" · "}
           Pemakaian daftar ini{" "}
           <span className="font-medium">
-            {balanceSummary.pemakaianBulan.toLocaleString("id-ID")} KM
+            {balanceSummary.pemakaianDaftar.toLocaleString("id-ID")} KM
+          </span>
+          {" · "}
+          Uang jalan{" "}
+          <span className="font-medium">
+            {formatRupiah(balanceSummary.totalUangJalan)}
+          </span>
+          {" · "}
+          Biaya perjalanan{" "}
+          <span className="font-medium">
+            {formatRupiah(balanceSummary.totalBiayaPerjalanan)}
+          </span>
+          {" · "}
+          Balance{" "}
+          <span className="font-medium">
+            {formatRupiah(balanceSummary.totalBalance)}
           </span>
         </div>
       ) : null}
@@ -138,12 +157,15 @@ export default function MobilUserLaporanPage() {
                 <TableHead className="text-right">KM akhir</TableHead>
                 <TableHead className="text-right">Pemakaian</TableHead>
                 <TableHead className="text-right">Trip</TableHead>
+                <TableHead className="text-right">Uang jalan</TableHead>
+                <TableHead className="text-right">Biaya perjalanan</TableHead>
+                <TableHead className="text-right">Balance</TableHead>
                 <TableHead className="text-right">Aksi</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {rows.length === 0 ? (
-                <TableEmptyState colSpan={8} title="Belum ada laporan KM" />
+                <TableEmptyState colSpan={11} title="Belum ada laporan KM" />
               ) : (
                 rows.map((row) => (
                   <TableRow key={row.idLaporan}>
@@ -163,6 +185,15 @@ export default function MobilUserLaporanPage() {
                     </TableCell>
                     <TableCell className="text-right">
                       {row.jumlahPerjalanan}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {formatRupiah(row.uangJalan)}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {formatRupiah(row.totalTol)}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {formatRupiah(row.balanceUangJalan)}
                     </TableCell>
                     <TableCell className="text-right">
                       <TableActions>

@@ -23,6 +23,8 @@ type DataRow = {
   jabatan: string
   kmAwal: number
   kmAkhir: number
+  uangJalan: number
+  balanceUangJalan: number
   urutan: number | ""
   dari: string
   jamDari: string
@@ -39,6 +41,8 @@ const HEADERS = [
   "Jabatan",
   "KM awal",
   "KM akhir",
+  "Uang jalan (Rp)",
+  "Balance (Rp)",
   "No",
   "Dari",
   "Jam dari",
@@ -49,7 +53,7 @@ const HEADERS = [
   "Bukti",
 ] as const
 
-const COL_WIDTHS = [14, 16, 18, 11, 11, 6, 22, 10, 22, 10, 10, 14, 12]
+const COL_WIDTHS = [14, 16, 18, 11, 11, 14, 14, 6, 22, 10, 22, 10, 10, 14, 12]
 
 const thinBorder: Partial<ExcelJS.Borders> = {
   top: { style: "thin", color: { argb: "FFCBD5E1" } },
@@ -87,7 +91,7 @@ function mergeVertical(
   const cell = sheet.getCell(startRow, col)
   cell.alignment = {
     vertical: "middle",
-    horizontal: col >= 4 && col <= 5 ? "right" : "left",
+    horizontal: col >= 4 && col <= 7 ? "right" : "left",
     wrapText: true,
   }
 }
@@ -113,6 +117,8 @@ function buildDataRows(laporanList: MobilLaporanKm[]): DataRow[] {
         jabatan: laporan.jabatan || "—",
         kmAwal: laporan.kmAwal,
         kmAkhir: laporan.kmAkhir,
+        uangJalan: laporan.uangJalan,
+        balanceUangJalan: laporan.balanceUangJalan,
         urutan: trip?.urutan ?? "",
         dari: trip?.dari ?? "",
         jamDari: trip?.jamDari ?? "",
@@ -156,7 +162,7 @@ function applyDateAndLaporanMerges(
     if (same) continue
     const start = firstDataRow + lapStart
     const end = firstDataRow + i - 1
-    for (const col of [2, 3, 4, 5]) {
+    for (const col of [2, 3, 4, 5, 6, 7]) {
       mergeVertical(sheet, col, start, end)
     }
     lapStart = i
@@ -267,6 +273,8 @@ export async function downloadMobilLaporanListExcel(
         row.jabatan,
         row.kmAwal,
         row.kmAkhir,
+        row.uangJalan,
+        row.balanceUangJalan,
         row.urutan,
         row.dari,
         row.jamDari,
@@ -279,17 +287,26 @@ export async function downloadMobilLaporanListExcel(
       values.forEach((value, colIdx) => {
         const cell = excelRow.getCell(colIdx + 1)
         cell.value = value
-        // 0 Tanggal … 5 No, 6 Dari, 7 Jam dari, 8 Ke, 9 Jam ke, 10 KM, 11 Tol, 12 Bukti
         const rightAlign =
-          colIdx === 3 || colIdx === 4 || colIdx === 10 || colIdx === 11
+          colIdx === 3 ||
+          colIdx === 4 ||
+          colIdx === 5 ||
+          colIdx === 6 ||
+          colIdx === 12 ||
+          colIdx === 13
         const centerAlign =
-          colIdx === 5 || colIdx === 7 || colIdx === 9 || colIdx === 12
+          colIdx === 7 || colIdx === 9 || colIdx === 11 || colIdx === 14
         applyDataCellStyle(cell, {
           align: centerAlign ? "center" : rightAlign ? "right" : "left",
         })
         if (
           typeof value === "number" &&
-          (colIdx === 3 || colIdx === 4 || colIdx === 10 || colIdx === 11)
+          (colIdx === 3 ||
+            colIdx === 4 ||
+            colIdx === 5 ||
+            colIdx === 6 ||
+            colIdx === 12 ||
+            colIdx === 13)
         ) {
           cell.numFmt = "#,##0"
         }
@@ -314,10 +331,25 @@ export async function downloadMobilLaporanListExcel(
       (sum, r) => sum + (typeof r.tol === "number" ? r.tol : 0),
       0
     )
+    const laporanTotals = new Map<number, { uangJalan: number; balance: number }>()
+    for (const row of dataRows) {
+      if (!laporanTotals.has(row.idLaporan)) {
+        laporanTotals.set(row.idLaporan, {
+          uangJalan: row.uangJalan,
+          balance: row.balanceUangJalan,
+        })
+      }
+    }
+    let totalUangJalan = 0
+    let totalBalance = 0
+    for (const totals of laporanTotals.values()) {
+      totalUangJalan += totals.uangJalan
+      totalBalance += totals.balance
+    }
     const footerRowIndex = firstDataRow + dataRows.length
     const footer = sheet.getRow(footerRowIndex)
     footer.height = 20
-    sheet.mergeCells(footerRowIndex, 1, footerRowIndex, 10)
+    sheet.mergeCells(footerRowIndex, 1, footerRowIndex, 12)
     const footerLabel = footer.getCell(1)
     footerLabel.value = "Total"
     footerLabel.font = {
@@ -334,7 +366,7 @@ export async function downloadMobilLaporanListExcel(
     footerLabel.border = thinBorder
     footerLabel.alignment = { vertical: "middle", horizontal: "right" }
 
-    for (const col of [2, 3, 4, 5, 6, 7, 8, 9, 10]) {
+    for (const col of [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]) {
       const c = footer.getCell(col)
       c.fill = {
         type: "pattern",
@@ -344,7 +376,31 @@ export async function downloadMobilLaporanListExcel(
       c.border = thinBorder
     }
 
-    const kmCell = footer.getCell(11)
+    const uangJalanCell = footer.getCell(6)
+    uangJalanCell.value = totalUangJalan
+    uangJalanCell.numFmt = "#,##0"
+    uangJalanCell.font = { name: "Calibri", size: 11, bold: true }
+    uangJalanCell.fill = {
+      type: "pattern",
+      pattern: "solid",
+      fgColor: { argb: "FFE2E8F0" },
+    }
+    uangJalanCell.border = thinBorder
+    uangJalanCell.alignment = { vertical: "middle", horizontal: "right" }
+
+    const balanceCell = footer.getCell(7)
+    balanceCell.value = totalBalance
+    balanceCell.numFmt = "#,##0"
+    balanceCell.font = { name: "Calibri", size: 11, bold: true }
+    balanceCell.fill = {
+      type: "pattern",
+      pattern: "solid",
+      fgColor: { argb: "FFE2E8F0" },
+    }
+    balanceCell.border = thinBorder
+    balanceCell.alignment = { vertical: "middle", horizontal: "right" }
+
+    const kmCell = footer.getCell(13)
     kmCell.value = totalKm
     kmCell.numFmt = "#,##0"
     kmCell.font = { name: "Calibri", size: 11, bold: true }
@@ -356,7 +412,7 @@ export async function downloadMobilLaporanListExcel(
     kmCell.border = thinBorder
     kmCell.alignment = { vertical: "middle", horizontal: "right" }
 
-    const tolCell = footer.getCell(12)
+    const tolCell = footer.getCell(14)
     tolCell.value = totalTol
     tolCell.numFmt = "#,##0"
     tolCell.font = { name: "Calibri", size: 11, bold: true }
@@ -368,7 +424,7 @@ export async function downloadMobilLaporanListExcel(
     tolCell.border = thinBorder
     tolCell.alignment = { vertical: "middle", horizontal: "right" }
 
-    const buktiFooter = footer.getCell(13)
+    const buktiFooter = footer.getCell(15)
     buktiFooter.value = ""
     buktiFooter.fill = {
       type: "pattern",

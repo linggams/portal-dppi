@@ -1,9 +1,12 @@
 import {
-  pemakaianKm,
   type MobilLaporanKm,
   type MobilLaporanPerjalanan,
   type MobilKendaraan,
 } from "./mobil-types"
+
+function pemakaianKm(kmAwal: number, kmAkhir: number) {
+  return Math.max(0, kmAkhir - kmAwal)
+}
 
 export function toMobilKendaraan(row: {
   idKendaraan: number
@@ -64,6 +67,7 @@ export function toMobilLaporan(row: {
   tanggal: Date
   kmAwal: number
   kmAkhir: number
+  uangJalan?: number
   tglDibuat: Date
   tglDiupdate: Date
   perjalanan?: Array<{
@@ -89,6 +93,9 @@ export function toMobilLaporan(row: {
     .sort((a, b) => a.urutan - b.urutan)
     .map(toPerjalanan)
 
+  const totalTol = perjalanan.reduce((sum, trip) => sum + trip.tol, 0)
+  const uangJalan = row.uangJalan ?? 0
+
   return {
     idLaporan: row.idLaporan,
     idKendaraan: row.idKendaraan,
@@ -99,7 +106,9 @@ export function toMobilLaporan(row: {
     kmAkhir: row.kmAkhir,
     pemakaian: pemakaianKm(row.kmAwal, row.kmAkhir),
     jumlahPerjalanan: perjalanan.length,
-    totalTol: perjalanan.reduce((sum, trip) => sum + trip.tol, 0),
+    totalTol,
+    uangJalan,
+    balanceUangJalan: uangJalan - totalTol,
     tglDibuat: row.tglDibuat.toISOString(),
     tglDiupdate: row.tglDiupdate.toISOString(),
     perjalanan,

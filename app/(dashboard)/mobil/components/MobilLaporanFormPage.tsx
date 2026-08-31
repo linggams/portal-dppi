@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState, Suspense } from "react"
+import { useEffect, useMemo, useState, Fragment, Suspense } from "react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { toast } from "sonner"
@@ -9,17 +9,24 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import { TableContainer } from "@/components/ui/table-container"
+import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { MOBIL_BUKTI_MAX_BYTES } from "@/lib/mobil/upload-limits"
+import { MOBIL_BUKTI_MAX_BYTES, MOBIL_BUKTI_MAX_MB, MOBIL_BUKTI_PLACEHOLDER } from "@/lib/mobil/upload-limits"
 import { formatRupiah, parseRupiahInput } from "@/lib/dana/format"
 import type { MobilKendaraan } from "@/lib/mobil/mobil-types"
-
-const MAX_MB = MOBIL_BUKTI_MAX_BYTES / (1024 * 1024)
 
 type TripDraft = {
   key: string
@@ -64,7 +71,7 @@ function validateJpg(file: File): string | null {
     name.endsWith(".jpg") ||
     name.endsWith(".jpeg")
   if (!isJpg) return "File harus JPG"
-  if (file.size > MOBIL_BUKTI_MAX_BYTES) return `Ukuran foto maksimal ${MAX_MB} MB`
+  if (file.size > MOBIL_BUKTI_MAX_BYTES) return `Ukuran foto maksimal ${MOBIL_BUKTI_MAX_MB} MB`
   return null
 }
 
@@ -104,6 +111,7 @@ function MobilLaporanForm({
   const [idKendaraan, setIdKendaraan] = useState("")
   const [tanggal, setTanggal] = useState("")
   const [kmAwal, setKmAwal] = useState(0)
+  const [uangJalan, setUangJalan] = useState(0)
   const [trips, setTrips] = useState<TripDraft[]>(() => [emptyTrip("trip-1")])
   const [saving, setSaving] = useState(false)
 
@@ -152,6 +160,7 @@ function MobilLaporanForm({
     () => trips.reduce((sum, trip) => sum + trip.tol, 0),
     [trips]
   )
+  const balanceUangJalan = uangJalan - totalTol
   const kmAkhir = kmAwal + totalKm
 
   const updateTrip = (key: string, patch: Partial<TripDraft>) => {
@@ -214,6 +223,7 @@ function MobilLaporanForm({
       const form = new FormData()
       form.set("idKendaraan", idKendaraan)
       form.set("tanggal", tanggal)
+      form.set("uangJalan", String(uangJalan))
       form.set(
         "perjalanan",
         JSON.stringify(
@@ -302,6 +312,31 @@ function MobilLaporanForm({
                   Otomatis = KM awal + total perjalanan
                 </p>
               </div>
+              <div className="space-y-2">
+                <Label>Uang jalan</Label>
+                <Input
+                  inputMode="numeric"
+                  value={uangJalan ? formatRupiah(uangJalan) : ""}
+                  onChange={(e) =>
+                    setUangJalan(parseRupiahInput(e.target.value))
+                  }
+                  placeholder="Rp 0"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Total biaya perjalanan</Label>
+                <Input value={formatRupiah(totalTol)} disabled />
+                <p className="text-xs text-muted-foreground">
+                  Jumlah tol seluruh perjalanan
+                </p>
+              </div>
+              <div className="space-y-2">
+                <Label>Balance</Label>
+                <Input value={formatRupiah(balanceUangJalan)} disabled />
+                <p className="text-xs text-muted-foreground">
+                  Uang jalan − total biaya perjalanan
+                </p>
+              </div>
             </div>
 
             <div className="space-y-3 border-t pt-6">
@@ -320,142 +355,146 @@ function MobilLaporanForm({
                 </p>
               </div>
 
-              <div className="hidden gap-2 px-1 text-xs text-muted-foreground lg:grid lg:grid-cols-[2rem_minmax(0,1.4fr)_minmax(0,1.4fr)_5.5rem_minmax(7.5rem,9rem)_minmax(11rem,14rem)_2.5rem]">
-                <span>#</span>
-                <span>Dari * / Jam *</span>
-                <span>Ke * / Jam *</span>
-                <span>KM *</span>
-                <span>Tol</span>
-                <span>Bukti (JPG, maks {MAX_MB} MB)</span>
-                <span className="sr-only">Aksi</span>
-              </div>
-
-              <div className="space-y-2">
-                {trips.map((trip, index) => (
-                  <div key={trip.key} className="space-y-1">
-                    <div className="grid grid-cols-1 items-end gap-2 rounded-md border p-3 lg:grid-cols-[2rem_minmax(0,1.4fr)_minmax(0,1.4fr)_5.5rem_minmax(7.5rem,9rem)_minmax(11rem,14rem)_2.5rem] lg:items-center lg:gap-2 lg:p-2">
-                      <span className="text-sm font-medium text-muted-foreground lg:text-center">
-                        {index + 1}
-                      </span>
-                      <div className="space-y-1">
-                        <Label className="lg:hidden">Dari * / Jam *</Label>
-                        <div className="flex gap-2">
-                          <Input
-                            value={trip.dari}
-                            onChange={(e) =>
-                              updateTrip(trip.key, { dari: e.target.value })
-                            }
-                            placeholder="Asal"
-                            className="min-w-0 flex-1"
-                            required
-                          />
-                          <Input
-                            type="time"
-                            value={trip.jamDari}
-                            onChange={(e) =>
-                              updateTrip(trip.key, { jamDari: e.target.value })
-                            }
-                            className="w-[7.5rem] shrink-0"
-                            aria-label={`Jam dari perjalanan ${index + 1}`}
-                            required
-                          />
-                        </div>
-                      </div>
-                      <div className="space-y-1">
-                        <Label className="lg:hidden">Ke * / Jam *</Label>
-                        <div className="flex gap-2">
-                          <Input
-                            value={trip.ke}
-                            onChange={(e) =>
-                              updateTrip(trip.key, { ke: e.target.value })
-                            }
-                            placeholder="Tujuan"
-                            className="min-w-0 flex-1"
-                            required
-                          />
-                          <Input
-                            type="time"
-                            value={trip.jamKe}
-                            onChange={(e) =>
-                              updateTrip(trip.key, { jamKe: e.target.value })
-                            }
-                            className="w-[7.5rem] shrink-0"
-                            aria-label={`Jam ke perjalanan ${index + 1}`}
-                            required
-                          />
-                        </div>
-                      </div>
-                      <div className="space-y-1">
-                        <Label className="lg:hidden">KM *</Label>
-                        <Input
-                          type="number"
-                          min={1}
-                          value={trip.km}
-                          onChange={(e) =>
-                            updateTrip(trip.key, { km: e.target.value })
-                          }
-                          placeholder="0"
-                          required
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <Label className="lg:hidden">Tol</Label>
-                        <Input
-                          inputMode="numeric"
-                          value={trip.tol ? formatRupiah(trip.tol) : ""}
-                          onChange={(e) =>
-                            updateTrip(trip.key, {
-                              tol: parseRupiahInput(e.target.value),
-                            })
-                          }
-                          placeholder="Rp 0"
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <Label className="lg:hidden">
-                          Bukti (JPG, maks {MAX_MB} MB)
-                        </Label>
-                        <div className="flex items-center gap-2">
-                          <Input
-                            type="file"
-                            accept=".jpg,.jpeg,image/jpeg"
-                            className="min-w-0 flex-1"
-                            onChange={(e) =>
-                              onPickBukti(trip.key, e.target.files?.[0] ?? null)
-                            }
-                          />
-                          {trip.previewUrl ? (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img
-                              src={trip.previewUrl}
-                              alt={`Preview perjalanan ${index + 1}`}
-                              className="size-9 shrink-0 rounded border object-cover"
+              <TableContainer>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-12">#</TableHead>
+                      <TableHead>Dari</TableHead>
+                      <TableHead className="w-28">Jam</TableHead>
+                      <TableHead>Ke</TableHead>
+                      <TableHead className="w-28">Jam</TableHead>
+                      <TableHead className="w-24 text-right">KM</TableHead>
+                      <TableHead className="w-36 text-right">Tol</TableHead>
+                      <TableHead>Bukti</TableHead>
+                      <TableHead className="w-[72px] text-right">Aksi</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {trips.map((trip, index) => (
+                      <Fragment key={trip.key}>
+                        <TableRow>
+                          <TableCell className="font-medium text-muted-foreground">
+                            {index + 1}
+                          </TableCell>
+                          <TableCell>
+                            <Input
+                              value={trip.dari}
+                              onChange={(e) =>
+                                updateTrip(trip.key, { dari: e.target.value })
+                              }
+                              placeholder="Asal"
+                              required
                             />
-                          ) : null}
-                        </div>
-                      </div>
-                      <div className="flex justify-end lg:justify-center">
-                        {trips.length > 1 ? (
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            className="text-destructive"
-                            onClick={() => removeTrip(trip.key)}
-                          >
-                            Hapus
-                          </Button>
-                        ) : (
-                          <span className="hidden size-8 lg:block" />
-                        )}
-                      </div>
-                    </div>
-                    {trip.error ? (
-                      <p className="px-1 text-sm text-destructive">{trip.error}</p>
-                    ) : null}
-                  </div>
-                ))}
-              </div>
+                          </TableCell>
+                          <TableCell>
+                            <Input
+                              type="time"
+                              value={trip.jamDari}
+                              onChange={(e) =>
+                                updateTrip(trip.key, { jamDari: e.target.value })
+                              }
+                              aria-label={`Jam dari perjalanan ${index + 1}`}
+                              required
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Input
+                              value={trip.ke}
+                              onChange={(e) =>
+                                updateTrip(trip.key, { ke: e.target.value })
+                              }
+                              placeholder="Tujuan"
+                              required
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Input
+                              type="time"
+                              value={trip.jamKe}
+                              onChange={(e) =>
+                                updateTrip(trip.key, { jamKe: e.target.value })
+                              }
+                              aria-label={`Jam ke perjalanan ${index + 1}`}
+                              required
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Input
+                              type="number"
+                              min={1}
+                              value={trip.km}
+                              onChange={(e) =>
+                                updateTrip(trip.key, { km: e.target.value })
+                              }
+                              className="text-right"
+                              placeholder="0"
+                              required
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Input
+                              inputMode="numeric"
+                              value={trip.tol ? formatRupiah(trip.tol) : ""}
+                              onChange={(e) =>
+                                updateTrip(trip.key, {
+                                  tol: parseRupiahInput(e.target.value),
+                                })
+                              }
+                              className="text-right"
+                              placeholder="Rp 0"
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex min-w-40 items-center gap-2">
+                              <Input
+                                type="file"
+                                accept=".jpg,.jpeg,image/jpeg"
+                                className="min-w-0 flex-1"
+                                placeholder={MOBIL_BUKTI_PLACEHOLDER}
+                                onChange={(e) =>
+                                  onPickBukti(trip.key, e.target.files?.[0] ?? null)
+                                }
+                              />
+                              {trip.previewUrl ? (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img
+                                  src={trip.previewUrl}
+                                  alt={`Preview perjalanan ${index + 1}`}
+                                  className="size-9 shrink-0 rounded border object-cover"
+                                />
+                              ) : null}
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            {trips.length > 1 ? (
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                className="text-destructive"
+                                onClick={() => removeTrip(trip.key)}
+                              >
+                                Hapus
+                              </Button>
+                            ) : null}
+                          </TableCell>
+                        </TableRow>
+                        {trip.error ? (
+                          <TableRow>
+                            <TableCell
+                              colSpan={9}
+                              className="py-1 text-sm text-destructive"
+                            >
+                              {trip.error}
+                            </TableCell>
+                          </TableRow>
+                        ) : null}
+                      </Fragment>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
 
               <Button type="button" variant="outline" onClick={addTrip}>
                 Tambah perjalanan
