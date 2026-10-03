@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react"
 import { toast } from "sonner"
 import { downloadPdf } from "@/lib/shared/makepdf"
+import { companyPdfHeader } from "@/lib/shared/app-branding"
 import { getMonthToDateRangeWIB } from "@/lib/purchasing/permintaan-daily-limit-types"
 import {
   DEFAULT_PAGE_SIZE,
@@ -10,6 +11,7 @@ import {
   readPaginatedJson,
 } from "@/lib/shared/pagination"
 import { formatDate, formatRupiah } from "../utils"
+import { groupLaporan, groupMeta } from "@/lib/purchasing/laporan-group"
 import type { LaporanFilters, LaporanSummary } from "../types"
 
 export function useLaporan() {
@@ -202,17 +204,124 @@ export function useLaporan() {
       }
 
       const headers = getHeaders(activeTab)
-      const tableRows = allRows.map((item) => getRowData(item, activeTab))
+      const groups = groupLaporan(allRows, activeTab)
+      const colCount = headers.length
 
-      const filename = `laporan-${activeTab}-${new Date().toISOString().split("T")[0]}.pdf`
+      const span = (text: string, style: string) => [
+        { text, style, colSpan: colCount },
+        ...Array.from({ length: colCount - 1 }, () => ({})),
+      ]
+
+      const subtotalCells = (group: (typeof groups)[number]) => {
+        const label = { text: "Subtotal", style: "subtotal" }
+        const empty = { text: "", style: "subtotal" }
+        const qty = { text: String(group.jumlah), style: "subtotal" }
+        if (activeTab === "pengajuan") {
+          return [
+            { ...label, colSpan: 3 },
+            {},
+            {},
+            qty,
+            empty,
+            empty,
+            { text: formatRupiah(group.total), style: "subtotal" },
+            empty,
+          ]
+        }
+        if (activeTab === "stok") {
+          return [
+            { ...label, colSpan: 2 },
+            {},
+            { text: String(group.stok), style: "subtotal" },
+            { text: String(group.keluar), style: "subtotal" },
+            { text: String(group.sisa), style: "subtotal" },
+            empty,
+          ]
+        }
+        return [
+          { ...label, colSpan: 3 },
+          {},
+          {},
+          qty,
+          empty,
+          ...(activeTab === "permintaan" ? [empty] : []),
+        ]
+      }
+
+      const grand = groups.reduce(
+        (sum, group) => ({
+          jumlah: sum.jumlah + group.jumlah,
+          total: sum.total + group.total,
+          stok: sum.stok + group.stok,
+          keluar: sum.keluar + group.keluar,
+          sisa: sum.sisa + group.sisa,
+        }),
+        { jumlah: 0, total: 0, stok: 0, keluar: 0, sisa: 0 }
+      )
+
+      const grandCells = () => {
+        const label = { text: "Total keseluruhan", style: "grandTotal" }
+        const empty = { text: "", style: "grandTotal" }
+        if (activeTab === "pengajuan") {
+          return [
+            { ...label, colSpan: 3 },
+            {},
+            {},
+            { text: String(grand.jumlah), style: "grandTotal" },
+            empty,
+            empty,
+            { text: formatRupiah(grand.total), style: "grandTotal" },
+            empty,
+          ]
+        }
+        if (activeTab === "stok") {
+          return [
+            { ...label, colSpan: 2 },
+            {},
+            { text: String(grand.stok), style: "grandTotal" },
+            { text: String(grand.keluar), style: "grandTotal" },
+            { text: String(grand.sisa), style: "grandTotal" },
+            empty,
+          ]
+        }
+        return [
+          { ...label, colSpan: 3 },
+          {},
+          {},
+          { text: String(grand.jumlah), style: "grandTotal" },
+          empty,
+          ...(activeTab === "permintaan" ? [empty] : []),
+        ]
+      }
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const body: any[] = [
         headers.map((h) => ({ text: h, style: "tableHeader" })),
-        ...tableRows.map((row) =>
-          row.map((cell) => ({ text: cell, style: "tableCell" }))
-        ),
       ]
+      for (const group of groups) {
+        body.push(
+          span(
+            `${group.kategori}    ${groupMeta(group, activeTab)}`,
+            "groupHeader"
+          )
+        )
+        for (const item of group.rows) {
+          body.push(
+            getRowData(item, activeTab).map((cell) => ({
+              text: cell,
+              style: "tableCell",
+            }))
+          )
+        }
+        body.push(subtotalCells(group))
+      }
+      body.push(grandCells())
+
+      const filename = `laporan-${activeTab}-${new Date().toISOString().split("T")[0]}.pdf`
+      const period =
+        filters.startDate && filters.endDate
+          ? `${formatDate(filters.startDate)} – ${formatDate(filters.endDate)}`
+          : ""
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const widthsByTab: Record<string, any[]> = {
@@ -229,29 +338,23 @@ export function useLaporan() {
         pageOrientation: "portrait",
         pageMargins: [30, 50, 30, 30],
         content: [
-          {
-            text: "PT DASAN PAN PACIFIC INDONESIA",
-            style: "header",
-            alignment: "center",
-          },
-          {
-            text: "Parakansalak, Bojonglongok, Kec. Parakansalak, Kabupaten Sukabumi, Jawa Barat 43355",
-            style: "subheader",
-            alignment: "center",
-            margin: [0, 4, 0, 8],
-          },
-          {
-            canvas: [
-              { type: "line", x1: 0, y1: 0, x2: 760, y2: 0, lineWidth: 1 },
-            ],
-            margin: [0, 0, 0, 10],
-          },
+          ...companyPdfHeader({ lineWidth: 760, afterLine: 10 }),
           {
             text: `LAPORAN ${String(activeTab).toUpperCase()}`,
             style: "title",
             alignment: "center",
-            margin: [0, 0, 0, 14],
+            margin: [0, 0, 0, 4],
           },
+          ...(period
+            ? [
+                {
+                  text: period,
+                  style: "subheader",
+                  alignment: "center",
+                  margin: [0, 0, 0, 14],
+                },
+              ]
+            : []),
           {
             table: {
               headerRows: 1,
@@ -271,6 +374,17 @@ export function useLaporan() {
             fillColor: "#f3f4f6",
             alignment: "center",
           },
+          groupHeader: {
+            bold: true,
+            fontSize: 9,
+            fillColor: "#e5e7eb",
+          },
+          subtotal: { bold: true, fontSize: 9 },
+          grandTotal: {
+            bold: true,
+            fontSize: 9,
+            fillColor: "#f3f4f6",
+          },
           tableCell: { fontSize: 9 },
         },
         defaultStyle: { fontSize: 9 },
@@ -281,7 +395,7 @@ export function useLaporan() {
     } catch {
       toast.error("Gagal mengunduh PDF")
     }
-  }, [activeTab, buildParams])
+  }, [activeTab, buildParams, filters.endDate, filters.startDate])
 
   return {
     loading,

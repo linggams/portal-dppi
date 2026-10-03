@@ -57,7 +57,6 @@ function modulesFromUser(user: User): ManagerModules {
   return {
     managePurchasing: Boolean(user.managePurchasing),
     manageIt: Boolean(user.manageIt),
-    manageDana: Boolean(user.manageDana),
     manageMobil: Boolean(user.manageMobil),
   }
 }
@@ -66,7 +65,6 @@ function accessModulesFromUser(user: User): ApplicantModules {
   return {
     accessPurchasing: Boolean(user.accessPurchasing),
     accessIt: Boolean(user.accessIt),
-    accessDana: Boolean(user.accessDana),
     accessMobil: Boolean(user.accessMobil),
   }
 }

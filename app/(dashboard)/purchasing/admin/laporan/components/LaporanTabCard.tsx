@@ -2,7 +2,6 @@
 
 import { PageSection } from "@/components/layout"
 import { Skeleton } from "@/components/ui/skeleton"
-import { TableContainer } from "@/components/ui/table-container"
 
 interface LaporanTabCardProps {
   title: string
@@ -29,7 +28,7 @@ export function LaporanTabCard({
       ) : !hasData ? (
         <p className="py-12 text-center text-muted-foreground">Tidak ada data</p>
       ) : (
-        <TableContainer>{children}</TableContainer>
+        <div className="space-y-3">{children}</div>
       )}
     </PageSection>
   )

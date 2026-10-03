@@ -27,7 +27,7 @@ import { TableEmptyState } from "@/components/ui/table-empty-state"
 import { TableActionLink, TableActions } from "@/components/ui/table-actions"
 import { TablePagination } from "@/components/ui/table-pagination"
 import type { MobilKendaraan, MobilLaporanKm } from "@/lib/mobil/mobil-types"
-import { formatRupiah } from "@/lib/dana/format"
+import { formatRupiah } from "@/lib/shared/currency"
 import { DEFAULT_PAGE_SIZE, readPaginatedJson } from "@/lib/shared/pagination"
 
 type LaporanSummary = {

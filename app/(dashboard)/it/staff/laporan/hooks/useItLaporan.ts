@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react"
 import { toast } from "sonner"
 import { downloadPdf } from "@/lib/shared/makepdf"
+import { companyPdfHeader } from "@/lib/shared/app-branding"
 import { IT_TIKET_STATUS_LABEL } from "@/lib/it/constants"
 import { formatJamAtauHari } from "@/lib/it/laporan"
 import { getMonthToDateRangeWIB } from "@/lib/purchasing/permintaan-daily-limit-types"
@@ -257,23 +258,7 @@ export function useItLaporan() {
         pageOrientation: activeTab === "tiket" ? "landscape" : "portrait",
         pageMargins: [30, 50, 30, 30],
         content: [
-          {
-            text: "PT DASAN PAN PACIFIC INDONESIA",
-            style: "header",
-            alignment: "center",
-          },
-          {
-            text: "Parakansalak, Bojonglongok, Kec. Parakansalak, Kabupaten Sukabumi, Jawa Barat 43355",
-            style: "subheader",
-            alignment: "center",
-            margin: [0, 4, 0, 8],
-          },
-          {
-            canvas: [
-              { type: "line", x1: 0, y1: 0, x2: 760, y2: 0, lineWidth: 1 },
-            ],
-            margin: [0, 0, 0, 10],
-          },
+          ...companyPdfHeader({ lineWidth: 760, afterLine: 10 }),
           {
             text: `LAPORAN TIKET IT — ${activeTab.toUpperCase()}`,
             style: "title",

@@ -5,19 +5,14 @@ import {
   PageActions,
 } from "@/components/layout"
 import { Button } from "@/components/ui/button"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
+import { TableCell, TableRow } from "@/components/ui/table"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { TablePagination } from "@/components/ui/table-pagination"
+import { groupLaporan } from "@/lib/purchasing/laporan-group"
 import { useLaporan } from "./hooks/useLaporan"
 import {
   LaporanFiltersComponent,
+  LaporanKategoriTables,
   LaporanSummaryCards,
   LaporanTabCard,
 } from "./components"
@@ -79,42 +74,47 @@ export default function LaporanPage() {
                 loading={loading}
                 hasData={data.length > 0}
               >
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Tanggal</TableHead>
-                      <TableHead>Unit</TableHead>
-                      <TableHead>Nama Barang</TableHead>
-                      <TableHead>Jumlah</TableHead>
-                      <TableHead>Satuan</TableHead>
-                      <TableHead>Status</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {data.map((item: Record<string, unknown>) => (
-                      <TableRow key={Number(item.idPermintaan)}>
-                        <TableCell>
-                          {formatDate(String(item.tglPermintaan ?? ""))}
-                        </TableCell>
-                        <TableCell className="font-medium">
-                          {String(item.unit)}
-                        </TableCell>
-                        <TableCell>
-                          {(item.stokbarang as { namaBrg?: string })?.namaBrg ??
-                            ""}
-                        </TableCell>
-                        <TableCell>{String(item.jumlah)}</TableCell>
-                        <TableCell>
-                          {(item.stokbarang as { satuan?: string })?.satuan ??
-                            ""}
-                        </TableCell>
-                        <TableCell>
-                          {getStatusBadge(Number(item.status ?? 0))}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+              <LaporanKategoriTables
+                tab="permintaan"
+                groups={groupLaporan(data, "permintaan")}
+                columns={[
+                  "Tanggal",
+                  "Unit",
+                  "Nama Barang",
+                  "Jumlah",
+                  "Satuan",
+                  "Status",
+                ]}
+                renderRow={(item) => (
+                  <TableRow key={Number(item.idPermintaan)}>
+                    <TableCell>
+                      {formatDate(String(item.tglPermintaan ?? ""))}
+                    </TableCell>
+                    <TableCell className="font-medium">
+                      {String(item.unit)}
+                    </TableCell>
+                    <TableCell>
+                      {(item.stokbarang as { namaBrg?: string })?.namaBrg ?? ""}
+                    </TableCell>
+                    <TableCell>{String(item.jumlah)}</TableCell>
+                    <TableCell>
+                      {(item.stokbarang as { satuan?: string })?.satuan ?? ""}
+                    </TableCell>
+                    <TableCell>
+                      {getStatusBadge(Number(item.status ?? 0))}
+                    </TableCell>
+                  </TableRow>
+                )}
+                renderSubtotal={(group) => (
+                  <TableRow>
+                    <TableCell colSpan={3} className="font-medium">
+                      Subtotal
+                    </TableCell>
+                    <TableCell className="font-medium">{group.jumlah}</TableCell>
+                    <TableCell colSpan={2} />
+                  </TableRow>
+                )}
+              />
               </LaporanTabCard>
               <TablePagination
                 page={page}
@@ -133,47 +133,58 @@ export default function LaporanPage() {
                 loading={loading}
                 hasData={data.length > 0}
               >
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Tanggal</TableHead>
-                      <TableHead>Unit</TableHead>
-                      <TableHead>Nama Barang</TableHead>
-                      <TableHead>Jumlah</TableHead>
-                      <TableHead>Satuan</TableHead>
-                      <TableHead>Harga</TableHead>
-                      <TableHead>Total</TableHead>
-                      <TableHead>Status</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {data.map((item: Record<string, unknown>) => (
-                      <TableRow key={Number(item.idPengajuan)}>
-                        <TableCell>
-                          {formatDate(String(item.tglPengajuan ?? ""))}
-                        </TableCell>
-                        <TableCell className="font-medium">
-                          {String(item.unit)}
-                        </TableCell>
-                        <TableCell>
-                          {(item.stokbarang as { namaBrg?: string })?.namaBrg ??
-                            ""}
-                        </TableCell>
-                        <TableCell>{String(item.jumlah)}</TableCell>
-                        <TableCell>{String(item.satuan)}</TableCell>
-                        <TableCell>
-                          {formatRupiah(Number(item.hargabarang ?? 0))}
-                        </TableCell>
-                        <TableCell className="font-medium">
-                          {formatRupiah(Number(item.total ?? 0))}
-                        </TableCell>
-                        <TableCell>
-                          {getStatusBadge(Number(item.status ?? 0))}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+              <LaporanKategoriTables
+                tab="pengajuan"
+                groups={groupLaporan(data, "pengajuan")}
+                columns={[
+                  "Tanggal",
+                  "Unit",
+                  "Nama Barang",
+                  "Jumlah",
+                  "Satuan",
+                  "Harga",
+                  "Total",
+                  "Status",
+                ]}
+                renderRow={(item) => (
+                  <TableRow key={Number(item.idPengajuan)}>
+                    <TableCell>
+                      {formatDate(String(item.tglPengajuan ?? ""))}
+                    </TableCell>
+                    <TableCell className="font-medium">
+                      {String(item.unit)}
+                    </TableCell>
+                    <TableCell>
+                      {(item.stokbarang as { namaBrg?: string })?.namaBrg ?? ""}
+                    </TableCell>
+                    <TableCell>{String(item.jumlah)}</TableCell>
+                    <TableCell>{String(item.satuan)}</TableCell>
+                    <TableCell>
+                      {formatRupiah(Number(item.hargabarang ?? 0))}
+                    </TableCell>
+                    <TableCell className="font-medium">
+                      {formatRupiah(Number(item.total ?? 0))}
+                    </TableCell>
+                    <TableCell>
+                      {getStatusBadge(Number(item.status ?? 0))}
+                    </TableCell>
+                  </TableRow>
+                )}
+                renderSubtotal={(group) => (
+                  <TableRow>
+                    <TableCell colSpan={3} className="font-medium">
+                      Subtotal
+                    </TableCell>
+                    <TableCell className="font-medium">{group.jumlah}</TableCell>
+                    <TableCell />
+                    <TableCell />
+                    <TableCell className="font-medium">
+                      {formatRupiah(group.total)}
+                    </TableCell>
+                    <TableCell />
+                  </TableRow>
+                )}
+              />
               </LaporanTabCard>
               <TablePagination
                 page={page}
@@ -192,38 +203,37 @@ export default function LaporanPage() {
                 loading={loading}
                 hasData={data.length > 0}
               >
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Tanggal</TableHead>
-                      <TableHead>Unit</TableHead>
-                      <TableHead>Nama Barang</TableHead>
-                      <TableHead>Jumlah</TableHead>
-                      <TableHead>Satuan</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {data.map((item: Record<string, unknown>, index: number) => (
-                      <TableRow key={`pemasukan-${index}`}>
-                        <TableCell>
-                          {formatDate(String(item.tglMasuk ?? ""))}
-                        </TableCell>
-                        <TableCell className="font-medium">
-                          {String(item.unit)}
-                        </TableCell>
-                        <TableCell>
-                          {(item.stokbarang as { namaBrg?: string })?.namaBrg ??
-                            ""}
-                        </TableCell>
-                        <TableCell>{String(item.jumlah)}</TableCell>
-                        <TableCell>
-                          {(item.stokbarang as { satuan?: string })?.satuan ??
-                            ""}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+              <LaporanKategoriTables
+                tab="pemasukan"
+                groups={groupLaporan(data, "pemasukan")}
+                columns={["Tanggal", "Unit", "Nama Barang", "Jumlah", "Satuan"]}
+                renderRow={(item) => (
+                  <TableRow key={`pemasukan-${String(item.id)}`}>
+                    <TableCell>
+                      {formatDate(String(item.tglMasuk ?? ""))}
+                    </TableCell>
+                    <TableCell className="font-medium">
+                      {String(item.unit)}
+                    </TableCell>
+                    <TableCell>
+                      {(item.stokbarang as { namaBrg?: string })?.namaBrg ?? ""}
+                    </TableCell>
+                    <TableCell>{String(item.jumlah)}</TableCell>
+                    <TableCell>
+                      {(item.stokbarang as { satuan?: string })?.satuan ?? ""}
+                    </TableCell>
+                  </TableRow>
+                )}
+                renderSubtotal={(group) => (
+                  <TableRow>
+                    <TableCell colSpan={3} className="font-medium">
+                      Subtotal
+                    </TableCell>
+                    <TableCell className="font-medium">{group.jumlah}</TableCell>
+                    <TableCell />
+                  </TableRow>
+                )}
+              />
               </LaporanTabCard>
               <TablePagination
                 page={page}
@@ -242,38 +252,37 @@ export default function LaporanPage() {
                 loading={loading}
                 hasData={data.length > 0}
               >
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Tanggal</TableHead>
-                      <TableHead>Unit</TableHead>
-                      <TableHead>Nama Barang</TableHead>
-                      <TableHead>Jumlah</TableHead>
-                      <TableHead>Satuan</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {data.map((item: Record<string, unknown>, index: number) => (
-                      <TableRow key={`pengeluaran-${index}`}>
-                        <TableCell>
-                          {formatDate(String(item.tglKeluar ?? ""))}
-                        </TableCell>
-                        <TableCell className="font-medium">
-                          {String(item.unit)}
-                        </TableCell>
-                        <TableCell>
-                          {(item.stokbarang as { namaBrg?: string })?.namaBrg ??
-                            ""}
-                        </TableCell>
-                        <TableCell>{String(item.jumlah)}</TableCell>
-                        <TableCell>
-                          {(item.stokbarang as { satuan?: string })?.satuan ??
-                            ""}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+              <LaporanKategoriTables
+                tab="pengeluaran"
+                groups={groupLaporan(data, "pengeluaran")}
+                columns={["Tanggal", "Unit", "Nama Barang", "Jumlah", "Satuan"]}
+                renderRow={(item) => (
+                  <TableRow key={`pengeluaran-${String(item.id)}`}>
+                    <TableCell>
+                      {formatDate(String(item.tglKeluar ?? ""))}
+                    </TableCell>
+                    <TableCell className="font-medium">
+                      {String(item.unit)}
+                    </TableCell>
+                    <TableCell>
+                      {(item.stokbarang as { namaBrg?: string })?.namaBrg ?? ""}
+                    </TableCell>
+                    <TableCell>{String(item.jumlah)}</TableCell>
+                    <TableCell>
+                      {(item.stokbarang as { satuan?: string })?.satuan ?? ""}
+                    </TableCell>
+                  </TableRow>
+                )}
+                renderSubtotal={(group) => (
+                  <TableRow>
+                    <TableCell colSpan={3} className="font-medium">
+                      Subtotal
+                    </TableCell>
+                    <TableCell className="font-medium">{group.jumlah}</TableCell>
+                    <TableCell />
+                  </TableRow>
+                )}
+              />
               </LaporanTabCard>
               <TablePagination
                 page={page}
@@ -292,40 +301,49 @@ export default function LaporanPage() {
                 loading={loading}
                 hasData={data.length > 0}
               >
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Kode Barang</TableHead>
-                      <TableHead>Nama Barang</TableHead>
-                      <TableHead>Stok</TableHead>
-                      <TableHead>Keluar</TableHead>
-                      <TableHead>Sisa</TableHead>
-                      <TableHead>Satuan</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {data.map((item: Record<string, unknown>) => (
-                      <TableRow key={Number(item.idKodeBrg)}>
-                        <TableCell>{String(item.kodeBrg)}</TableCell>
-                        <TableCell className="font-medium">
-                          {String(item.namaBrg)}
-                        </TableCell>
-                        <TableCell>{String(item.stok)}</TableCell>
-                        <TableCell>{String(item.keluar)}</TableCell>
-                        <TableCell
-                          className={
-                            (item.sisa as number) <= 10
-                              ? "text-destructive font-semibold"
-                              : "font-medium"
-                          }
-                        >
-                          {String(item.sisa)}
-                        </TableCell>
-                        <TableCell>{String(item.satuan)}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+              <LaporanKategoriTables
+                tab="stok"
+                groups={groupLaporan(data, "stok")}
+                columns={[
+                  "Kode Barang",
+                  "Nama Barang",
+                  "Stok",
+                  "Keluar",
+                  "Sisa",
+                  "Satuan",
+                ]}
+                renderRow={(item) => (
+                  <TableRow key={Number(item.idKodeBrg)}>
+                    <TableCell>{String(item.kodeBrg)}</TableCell>
+                    <TableCell className="font-medium">
+                      {String(item.namaBrg)}
+                    </TableCell>
+                    <TableCell>{String(item.stok)}</TableCell>
+                    <TableCell>{String(item.keluar)}</TableCell>
+                    <TableCell
+                      className={
+                        Number(item.sisa) <= 10
+                          ? "font-semibold text-destructive"
+                          : "font-medium"
+                      }
+                    >
+                      {String(item.sisa)}
+                    </TableCell>
+                    <TableCell>{String(item.satuan)}</TableCell>
+                  </TableRow>
+                )}
+                renderSubtotal={(group) => (
+                  <TableRow>
+                    <TableCell colSpan={2} className="font-medium">
+                      Subtotal
+                    </TableCell>
+                    <TableCell className="font-medium">{group.stok}</TableCell>
+                    <TableCell className="font-medium">{group.keluar}</TableCell>
+                    <TableCell className="font-medium">{group.sisa}</TableCell>
+                    <TableCell />
+                  </TableRow>
+                )}
+              />
               </LaporanTabCard>
               <TablePagination
                 page={page}

@@ -32,7 +32,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { TableActionButton, TableActions } from "@/components/ui/table-actions"
-import { MAX_PAGE_SIZE, readPaginatedJson } from "@/lib/shared/pagination"
+import { readPaginatedJson } from "@/lib/shared/pagination"
 
 interface PengajuanSementara {
   idPengajuanSementara: number
@@ -127,8 +127,6 @@ export default function PengajuanPage() {
     try {
       const params = new URLSearchParams()
       params.set("id_jenis", String(idJenis))
-      params.set("page", "1")
-      params.set("page_size", String(MAX_PAGE_SIZE))
       const response = await fetch(`/api/purchasing/stok?${params.toString()}`)
       if (response.ok) {
         const result = readPaginatedJson<StokBarang>(await response.json())
@@ -363,19 +361,13 @@ export default function PengajuanPage() {
                 <Input
                   id="hargabarang"
                   type="text"
-                  value={formData.hargabarang}
-                  onChange={(e) => {
-                    const value = e.target.value.replace(/[^\d]/g, "")
-                    setFormData({ ...formData, hargabarang: value })
-                  }}
-                  required
-                  placeholder="Contoh: 50000"
+                  value={
+                    formData.hargabarang ? formatRupiah(formData.hargabarang) : ""
+                  }
+                  disabled
+                  readOnly
+                  placeholder="Otomatis dari nama barang"
                 />
-                {formData.hargabarang && (
-                  <p className="text-sm text-muted-foreground">
-                    {formatRupiah(formData.hargabarang)}
-                  </p>
-                )}
               </div>
 
               <div className="grid gap-2">

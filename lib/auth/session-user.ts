@@ -33,11 +33,9 @@ export function buildSessionAuthUser(user: {
   level: string
   managePurchasing?: boolean
   manageIt?: boolean
-  manageDana?: boolean
   manageMobil?: boolean
   accessPurchasing?: boolean
   accessIt?: boolean
-  accessDana?: boolean
   accessMobil?: boolean
   role?: RoleForSession | null
 }): SessionAuthUser {
@@ -50,13 +48,11 @@ export function buildSessionAuthUser(user: {
     {
       managePurchasing: Boolean(user.managePurchasing),
       manageIt: Boolean(user.manageIt),
-      manageDana: Boolean(user.manageDana),
       manageMobil: Boolean(user.manageMobil),
     },
     {
       accessPurchasing: Boolean(user.accessPurchasing),
       accessIt: Boolean(user.accessIt),
-      accessDana: Boolean(user.accessDana),
       accessMobil: Boolean(user.accessMobil),
     }
   )

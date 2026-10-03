@@ -38,11 +38,9 @@ model User {
   roleId   Int       @map("id_role")
   managePurchasing Boolean @default(false) @map("manage_purchasing")
   manageIt         Boolean @default(false) @map("manage_it")
-  manageDana       Boolean @default(false) @map("manage_dana")
   manageMobil      Boolean @default(false) @map("manage_mobil")
   accessPurchasing Boolean @default(false) @map("access_purchasing")
   accessIt         Boolean @default(false) @map("access_it")
-  accessDana       Boolean @default(false) @map("access_dana")
   accessMobil      Boolean @default(false) @map("access_mobil")
 
   role Role @relation(fields: [roleId], references: [idRole], onDelete: Restrict)
@@ -259,27 +257,6 @@ model ItMaintenanceLog {
   @@index([username])
   @@index([tglKerja])
   @@index([idTiket])
-}
-
-model DanaPengajuan {
-  idPengajuan   Int       @id @default(autoincrement()) @map("id_pengajuan")
-  nomor         String    @unique @db.VarChar(20)
-  username      String    @db.VarChar(20)
-  jabatan       String    @db.VarChar(50)
-  nominal       Int
-  kembalian     Int       @default(0)
-  keperluan     String    @db.Text
-  status        Int       @default(0)
-  alasanTolak   String?   @map("alasan_tolak") @db.Text
-  disetujuiOleh String?   @map("disetujui_oleh") @db.VarChar(20)
-  tglDisetujui  DateTime? @map("tgl_disetujui")
-  tglDibuat     DateTime  @default(now()) @map("tgl_dibuat")
-  tglDiupdate   DateTime  @updatedAt @map("tgl_diupdate")
-
-  @@map("dana_pengajuan")
-  @@index([username])
-  @@index([status])
-  @@index([tglDibuat])
 }
 
 model MobilJenis {

@@ -19,7 +19,6 @@ import {
   List,
   Wrench,
   Monitor,
-  Wallet,
   Car,
 } from "lucide-react"
 import {
@@ -45,16 +44,14 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { APP_NAME } from "@/lib/shared/app-branding"
+import { BrandMark } from "@/components/layout/BrandMark"
 import { USER_LEVEL_LABEL, normalizeUserLevel } from "@/lib/auth/user-level"
 import {
-  canAccessDanaUser,
   canAccessItStaff,
   canAccessItUser,
   canAccessMobilUser,
   canAccessPlatform,
   canAccessPurchasingUser,
-  canHandleDanaWorkflow,
   canHandleMobilWorkflow,
   canManagePurchasingMaster,
   getDefaultHomePath,
@@ -245,41 +242,6 @@ function getUserItMenu(): NavLink[] {
       title: "Antrian",
       href: "/it/user/antrian",
       icon: Inbox,
-    },
-  ]
-}
-
-function getAdminDanaMenu(): NavLink[] {
-  return [
-    {
-      title: "Antrian",
-      href: "/dana/admin/antrian",
-      icon: Inbox,
-    },
-    {
-      title: "List Pengajuan",
-      href: "/dana/admin/pengajuan",
-      icon: ClipboardList,
-    },
-    {
-      title: "Laporan",
-      href: "/dana/admin/laporan",
-      icon: BarChart3,
-    },
-  ]
-}
-
-function getUserDanaMenu(): NavLink[] {
-  return [
-    {
-      title: "Pengajuan",
-      href: "/dana/user/pengajuan",
-      icon: ClipboardList,
-    },
-    {
-      title: "Cetak",
-      href: "/dana/user/cetak",
-      icon: FileCheck,
     },
   ]
 }
@@ -493,12 +455,6 @@ export function AppSidebar() {
     return []
   }, [principal])
 
-  const danaItems = useMemo(() => {
-    if (canHandleDanaWorkflow(principal)) return getAdminDanaMenu()
-    if (canAccessDanaUser(principal)) return getUserDanaMenu()
-    return []
-  }, [principal])
-
   const mobilItems = useMemo(() => {
     if (canHandleMobilWorkflow(principal)) return getAdminMobilMenu()
     if (canAccessMobilUser(principal)) return getUserMobilMenu()
@@ -531,11 +487,9 @@ export function AppSidebar() {
       className="top-14! h-[calc(100svh-3.5rem)]!"
     >
       <SidebarHeader className="group-data-[collapsible=icon]:items-center">
-        <div className="flex h-10 items-center gap-2 px-0 group-data-[collapsible=icon]:size-8 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-0">
-          <SidebarTrigger className="size-8" />
-          <p className="truncate text-sm font-semibold leading-tight group-data-[collapsible=icon]:hidden">
-            {APP_NAME}
-          </p>
+        <div className="flex h-10 w-full items-center gap-2 px-0 group-data-[collapsible=icon]:size-8 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-0">
+          <SidebarTrigger className="size-8 shrink-0" />
+          <BrandMark className="h-10 min-w-0 flex-1 group-data-[collapsible=icon]:hidden" />
         </div>
       </SidebarHeader>
       <SidebarContent className="group-data-[collapsible=icon]:items-center">
@@ -578,7 +532,6 @@ export function AppSidebar() {
 
         {purchasingItems.length > 0 ||
         itItems.length > 0 ||
-        danaItems.length > 0 ||
         mobilItems.length > 0 ? (
           <SidebarGroup className="group-data-[collapsible=icon]:p-2">
             <SidebarGroupLabel>Modul</SidebarGroupLabel>
@@ -599,16 +552,6 @@ export function AppSidebar() {
                     title="IT Support"
                     icon={Monitor}
                     items={itItems}
-                    pathname={pathname}
-                    search={search}
-                  />
-                ) : null}
-
-                {danaItems.length > 0 ? (
-                  <ModuleNav
-                    title="Pengajuan Dana"
-                    icon={Wallet}
-                    items={danaItems}
                     pathname={pathname}
                     search={search}
                   />

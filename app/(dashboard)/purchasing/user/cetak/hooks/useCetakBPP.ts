@@ -6,6 +6,7 @@ import { toast } from "sonner"
 import { format } from "date-fns"
 import { id } from "date-fns/locale"
 import { downloadPdf } from "@/lib/shared/makepdf"
+import { COMPANY_LEGAL_NAME, companyPdfHeader } from "@/lib/shared/app-branding"
 import type { Permintaan } from "../types"
 
 export function useCetakBPP() {
@@ -75,14 +76,7 @@ export function useCetakBPP() {
           pageOrientation: "portrait",
           pageMargins: [40, 60, 40, 40],
           content: [
-            { text: "PT DASAN PAN PACIFIC INDONESIA", style: "header", alignment: "center" },
-            {
-              text: "Parakansalak, Bojonglongok, Kec. Parakansalak, Kabupaten Sukabumi, Jawa Barat 43355",
-              style: "subheader",
-              alignment: "center",
-              margin: [0, 4, 0, 8],
-            },
-            { canvas: [{ type: "line", x1: 0, y1: 0, x2: 515, y2: 0, lineWidth: 1 }], margin: [0, 0, 0, 10] },
+            ...companyPdfHeader({ lineWidth: 515, afterLine: 10 }),
             { text: "BUKTI PERMINTAAN BARANG (BPP)", style: "title", alignment: "center", margin: [0, 0, 0, 12] },
             {
               columns: [
@@ -145,7 +139,7 @@ export function useCetakBPP() {
                     { text: "Mengetahui,", style: "signTitle", margin: [0, 18, 0, 30] },
                     { canvas: [{ type: "line", x1: 0, y1: 0, x2: 200, y2: 0, lineWidth: 1 }] },
                     { text: "Admin", style: "signMeta", margin: [0, 6, 0, 0] },
-                    { text: "PT DASAN PAN PACIFIC INDONESIA", style: "signName", margin: [0, 30, 0, 0] },
+                    { text: COMPANY_LEGAL_NAME, style: "signName", margin: [0, 30, 0, 0] },
                   ],
                 },
               ],
@@ -192,14 +186,7 @@ export function useCetakBPP() {
         if (idx > 0) content.push({ text: "", pageBreak: "before" })
 
         content.push(
-          { text: "PT DASAN PAN PACIFIC INDONESIA", style: "header", alignment: "center" },
-          {
-            text: "Parakansalak, Bojonglongok, Kec. Parakansalak, Kabupaten Sukabumi, Jawa Barat 43355",
-            style: "subheader",
-            alignment: "center",
-            margin: [0, 4, 0, 8],
-          },
-          { canvas: [{ type: "line", x1: 0, y1: 0, x2: 515, y2: 0, lineWidth: 1 }], margin: [0, 0, 0, 10] },
+          ...companyPdfHeader({ lineWidth: 515, afterLine: 10 }),
           { text: "BUKTI PERMINTAAN BARANG (BPP)", style: "title", alignment: "center", margin: [0, 0, 0, 12] },
           {
             columns: [
@@ -262,7 +249,7 @@ export function useCetakBPP() {
                   { text: "Mengetahui,", style: "signTitle", margin: [0, 18, 0, 30] },
                   { canvas: [{ type: "line", x1: 0, y1: 0, x2: 200, y2: 0, lineWidth: 1 }] },
                   { text: "Admin", style: "signMeta", margin: [0, 6, 0, 0] },
-                  { text: "PT DASAN PAN PACIFIC INDONESIA", style: "signName", margin: [0, 30, 0, 0] },
+                  { text: COMPANY_LEGAL_NAME, style: "signName", margin: [0, 30, 0, 0] },
                 ],
               },
             ],

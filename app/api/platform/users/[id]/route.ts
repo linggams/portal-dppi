@@ -12,14 +12,12 @@ import { z } from "zod"
 const managerModulesSchema = z.object({
   managePurchasing: z.boolean(),
   manageIt: z.boolean(),
-  manageDana: z.boolean(),
   manageMobil: z.boolean(),
 })
 
 const applicantModulesSchema = z.object({
   accessPurchasing: z.boolean(),
   accessIt: z.boolean(),
-  accessDana: z.boolean(),
   accessMobil: z.boolean(),
 })
 
@@ -138,11 +136,9 @@ export async function PUT(
       }
       updateData.managePurchasing = modulesResult.modules.managePurchasing
       updateData.manageIt = modulesResult.modules.manageIt
-      updateData.manageDana = modulesResult.modules.manageDana
       updateData.manageMobil = modulesResult.modules.manageMobil
       updateData.accessPurchasing = modulesResult.modules.accessPurchasing
       updateData.accessIt = modulesResult.modules.accessIt
-      updateData.accessDana = modulesResult.modules.accessDana
       updateData.accessMobil = modulesResult.modules.accessMobil
     }
 

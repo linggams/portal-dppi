@@ -5,14 +5,12 @@ export type { ManagerModules }
 export const EMPTY_MANAGER_MODULES: ManagerModules = {
   managePurchasing: false,
   manageIt: false,
-  manageDana: false,
   manageMobil: false,
 }
 
 export const ALL_MANAGER_MODULES: ManagerModules = {
   managePurchasing: true,
   manageIt: true,
-  manageDana: true,
   manageMobil: true,
 }
 
@@ -28,11 +26,6 @@ export const MANAGER_MODULE_OPTIONS = [
     description: "Antrian tiket, maintenance",
   },
   {
-    key: "manageDana" as const,
-    label: "Pengajuan Dana",
-    description: "Antrian, setujui / tolak dana",
-  },
-  {
     key: "manageMobil" as const,
     label: "Penggunaan Mobil",
     description: "Jenis, kendaraan, laporan KM, input laporan",
@@ -43,7 +36,6 @@ export function hasAnyManagerModule(modules: ManagerModules) {
   return (
     modules.managePurchasing ||
     modules.manageIt ||
-    modules.manageDana ||
     modules.manageMobil
   )
 }
@@ -56,7 +48,6 @@ function resolveManagerModules(
   return {
     managePurchasing: Boolean(modules?.managePurchasing),
     manageIt: Boolean(modules?.manageIt),
-    manageDana: Boolean(modules?.manageDana),
     manageMobil: Boolean(modules?.manageMobil),
   }
 }

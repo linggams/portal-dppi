@@ -53,11 +53,9 @@ async function main() {
       level: 'administrator',
       managePurchasing: true,
       manageIt: true,
-      manageDana: true,
       manageMobil: true,
       accessPurchasing: false,
       accessIt: false,
-      accessDana: false,
       accessMobil: false,
     },
     create: {
@@ -68,11 +66,9 @@ async function main() {
       roleId: adminRole.idRole,
       managePurchasing: true,
       manageIt: true,
-      manageDana: true,
       manageMobil: true,
       accessPurchasing: false,
       accessIt: false,
-      accessDana: false,
       accessMobil: false,
     },
   })

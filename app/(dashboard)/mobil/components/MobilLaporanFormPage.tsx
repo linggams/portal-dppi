@@ -30,7 +30,7 @@ import {
 } from "@/components/ui/select"
 import { Trash2 } from "lucide-react"
 import { MOBIL_BUKTI_MAX_BYTES, MOBIL_BUKTI_MAX_MB, MOBIL_BUKTI_PLACEHOLDER } from "@/lib/mobil/upload-limits"
-import { formatRupiah, parseRupiahInput } from "@/lib/dana/format"
+import { formatRupiah, parseRupiahInput } from "@/lib/shared/currency"
 import type { MobilKendaraan } from "@/lib/mobil/mobil-types"
 
 type TripDraft = {

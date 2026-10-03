@@ -7,27 +7,17 @@ import { useSession } from "next-auth/react"
 import {
   DashboardLayout,
   PageActions,
-  SectionCard,
   StatCard,
 } from "@/components/layout"
 import { DashboardPendingPermintaanList } from "@/components/dashboard/pending-permintaan-list"
 import { DashboardPendingPengajuanList } from "@/components/dashboard/pending-pengajuan-list"
-import {
-  DashboardQuickLinks,
-  DANA_QUICK_LINKS,
-  IT_QUICK_LINKS,
-  MOBIL_QUICK_LINKS,
-  PURCHASING_QUICK_LINKS,
-} from "@/components/dashboard/quick-links"
 import { DashboardStokKritisList } from "@/components/dashboard/stok-kritis-list"
 import { DashboardTiketBaruList } from "@/components/dashboard/tiket-baru-list"
-import { DashboardDanaPendingList } from "@/components/dashboard/dana-pending-list"
 import { DashboardMobilLaporanList } from "@/components/dashboard/mobil-laporan-list"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
-  canHandleDanaWorkflow,
   canHandleMobilWorkflow,
   canHandlePurchasingWorkflow,
   canAccessItStaff,
@@ -37,19 +27,11 @@ import type {
   PlatformDashboardTab,
 } from "@/lib/platform/dashboard-types"
 
-const TAB_ORDER: PlatformDashboardTab[] = [
-  "purchasing",
-  "it",
-  "dana",
-  "mobil",
-]
+const TAB_ORDER: PlatformDashboardTab[] = ["purchasing", "it", "mobil"]
 
 function isDashboardTab(value: string | null): value is PlatformDashboardTab {
   return (
-    value === "purchasing" ||
-    value === "it" ||
-    value === "dana" ||
-    value === "mobil"
+    value === "purchasing" || value === "it" || value === "mobil"
   )
 }
 
@@ -85,7 +67,6 @@ function PlatformDashboardContent() {
     const tabs: PlatformDashboardTab[] = []
     if (canHandlePurchasingWorkflow(principal)) tabs.push("purchasing")
     if (canAccessItStaff(principal)) tabs.push("it")
-    if (canHandleDanaWorkflow(principal)) tabs.push("dana")
     if (canHandleMobilWorkflow(principal)) tabs.push("mobil")
     return tabs.length > 0 ? tabs : TAB_ORDER
   }, [principal])
@@ -118,15 +99,6 @@ function PlatformDashboardContent() {
   const badge = (count: number | undefined) =>
     typeof count === "number" && count > 0 ? ` (${count})` : ""
 
-  const quickLinks =
-    activeTab === "purchasing"
-      ? PURCHASING_QUICK_LINKS
-      : activeTab === "it"
-        ? IT_QUICK_LINKS
-        : activeTab === "dana"
-          ? DANA_QUICK_LINKS
-          : MOBIL_QUICK_LINKS
-
   return (
     <DashboardLayout title="Dashboard">
       <PageActions>
@@ -143,7 +115,7 @@ function PlatformDashboardContent() {
       </PageActions>
 
       <Tabs value={activeTab} onValueChange={setTab} className="w-full space-y-6">
-        <TabsList className="grid h-auto w-full grid-cols-2 gap-1 sm:grid-cols-4 lg:inline-grid lg:w-auto">
+        <TabsList className="grid h-auto w-full grid-cols-2 gap-1 sm:grid-cols-3 lg:inline-grid lg:w-auto">
           {availableTabs.includes("purchasing") ? (
             <TabsTrigger value="purchasing">
               Purchasing
@@ -156,12 +128,6 @@ function PlatformDashboardContent() {
               {!loading ? badge(stats?.it.baru) : ""}
             </TabsTrigger>
           ) : null}
-          {availableTabs.includes("dana") ? (
-            <TabsTrigger value="dana">
-              Dana
-              {!loading ? badge(stats?.dana.pending) : ""}
-            </TabsTrigger>
-          ) : null}
           {availableTabs.includes("mobil") ? (
             <TabsTrigger value="mobil">
               Mobil
@@ -169,10 +135,6 @@ function PlatformDashboardContent() {
             </TabsTrigger>
           ) : null}
         </TabsList>
-
-        <SectionCard title="Akses Cepat">
-          <DashboardQuickLinks groups={[...quickLinks]} />
-        </SectionCard>
 
         <TabsContent value="purchasing" className="space-y-6">
           {loading ? (
@@ -219,8 +181,36 @@ function PlatformDashboardContent() {
             </div>
           )}
 
-          <div className="grid gap-6 lg:grid-cols-2">
-            <SectionCard title="Permintaan Pending">
+          <Tabs defaultValue="stok-kritis" className="w-full gap-4">
+            <TabsList className="grid h-auto w-full grid-cols-1 gap-1 sm:grid-cols-3 lg:inline-grid lg:w-auto">
+              <TabsTrigger value="stok-kritis">
+                Stok Kritis
+                {!loading ? badge(stats?.purchasing.stokKritisTotal) : ""}
+              </TabsTrigger>
+              <TabsTrigger value="permintaan">
+                Permintaan Pending
+                {!loading
+                  ? badge(stats?.purchasing.permintaanPendingToday)
+                  : ""}
+              </TabsTrigger>
+              <TabsTrigger value="pengajuan">
+                Pengajuan Pending
+                {!loading
+                  ? badge(stats?.purchasing.pengajuanPendingToday)
+                  : ""}
+              </TabsTrigger>
+            </TabsList>
+            <TabsContent value="stok-kritis">
+              {loading ? (
+                <Skeleton className="h-48" />
+              ) : (
+                <DashboardStokKritisList
+                  items={stats?.purchasing.stokKritis ?? []}
+                  total={stats?.purchasing.stokKritisTotal}
+                />
+              )}
+            </TabsContent>
+            <TabsContent value="permintaan">
               {loading ? (
                 <Skeleton className="h-48" />
               ) : (
@@ -228,8 +218,8 @@ function PlatformDashboardContent() {
                   items={stats?.purchasing.pendingPermintaan ?? []}
                 />
               )}
-            </SectionCard>
-            <SectionCard title="Pengajuan Pending">
+            </TabsContent>
+            <TabsContent value="pengajuan">
               {loading ? (
                 <Skeleton className="h-48" />
               ) : (
@@ -237,19 +227,8 @@ function PlatformDashboardContent() {
                   items={stats?.purchasing.pendingPengajuan ?? []}
                 />
               )}
-            </SectionCard>
-          </div>
-
-          <SectionCard title="Stok Kritis">
-            {loading ? (
-              <Skeleton className="h-48" />
-            ) : (
-              <DashboardStokKritisList
-                items={stats?.purchasing.stokKritis ?? []}
-                total={stats?.purchasing.stokKritisTotal}
-              />
-            )}
-          </SectionCard>
+            </TabsContent>
+          </Tabs>
         </TabsContent>
 
         <TabsContent value="it" className="space-y-6">
@@ -264,43 +243,14 @@ function PlatformDashboardContent() {
             </div>
           )}
 
-          <SectionCard title="Tiket IT Baru">
+          <section className="space-y-3">
+            <h2 className="text-sm font-medium">Tiket IT Baru</h2>
             {loading ? (
               <Skeleton className="h-48" />
             ) : (
               <DashboardTiketBaruList items={stats?.it.tiketBaru ?? []} />
             )}
-          </SectionCard>
-        </TabsContent>
-
-        <TabsContent value="dana" className="space-y-6">
-          {loading ? (
-            <StatsSkeleton />
-          ) : (
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <StatCard label="Pending" value={stats?.dana.pending ?? 0} />
-              <StatCard
-                label="Disetujui Hari Ini"
-                value={stats?.dana.approvedToday ?? 0}
-              />
-              <StatCard
-                label="Ditolak Hari Ini"
-                value={stats?.dana.rejectedToday ?? 0}
-              />
-              <StatCard
-                label="Total Bulan Ini"
-                value={stats?.dana.totalBulan ?? 0}
-              />
-            </div>
-          )}
-
-          <SectionCard title="Antrian Pengajuan Dana">
-            {loading ? (
-              <Skeleton className="h-48" />
-            ) : (
-              <DashboardDanaPendingList items={stats?.dana.pendingList ?? []} />
-            )}
-          </SectionCard>
+          </section>
         </TabsContent>
 
         <TabsContent value="mobil" className="space-y-6">
@@ -327,7 +277,8 @@ function PlatformDashboardContent() {
             </div>
           )}
 
-          <SectionCard title="Laporan KM Terbaru">
+          <section className="space-y-3">
+            <h2 className="text-sm font-medium">Laporan KM Terbaru</h2>
             {loading ? (
               <Skeleton className="h-48" />
             ) : (
@@ -335,7 +286,7 @@ function PlatformDashboardContent() {
                 items={stats?.mobil.laporanTerbaru ?? []}
               />
             )}
-          </SectionCard>
+          </section>
         </TabsContent>
       </Tabs>
     </DashboardLayout>

@@ -14,7 +14,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { TableContainer } from "@/components/ui/table-container"
-import { formatRupiah } from "@/lib/dana/format"
+import { formatRupiah } from "@/lib/shared/currency"
 import type { DashboardMobilLaporanItem } from "@/lib/platform/dashboard-types"
 
 interface Props {

@@ -5,7 +5,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { APP_DESCRIPTION, APP_NAME, COMPANY_NAME } from "@/lib/shared/app-branding"
+import { APP_DESCRIPTION, APP_NAME, COMPANY_LEGAL_NAME } from "@/lib/shared/app-branding"
 import { cn } from "@/lib/utils"
 
 interface AuthCardProps {
@@ -42,7 +42,7 @@ export function AuthCard({
             <CardDescription className="pt-1">{description}</CardDescription>
           ) : (
             <CardDescription className="pt-1 text-xs">
-              {APP_NAME} · {COMPANY_NAME} — {APP_DESCRIPTION}
+              {APP_NAME} · {COMPANY_LEGAL_NAME} — {APP_DESCRIPTION}
             </CardDescription>
           )}
         </CardHeader>

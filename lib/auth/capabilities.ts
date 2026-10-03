@@ -6,14 +6,12 @@ import {
 export type ManagerModules = {
   managePurchasing: boolean
   manageIt: boolean
-  manageDana: boolean
   manageMobil: boolean
 }
 
 export type ApplicantModules = {
   accessPurchasing: boolean
   accessIt: boolean
-  accessDana: boolean
   accessMobil: boolean
 }
 
@@ -24,8 +22,6 @@ export type RoleCapabilities = {
   purchasingMaster: boolean
   itUser: boolean
   itStaff: boolean
-  danaUser: boolean
-  danaWorkflow: boolean
   mobilUser: boolean
   mobilWorkflow: boolean
 }
@@ -53,8 +49,6 @@ export const EMPTY_CAPABILITIES: RoleCapabilities = {
   purchasingMaster: false,
   itUser: false,
   itStaff: false,
-  danaUser: false,
-  danaWorkflow: false,
   mobilUser: false,
   mobilWorkflow: false,
 }
@@ -72,8 +66,6 @@ const SYSTEM_ROLE_CAPABILITIES: Record<AppUserLevel, RoleCapabilities> = {
     purchasingMaster: true,
     itUser: true,
     itStaff: true,
-    danaUser: true,
-    danaWorkflow: true,
     mobilUser: true,
     mobilWorkflow: true,
   },
@@ -81,7 +73,6 @@ const SYSTEM_ROLE_CAPABILITIES: Record<AppUserLevel, RoleCapabilities> = {
     ...EMPTY_CAPABILITIES,
     purchasingUser: true,
     itUser: true,
-    danaUser: true,
     mobilUser: true,
   },
 }
@@ -91,7 +82,7 @@ export const SYSTEM_ROLES = [
     code: "administrator" as const,
     name: "Pengelola",
     description:
-      "Akses penuh: kelola user, stok, approve, tiket IT, pengajuan dana, dan mobil",
+      "Akses penuh: kelola user, stok, approve, tiket IT, dan mobil",
     isSystem: true,
     homePath: SYSTEM_ROLE_HOME_PATH.administrator,
     canAccessPlatform: true,
@@ -105,7 +96,7 @@ export const SYSTEM_ROLES = [
     code: "user" as const,
     name: "Pemohon",
     description:
-      "Ajukan permintaan ATK, tiket gangguan, pengajuan dana, dan laporan KM mobil",
+      "Ajukan permintaan ATK, tiket gangguan, dan laporan KM mobil",
     isSystem: true,
     homePath: SYSTEM_ROLE_HOME_PATH.user,
     canAccessPlatform: false,
@@ -131,8 +122,6 @@ export function capabilitiesFromRole(
     purchasingMaster: role.canManagePurchasingMaster,
     itUser: role.canAccessItUser,
     itStaff: role.canAccessItStaff,
-    danaUser: false,
-    danaWorkflow: false,
     mobilUser: false,
     mobilWorkflow: false,
   }
@@ -152,8 +141,6 @@ export function applyUserModules(
       purchasingMaster: manager.managePurchasing,
       itUser: false,
       itStaff: manager.manageIt,
-      danaUser: false,
-      danaWorkflow: manager.manageDana,
       // Pengelola modul mobil juga boleh input laporan KM
       mobilUser: manager.manageMobil,
       mobilWorkflow: manager.manageMobil,
@@ -167,8 +154,6 @@ export function applyUserModules(
     purchasingMaster: false,
     itUser: applicant.accessIt,
     itStaff: false,
-    danaUser: applicant.accessDana,
-    danaWorkflow: false,
     mobilUser: applicant.accessMobil,
     mobilWorkflow: false,
   }
@@ -178,7 +163,6 @@ export function homePathFromCapabilities(caps: RoleCapabilities): string {
   if (caps.platform) return SYSTEM_ROLE_HOME_PATH.administrator
   if (caps.purchasingUser) return "/purchasing/user/dashboard"
   if (caps.itUser) return "/it/user/tiket"
-  if (caps.danaUser) return "/dana/user/pengajuan"
   if (caps.mobilUser) return "/mobil/user/laporan"
   return "/unauthorized"
 }
@@ -192,8 +176,6 @@ export function hydrateCapabilities(
   return {
     ...EMPTY_CAPABILITIES,
     ...caps,
-    danaUser: caps.danaUser ?? (!platform && Boolean(caps.purchasingUser)),
-    danaWorkflow: caps.danaWorkflow ?? platform,
     mobilWorkflow: caps.mobilWorkflow ?? platform,
     mobilUser: caps.mobilUser ?? !platform,
   }

@@ -25,3 +25,7 @@ export interface StokFormData {
   stok: number
   keterangan: string
 }
+
+export type StokSort = "" | "stok" | "keluar" | "sisa" | "hargabarang"
+
+export type StokSortDir = "asc" | "desc"

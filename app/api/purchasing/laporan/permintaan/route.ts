@@ -6,6 +6,7 @@ import {
   paginateArray,
   parsePaginationParams,
 } from "@/lib/shared/pagination"
+import { sortByKategoriThen } from "@/lib/purchasing/laporan-group"
 
 // GET - Laporan permintaan (only for admin)
 export async function GET(request: NextRequest) {
@@ -61,12 +62,13 @@ export async function GET(request: NextRequest) {
     const permintaan = await prisma.permintaan.findMany({
       where,
       include: {
-        stokbarang: true,
-      },
-      orderBy: {
-        tglPermintaan: "desc",
+        stokbarang: { include: { jenisBarang: true } },
       },
     })
+
+    sortByKategoriThen(permintaan, "permintaan", (a, b) =>
+      b.tglPermintaan.getTime() - a.tglPermintaan.getTime()
+    )
 
     const totalJumlah = permintaan.reduce(
       (sum: number, item) => sum + item.jumlah,

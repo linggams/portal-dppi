@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/table"
 import { TableContainer } from "@/components/ui/table-container"
 import { getGroupStatusBadge } from "@/lib/purchasing/permintaan-status"
-import { formatRupiah } from "@/lib/dana/format"
+import { formatRupiah } from "@/lib/shared/currency"
 import type { DashboardPengajuanItem } from "@/lib/platform/dashboard-types"
 
 interface Props {

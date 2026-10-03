@@ -1,7 +1,15 @@
 import Link from "next/link"
 import { ContentEmpty } from "@/components/layout/content-empty"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import { TableContainer } from "@/components/ui/table-container"
 import type { DashboardStokKritisItem } from "@/lib/platform/dashboard-types"
 
 interface Props {
@@ -22,22 +30,30 @@ export function DashboardStokKritisList({ items, total }: Props) {
 
   return (
     <div className="space-y-4">
-      <ul className="space-y-3">
-        {items.map((item) => (
-          <li
-            key={item.kodeBrg}
-            className="flex items-center justify-between gap-3 rounded-md border px-3 py-2"
-          >
-            <div className="min-w-0">
-              <p className="truncate font-medium">{item.namaBrg}</p>
-              <p className="text-sm text-muted-foreground">
-                Sisa: {item.sisa} {item.satuan}
-              </p>
-            </div>
-            <Badge variant="destructive">Kritis</Badge>
-          </li>
-        ))}
-      </ul>
+      <TableContainer>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Kode Barang</TableHead>
+              <TableHead>Nama Barang</TableHead>
+              <TableHead className="text-right">Sisa</TableHead>
+              <TableHead>Satuan</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {items.map((item) => (
+              <TableRow key={item.kodeBrg}>
+                <TableCell className="font-medium">{item.kodeBrg}</TableCell>
+                <TableCell>{item.namaBrg}</TableCell>
+                <TableCell className="text-right font-semibold tabular-nums text-destructive">
+                  {item.sisa}
+                </TableCell>
+                <TableCell>{item.satuan}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
       {total != null && total > items.length ? (
         <p className="text-sm text-muted-foreground">
           +{total - items.length} barang lain dengan stok kritis

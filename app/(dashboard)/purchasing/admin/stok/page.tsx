@@ -1,14 +1,22 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { ArrowDown, ArrowUp } from "lucide-react"
 import { PageActions } from "@/components/layout"
 import { DashboardLayout } from "@/components/layout/DashboardLayout"
 import { Button } from "@/components/ui/button"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Skeleton } from "@/components/ui/skeleton"
 import { TablePagination } from "@/components/ui/table-pagination"
 import { useStok } from "./hooks/useStok"
 import { StokTable, StokFormDialog, DeleteStokDialog } from "./components"
-import type { StokBarang } from "./types"
+import type { StokBarang, StokSort } from "./types"
 
 export default function StokPage() {
   const {
@@ -21,6 +29,10 @@ export default function StokPage() {
     total,
     totalPages,
     pageSize,
+    sort,
+    setSort,
+    sortDir,
+    setSortDir,
     fetchNextKode,
     saveStok,
     deleteStok,
@@ -62,7 +74,7 @@ export default function StokPage() {
     }
   }, [])
 
-  if (loading) {
+  if (loading && stokBarang.length === 0 && !sort) {
     return (
       <DashboardLayout title="Data Stok Barang">
         <div className="space-y-3 rounded-md border p-4">
@@ -78,6 +90,47 @@ export default function StokPage() {
   return (
     <DashboardLayout title="Data Stok Barang">
       <PageActions>
+        <div className="mr-auto flex items-center gap-2">
+          <Select
+            value={sort || "default"}
+            onValueChange={(value) =>
+              setSort(value === "default" ? "" : (value as StokSort))
+            }
+          >
+            <SelectTrigger className="w-[160px]">
+              <SelectValue placeholder="Urutkan" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="default">Urutkan</SelectItem>
+              <SelectItem value="stok">Stok</SelectItem>
+              <SelectItem value="keluar">Keluar</SelectItem>
+              <SelectItem value="sisa">Sisa</SelectItem>
+              <SelectItem value="hargabarang">Harga</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button
+            type="button"
+            variant={sort && sortDir === "asc" ? "default" : "outline"}
+            size="icon"
+            disabled={!sort}
+            aria-label="Urutkan menaik"
+            title="Menaik"
+            onClick={() => setSortDir("asc")}
+          >
+            <ArrowUp />
+          </Button>
+          <Button
+            type="button"
+            variant={sort && sortDir === "desc" ? "default" : "outline"}
+            size="icon"
+            disabled={!sort}
+            aria-label="Urutkan menurun"
+            title="Menurun"
+            onClick={() => setSortDir("desc")}
+          >
+            <ArrowDown />
+          </Button>
+        </div>
             <Button
               onClick={downloadPDF}
               variant="default"
@@ -115,12 +168,21 @@ export default function StokPage() {
         />
 
         <div id="pdf-stok-content" className="space-y-4 print:space-y-2">
-          <StokTable
-            data={stokBarang}
-            rowOffset={(page - 1) * pageSize}
-            onEdit={handleEditClick}
-            onDelete={handleDeleteClick}
-          />
+          {loading ? (
+            <div className="space-y-3 rounded-md border p-4">
+              <Skeleton className="h-10 w-full" />
+              {[...Array(6)].map((_, i) => (
+                <Skeleton key={i} className="h-12 w-full" />
+              ))}
+            </div>
+          ) : (
+            <StokTable
+              data={stokBarang}
+              rowOffset={(page - 1) * pageSize}
+              onEdit={handleEditClick}
+              onDelete={handleDeleteClick}
+            />
+          )}
           <TablePagination
             page={page}
             totalPages={totalPages}

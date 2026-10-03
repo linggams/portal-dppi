@@ -16,8 +16,6 @@ Next.js App Router + PostgreSQL + Prisma + NextAuth + shadcn/ui.
 | Purchasing user | `/purchasing/user/*` | `/api/purchasing/*` | `atk_*` |
 | IT staff | `/it/staff/*` | `/api/it/*` | `it_*` |
 | IT user | `/it/user/*` | `/api/it/*` | `it_*` |
-| Pengajuan Dana admin | `/dana/admin/*` | `/api/dana/*` | `dana_*` |
-| Pengajuan Dana user | `/dana/user/*` | `/api/dana/*` | `dana_*` |
 | Penggunaan Mobil admin | `/mobil/admin/*` | `/api/mobil/*` | `mobil_*` |
 | Penggunaan Mobil user | `/mobil/user/*` | `/api/mobil/*` | `mobil_*` |
 

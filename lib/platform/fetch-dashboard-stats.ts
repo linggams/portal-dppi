@@ -1,5 +1,4 @@
 import { prisma } from "@/lib/db/prisma"
-import { DANA_STATUS } from "@/lib/dana/constants"
 import { IT_TIKET_STATUS } from "@/lib/it/constants"
 import { fetchPermintaanGroups } from "@/lib/purchasing/permintaan-groups"
 import { fetchPengajuanGroups } from "@/lib/purchasing/pengajuan-groups"
@@ -8,7 +7,6 @@ import {
   DASHBOARD_LIST_DAYS,
   DASHBOARD_LIST_LIMIT,
   STOK_KRITIS_THRESHOLD,
-  type DashboardDanaStats,
   type DashboardItStats,
   type DashboardMobilStats,
   type DashboardPermintaanItem,
@@ -198,64 +196,6 @@ async function fetchItStats(): Promise<DashboardItStats> {
   }
 }
 
-async function fetchDanaStats(): Promise<DashboardDanaStats> {
-  const today = getTodayDateWIB()
-  const { start: todayStart, end: todayEnd } = wibDayBounds(today)
-  const month = currentMonthBoundsWIB()
-
-  const [pending, approvedToday, rejectedToday, totalBulan, pendingList] =
-    await Promise.all([
-      prisma.danaPengajuan.count({
-        where: { status: DANA_STATUS.PENDING },
-      }),
-      prisma.danaPengajuan.count({
-        where: {
-          status: DANA_STATUS.APPROVED,
-          tglDisetujui: { gte: todayStart, lte: todayEnd },
-        },
-      }),
-      prisma.danaPengajuan.count({
-        where: {
-          status: DANA_STATUS.REJECTED,
-          tglDiupdate: { gte: todayStart, lte: todayEnd },
-        },
-      }),
-      prisma.danaPengajuan.count({
-        where: {
-          tglDibuat: { gte: month.start, lte: month.end },
-        },
-      }),
-      prisma.danaPengajuan.findMany({
-        where: { status: DANA_STATUS.PENDING },
-        orderBy: { tglDibuat: "desc" },
-        take: DASHBOARD_LIST_LIMIT,
-        select: {
-          idPengajuan: true,
-          nomor: true,
-          username: true,
-          jabatan: true,
-          nominal: true,
-          tglDibuat: true,
-        },
-      }),
-    ])
-
-  return {
-    pending,
-    approvedToday,
-    rejectedToday,
-    totalBulan,
-    pendingList: pendingList.map((row) => ({
-      idPengajuan: row.idPengajuan,
-      nomor: row.nomor,
-      username: row.username,
-      jabatan: row.jabatan,
-      nominal: row.nominal,
-      tglDibuat: row.tglDibuat.toISOString(),
-    })),
-  }
-}
-
 async function fetchMobilStats(): Promise<DashboardMobilStats> {
   const today = getTodayDateWIB()
   const { start: todayStart, end: todayEnd } = wibDayBounds(today)
@@ -312,13 +252,12 @@ async function fetchMobilStats(): Promise<DashboardMobilStats> {
 }
 
 export async function fetchPlatformDashboardStats(): Promise<PlatformDashboardStats> {
-  const [users, purchasing, it, dana, mobil] = await Promise.all([
+  const [users, purchasing, it, mobil] = await Promise.all([
     fetchUserStats(),
     fetchPurchasingStats(),
     fetchItStats(),
-    fetchDanaStats(),
     fetchMobilStats(),
   ])
 
-  return { users, purchasing, it, dana, mobil }
+  return { users, purchasing, it, mobil }
 }

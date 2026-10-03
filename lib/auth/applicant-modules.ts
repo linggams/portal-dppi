@@ -5,14 +5,12 @@ export type { ApplicantModules }
 export const EMPTY_APPLICANT_MODULES: ApplicantModules = {
   accessPurchasing: false,
   accessIt: false,
-  accessDana: false,
   accessMobil: false,
 }
 
 export const ALL_APPLICANT_MODULES: ApplicantModules = {
   accessPurchasing: true,
   accessIt: true,
-  accessDana: true,
   accessMobil: true,
 }
 
@@ -28,11 +26,6 @@ export const APPLICANT_MODULE_OPTIONS = [
     description: "Buat tiket, antrian gangguan",
   },
   {
-    key: "accessDana" as const,
-    label: "Pengajuan Dana",
-    description: "Ajukan & cetak pengajuan dana",
-  },
-  {
     key: "accessMobil" as const,
     label: "Penggunaan Mobil",
     description: "Input laporan kilometer",
@@ -43,7 +36,6 @@ export function hasAnyApplicantModule(modules: ApplicantModules) {
   return (
     modules.accessPurchasing ||
     modules.accessIt ||
-    modules.accessDana ||
     modules.accessMobil
   )
 }
@@ -56,7 +48,6 @@ function resolveApplicantModules(
   return {
     accessPurchasing: Boolean(modules?.accessPurchasing),
     accessIt: Boolean(modules?.accessIt),
-    accessDana: Boolean(modules?.accessDana),
     accessMobil: Boolean(modules?.accessMobil),
   }
 }

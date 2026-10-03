@@ -56,23 +56,9 @@ export function getDefaultHomePath(input: AccessInput): string {
   }
   if (caps.purchasingUser) return "/purchasing/user/dashboard"
   if (caps.itUser) return "/it/user/tiket"
-  if (caps.danaUser) return "/dana/user/pengajuan"
   if (caps.mobilUser) return "/mobil/user/laporan"
 
   return SYSTEM_ROLE_HOME_PATH.user
-}
-
-export function canAccessDanaUser(input: AccessInput): boolean {
-  return resolveCapabilities(input).danaUser
-}
-
-export function canHandleDanaWorkflow(input: AccessInput): boolean {
-  return resolveCapabilities(input).danaWorkflow
-}
-
-/** Baca pengajuan dana: pemohon (user) atau pengelola modul dana. */
-export function canAccessDana(input: AccessInput): boolean {
-  return canAccessDanaUser(input) || canHandleDanaWorkflow(input)
 }
 
 export function canAccessMobilUser(input: AccessInput): boolean {
@@ -106,14 +92,6 @@ export function canAccessUiPath(input: AccessInput, pathname: string): boolean {
 
   if (pathname.startsWith("/it/user")) {
     return canAccessItUser(input)
-  }
-
-  if (pathname.startsWith("/dana/user")) {
-    return canAccessDanaUser(input)
-  }
-
-  if (pathname.startsWith("/dana/admin")) {
-    return canHandleDanaWorkflow(input)
   }
 
   if (pathname.startsWith("/mobil/user")) {

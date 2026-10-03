@@ -25,7 +25,7 @@ import {
 } from "@/components/ui/table"
 import { TableContainer } from "@/components/ui/table-container"
 import { TableEmptyState } from "@/components/ui/table-empty-state"
-import { formatRupiah, parseRupiahInput } from "@/lib/dana/format"
+import { formatRupiah, parseRupiahInput } from "@/lib/shared/currency"
 import { MOBIL_BUKTI_MAX_BYTES, MOBIL_BUKTI_MAX_MB, MOBIL_BUKTI_PLACEHOLDER } from "@/lib/mobil/upload-limits"
 import type { MobilLaporanKm } from "@/lib/mobil/mobil-types"
 

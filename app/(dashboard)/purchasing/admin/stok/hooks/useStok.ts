@@ -4,12 +4,13 @@ import { useState, useEffect, useCallback } from "react"
 import { useSearchParams } from "next/navigation"
 import { toast } from "sonner"
 import { downloadPdf } from "@/lib/shared/makepdf"
+import { companyPdfHeader } from "@/lib/shared/app-branding"
 import {
   DEFAULT_PAGE_SIZE,
   MAX_PAGE_SIZE,
   readPaginatedJson,
 } from "@/lib/shared/pagination"
-import type { StokBarang, JenisBarang, StokFormData } from "../types"
+import type { StokBarang, JenisBarang, StokFormData, StokSort, StokSortDir } from "../types"
 
 export function useStok() {
   const searchParams = useSearchParams()
@@ -22,6 +23,18 @@ export function useStok() {
   const [total, setTotal] = useState(0)
   const [totalPages, setTotalPages] = useState(1)
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE)
+  const [sort, setSortState] = useState<StokSort>("")
+  const [sortDir, setSortDirState] = useState<StokSortDir>("desc")
+
+  const setSort = useCallback((next: StokSort) => {
+    setPage(1)
+    setSortState(next)
+  }, [])
+
+  const setSortDir = useCallback((next: StokSortDir) => {
+    setPage(1)
+    setSortDirState(next)
+  }, [])
 
   useEffect(() => {
     setPage(1)
@@ -47,6 +60,10 @@ export function useStok() {
       const params = new URLSearchParams()
       params.set("id_jenis", jenisParam)
       params.set("page", String(page))
+      if (sort) {
+        params.set("sort", sort)
+        params.set("dir", sortDir)
+      }
       const response = await fetch(`/api/purchasing/stok?${params.toString()}`)
       if (response.ok) {
         const result = readPaginatedJson<StokBarang>(await response.json())
@@ -62,7 +79,7 @@ export function useStok() {
     } finally {
       setLoading(false)
     }
-  }, [jenisParam, page])
+  }, [jenisParam, page, sort, sortDir])
 
   useEffect(() => {
     fetchJenisBarang()
@@ -139,6 +156,10 @@ export function useStok() {
       params.set("id_jenis", jenisParam)
       params.set("page", "1")
       params.set("page_size", String(MAX_PAGE_SIZE))
+      if (sort) {
+        params.set("sort", sort)
+        params.set("dir", sortDir)
+      }
       const response = await fetch(`/api/purchasing/stok?${params.toString()}`)
       if (!response.ok) {
         toast.error("Gagal memuat data untuk PDF")
@@ -179,7 +200,7 @@ export function useStok() {
           {
             text: String(item.sisa),
             alignment: "right",
-            color: item.sisa < 0 ? "red" : item.sisa === 0 ? "#b45309" : undefined,
+            color: item.sisa <= 0 ? "red" : undefined,
             bold: item.sisa <= 0,
           },
         ]),
@@ -191,21 +212,7 @@ export function useStok() {
         pageOrientation: "portrait",
         pageMargins: [40, 60, 40, 40],
         content: [
-          {
-            text: "PT DASAN PAN PACIFIC INDONESIA",
-            style: "header",
-            alignment: "center",
-          },
-          {
-            text: "Parakansalak, Bojonglongok, Kec. Parakansalak, Kabupaten Sukabumi, Jawa Barat 43355",
-            style: "subheader",
-            alignment: "center",
-            margin: [0, 4, 0, 8],
-          },
-          {
-            canvas: [{ type: "line", x1: 0, y1: 0, x2: 515, y2: 0, lineWidth: 1 }],
-            margin: [0, 0, 0, 8],
-          },
+          ...companyPdfHeader({ lineWidth: 515 }),
           {
             text: `LAPORAN DATA STOK BARANG ${jenisName.toUpperCase()}`,
             style: "title",
@@ -263,6 +270,10 @@ export function useStok() {
     total,
     totalPages,
     pageSize,
+    sort,
+    setSort,
+    sortDir,
+    setSortDir,
     fetchNextKode,
     saveStok,
     deleteStok,

@@ -15,11 +15,9 @@ export interface User {
   level?: string
   managePurchasing: boolean
   manageIt: boolean
-  manageDana: boolean
   manageMobil: boolean
   accessPurchasing: boolean
   accessIt: boolean
-  accessDana: boolean
   accessMobil: boolean
   role: UserRole | null
 }

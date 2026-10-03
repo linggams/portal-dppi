@@ -6,6 +6,7 @@ import {
   paginateArray,
   parsePaginationParams,
 } from "@/lib/shared/pagination"
+import { sortByKategoriThen } from "@/lib/purchasing/laporan-group"
 
 // GET - Laporan stok (only for admin)
 export async function GET(request: NextRequest) {
@@ -24,10 +25,12 @@ export async function GET(request: NextRequest) {
     )
 
     const stok = await prisma.stokbarang.findMany({
-      orderBy: {
-        namaBrg: "asc",
-      },
+      include: { jenisBarang: true },
     })
+
+    sortByKategoriThen(stok, "stok", (a, b) =>
+      a.namaBrg.localeCompare(b.namaBrg, "id")
+    )
 
     const totalStok = stok.reduce((sum: number, item) => sum + item.stok, 0)
     const totalSisa = stok.reduce((sum: number, item) => sum + item.sisa, 0)

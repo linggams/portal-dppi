@@ -13,6 +13,7 @@ import {
 import { TableContainer } from "@/components/ui/table-container"
 import { TableActionButton, TableActions } from "@/components/ui/table-actions"
 import type { Permintaan } from "../types"
+import { COMPANY_LEGAL_NAME } from "@/lib/shared/app-branding"
 
 interface CetakBPPCardProps {
   date: string
@@ -119,7 +120,7 @@ export function CetakBPPCard({
                 <div className="border-t pt-2">
                   <p>Admin</p>
                   <p className="text-sm text-muted-foreground mt-8">
-                    PT DASAN PAN PACIFIC INDONESIA
+                    {COMPANY_LEGAL_NAME}
                   </p>
                 </div>
               </div>

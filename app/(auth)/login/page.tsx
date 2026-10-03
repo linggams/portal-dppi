@@ -20,7 +20,7 @@ import {
   APP_MODULES,
   APP_NAME,
   APP_TAGLINE,
-  COMPANY_NAME,
+  COMPANY_LEGAL_NAME,
 } from "@/lib/shared/app-branding"
 import { cn } from "@/lib/utils"
 
@@ -90,7 +90,7 @@ export default function LoginPage() {
           <div className="relative space-y-8">
             <div className="space-y-2">
               <p className="text-sm font-medium uppercase tracking-widest text-primary-foreground/80">
-                {COMPANY_NAME}
+                {COMPANY_LEGAL_NAME}
               </p>
               <h1 className="text-4xl font-bold tracking-tight">{APP_NAME}</h1>
               <p className="max-w-md text-lg text-primary-foreground/90">
@@ -122,7 +122,7 @@ export default function LoginPage() {
         <div className="flex flex-col items-center justify-center px-4 py-10 sm:px-8">
           <div className="mb-8 w-full max-w-md space-y-2 text-center lg:hidden">
             <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
-              {COMPANY_NAME}
+              {COMPANY_LEGAL_NAME}
             </p>
             <h1 className="text-2xl font-bold tracking-tight">{APP_NAME}</h1>
             <p className="text-sm text-muted-foreground">{APP_TAGLINE}</p>

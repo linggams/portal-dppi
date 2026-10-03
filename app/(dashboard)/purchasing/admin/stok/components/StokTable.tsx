@@ -62,11 +62,7 @@ export function StokTable({
                 <TableCell>{stok.keluar}</TableCell>
                 <TableCell
                   className={
-                    stok.sisa < 0
-                      ? "text-destructive font-semibold"
-                      : stok.sisa === 0
-                        ? "text-amber-600 dark:text-amber-500 font-semibold"
-                        : ""
+                    stok.sisa <= 0 ? "font-semibold text-destructive" : ""
                   }
                 >
                   {stok.sisa}

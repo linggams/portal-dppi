@@ -2,6 +2,7 @@ import { format } from "date-fns"
 import { id } from "date-fns/locale"
 import { toast } from "sonner"
 import { downloadPdf } from "@/lib/shared/makepdf"
+import { companyPdfHeader } from "@/lib/shared/app-branding"
 
 interface PengajuanPdfItem {
   kodeBrg: string
@@ -80,21 +81,7 @@ export async function downloadPengajuanGroupPdf(
       pageOrientation: "portrait",
       pageMargins: [40, 60, 40, 40],
       content: [
-        {
-          text: "PT DASAN PAN PACIFIC INDONESIA",
-          style: "header",
-          alignment: "center",
-        },
-        {
-          text: "Parakansalak, Bojonglongok, Kec. Parakansalak, Kabupaten Sukabumi, Jawa Barat 43355",
-          style: "subheader",
-          alignment: "center",
-          margin: [0, 4, 0, 8],
-        },
-        {
-          canvas: [{ type: "line", x1: 0, y1: 0, x2: 515, y2: 0, lineWidth: 1 }],
-          margin: [0, 0, 0, 8],
-        },
+        ...companyPdfHeader({ lineWidth: 515 }),
         {
           text: "FORM PENGAJUAN BARANG",
           style: "title",

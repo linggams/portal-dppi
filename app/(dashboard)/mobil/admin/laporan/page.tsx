@@ -37,7 +37,7 @@ import {
 import { TablePagination } from "@/components/ui/table-pagination"
 import type { MobilKendaraan, MobilLaporanKm } from "@/lib/mobil/mobil-types"
 import { downloadMobilLaporanListExcel } from "@/lib/mobil/export-laporan"
-import { formatRupiah } from "@/lib/dana/format"
+import { formatRupiah } from "@/lib/shared/currency"
 import { DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE, readPaginatedJson } from "@/lib/shared/pagination"
 import { getMonthToDateRangeWIB } from "@/lib/purchasing/permintaan-daily-limit-types"
 
