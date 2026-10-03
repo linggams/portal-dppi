@@ -5,11 +5,13 @@ import {
   canHandleMobilWorkflow,
 } from "@/lib/auth/permissions"
 import { prisma } from "@/lib/db/prisma"
+import { requireUserId } from "@/lib/purchasing/actor"
 import { toMobilLaporan } from "@/lib/mobil/map"
 import { parseJamHm } from "@/lib/mobil/time"
 import { deleteMobilBukti, saveMobilBuktiJpg } from "@/lib/mobil/upload"
 
 const includeLaporan = {
+  pemohon: { select: { username: true, jabatan: true } },
   kendaraan: {
     select: {
       idKendaraan: true,
@@ -114,7 +116,7 @@ export async function POST(
 
     if (
       !canHandleMobilWorkflow(session.user) &&
-      existing.username !== session.user.username
+      existing.idUser !== requireUserId(session.user.id)
     ) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }

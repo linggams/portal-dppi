@@ -2,7 +2,7 @@ import { PrismaClient } from '@prisma/client'
 import { PrismaPg } from '@prisma/adapter-pg'
 import { Pool } from 'pg'
 
-const PRISMA_CLIENT_REV = 14
+const PRISMA_CLIENT_REV = 15
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined

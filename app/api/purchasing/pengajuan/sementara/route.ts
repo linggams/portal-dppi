@@ -3,6 +3,7 @@ import { getSessionFromRequest } from "@/lib/get-session"
 import { isClientUser } from "@/lib/auth/permissions"
 import { prisma } from "@/lib/db/prisma"
 import { z } from "zod"
+import { flattenActor, pemohonInclude, requireUserId } from "@/lib/purchasing/actor"
 
 const sementaraSchema = z.object({
   unit: z.string().min(1).max(20),
@@ -33,29 +34,29 @@ export async function GET(request: NextRequest) {
       new Date().toISOString().split("T")[0]
 
     const where: {
-      unit: string
+      pemohon: { username: string } | { idUser: number }
       tglPengajuan: Date
     } = {
-      unit,
+      pemohon: { username: unit },
       tglPengajuan: new Date(tglPengajuan),
     }
 
-    // If user, only show their own
     if (isClientUser(session.user)) {
-      where.unit = session.user.username
+      where.pemohon = { idUser: requireUserId(session.user.id) }
     }
 
     const sementara = await prisma.pengajuanSementara.findMany({
       where,
       include: {
         stokbarang: true,
+        ...pemohonInclude,
       },
       orderBy: {
         idPengajuanSementara: "asc",
       },
     })
 
-    return NextResponse.json(sementara)
+    return NextResponse.json(sementara.map(flattenActor))
   } catch (error) {
     console.error("Error fetching pengajuan sementara:", error)
     return NextResponse.json(
@@ -102,9 +103,8 @@ export async function POST(request: NextRequest) {
 
     const sementara = await prisma.pengajuanSementara.create({
       data: {
-        unit: validatedData.unit,
+        idUser: requireUserId(session.user.id),
         kodeBrg: validatedData.kodeBrg,
-        idJenis: validatedData.idJenis,
         jumlah: validatedData.jumlah,
         satuan: validatedData.satuan,
         hargabarang: validatedData.hargabarang,
@@ -114,10 +114,11 @@ export async function POST(request: NextRequest) {
       },
       include: {
         stokbarang: true,
+        ...pemohonInclude,
       },
     })
 
-    return NextResponse.json(sementara, { status: 201 })
+    return NextResponse.json(flattenActor(sementara), { status: 201 })
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
@@ -161,7 +162,7 @@ export async function DELETE(request: NextRequest) {
       where: { idPengajuanSementara: parseInt(id) },
     })
 
-    if (!sementara || sementara.unit !== session.user.username) {
+    if (!sementara || sementara.idUser !== requireUserId(session.user.id)) {
       return NextResponse.json(
         { error: "Unauthorized" },
         { status: 401 }

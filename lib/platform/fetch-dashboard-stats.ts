@@ -217,7 +217,7 @@ async function fetchMobilStats(): Promise<DashboardMobilStats> {
         select: {
           idLaporan: true,
           tanggal: true,
-          username: true,
+          pemohon: { select: { username: true } },
           kmAwal: true,
           kmAkhir: true,
           uangJalan: true,
@@ -241,7 +241,7 @@ async function fetchMobilStats(): Promise<DashboardMobilStats> {
       return {
         idLaporan: row.idLaporan,
         tanggal: formatDateOnly(row.tanggal),
-        username: row.username,
+        username: row.pemohon.username,
         nopol: row.kendaraan.nopol,
         pemakaian: Math.max(0, row.kmAkhir - row.kmAwal),
         uangJalan: row.uangJalan,

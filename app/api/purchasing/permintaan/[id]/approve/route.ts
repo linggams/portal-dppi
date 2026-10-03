@@ -61,7 +61,7 @@ export async function POST(
       // Create pengeluaran record
       await tx.pengeluaran.create({
         data: {
-          unit: permintaan.unit,
+          idUser: permintaan.idUser,
           kodeBrg: permintaan.kodeBrg,
           jumlah: permintaan.jumlah,
           tglKeluar: new Date(),

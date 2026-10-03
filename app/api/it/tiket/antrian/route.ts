@@ -3,6 +3,7 @@ import { getSessionFromRequest } from "@/lib/get-session"
 import { canAccessItUser } from "@/lib/auth/permissions"
 import { prisma } from "@/lib/db/prisma"
 import { IT_QUEUE_ACTIVE_STATUSES } from "@/lib/it/queue"
+import { requireUserId } from "@/lib/purchasing/actor"
 
 export async function GET(request: NextRequest) {
   try {
@@ -11,7 +12,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const username = session.user.username
+    const userId = requireUserId(session.user.id)
 
     const allInQueue = await prisma.itTiket.findMany({
       where: {
@@ -20,11 +21,11 @@ export async function GET(request: NextRequest) {
       select: {
         idTiket: true,
         nomorTiket: true,
-        username: true,
         judul: true,
         status: true,
-        ditugaskanKe: true,
         tglDibuat: true,
+        pemohon: { select: { idUser: true, username: true } },
+        petugas: { select: { username: true } },
         kategori: { select: { nama: true } },
       },
       orderBy: { tglDibuat: "asc" },
@@ -37,16 +38,16 @@ export async function GET(request: NextRequest) {
       return {
         idTiket: t.idTiket,
         nomorTiket: t.nomorTiket,
-        username: t.username,
+        username: t.pemohon.username,
         judul: t.judul,
         status: t.status,
-        ditugaskanKe: t.ditugaskanKe,
+        ditugaskanKe: t.petugas?.username ?? null,
         tglDibuat: t.tglDibuat,
         kategori: t.kategori,
         posisiAntrian,
         antrianDiDepan: Math.max(0, posisiAntrian - 1),
         totalAntrian,
-        isMine: t.username === username,
+        isMine: t.pemohon.idUser === userId,
       }
     })
 

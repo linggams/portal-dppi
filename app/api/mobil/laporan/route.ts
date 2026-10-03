@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getSessionFromRequest } from "@/lib/get-session"
 import { canAccessMobil } from "@/lib/auth/permissions"
 import { prisma } from "@/lib/db/prisma"
+import { requireUserId } from "@/lib/purchasing/actor"
 import { parseDateOnly, toMobilLaporan } from "@/lib/mobil/map"
 import { parseJamHm } from "@/lib/mobil/time"
 import { deleteMobilBukti, saveMobilBuktiJpg } from "@/lib/mobil/upload"
@@ -11,6 +12,7 @@ import {
 } from "@/lib/shared/pagination"
 
 const includeLaporan = {
+  pemohon: { select: { username: true, jabatan: true } },
   kendaraan: {
     select: {
       idKendaraan: true,
@@ -82,18 +84,17 @@ export async function GET(request: NextRequest) {
     const q = params.get("q")?.trim() ?? ""
 
     const where: {
-      username?: string
+      idUser?: number
       idKendaraan?: number
       tanggal?: { gte?: Date; lte?: Date }
       OR?: Array<
-        | { username: { contains: string; mode: "insensitive" } }
+        | { pemohon: { username: { contains: string; mode: "insensitive" } } }
         | { kendaraan: { nopol: { contains: string; mode: "insensitive" } } }
       >
     } = {}
 
-    // Semua user modul mobil boleh lihat laporan semua pelapor
     if (mine) {
-      where.username = session.user.username
+      where.idUser = requireUserId(session.user.id)
     }
 
     if (idKendaraan) {
@@ -115,7 +116,7 @@ export async function GET(request: NextRequest) {
 
     if (q) {
       where.OR = [
-        { username: { contains: q, mode: "insensitive" } },
+        { pemohon: { username: { contains: q, mode: "insensitive" } } },
         { kendaraan: { nopol: { contains: q, mode: "insensitive" } } },
       ]
     }
@@ -258,8 +259,7 @@ export async function POST(request: NextRequest) {
       const row = await prisma.mobilLaporanKm.create({
         data: {
           idKendaraan,
-          username: session.user.username,
-          jabatan: session.user.jabatan,
+          idUser: requireUserId(session.user.id),
           tanggal,
           kmAwal,
           kmAkhir,

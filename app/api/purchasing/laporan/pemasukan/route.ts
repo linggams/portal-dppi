@@ -7,6 +7,7 @@ import {
   parsePaginationParams,
 } from "@/lib/shared/pagination"
 import { sortByKategoriThen } from "@/lib/purchasing/laporan-group"
+import { flattenActor, pemohonInclude } from "@/lib/purchasing/actor"
 
 // GET - Laporan pemasukan (only for admin)
 export async function GET(request: NextRequest) {
@@ -31,7 +32,7 @@ export async function GET(request: NextRequest) {
         gte?: Date
         lte?: Date
       }
-      unit?: string
+      pemohon?: { username: string }
     } = {}
 
     if (startDate && endDate) {
@@ -50,13 +51,14 @@ export async function GET(request: NextRequest) {
     }
 
     if (unit) {
-      where.unit = unit
+      where.pemohon = { username: unit }
     }
 
     const pemasukan = await prisma.pemasukan.findMany({
       where,
       include: {
         stokbarang: { include: { jenisBarang: true } },
+        ...pemohonInclude,
       },
     })
 
@@ -70,7 +72,7 @@ export async function GET(request: NextRequest) {
     )
     const totalItems = pemasukan.length
 
-    const paginated = paginateArray(pemasukan, page, pageSize)
+    const paginated = paginateArray(pemasukan.map(flattenActor), page, pageSize)
 
     return NextResponse.json({
       ...paginated,

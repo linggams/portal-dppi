@@ -8,6 +8,7 @@ import {
   parseDateOnly,
   PERMINTAAN_DAILY_LIMIT_MESSAGE,
 } from "@/lib/purchasing/permintaan-daily-limit"
+import { requireUserId } from "@/lib/purchasing/actor"
 
 // POST - Submit semua permintaan sementara menjadi permintaan
 export async function POST(request: NextRequest) {
@@ -24,6 +25,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { unit, tglPermintaan: tglInput } = body
     const tglPermintaan = tglInput ?? getTodayDateWIB()
+    const idUser = requireUserId(session.user.id)
 
     if (session.user.username !== unit) {
       return NextResponse.json(
@@ -42,7 +44,7 @@ export async function POST(request: NextRequest) {
     // Get all sementara for this unit and date
     const sementaraList = await prisma.sementara.findMany({
       where: {
-        unit,
+        idUser,
         tglPermintaan: parseDateOnly(tglPermintaan),
         status: 0,
       },
@@ -73,10 +75,8 @@ export async function POST(request: NextRequest) {
     for (const item of sementaraList) {
       const permintaan = await prisma.permintaan.create({
         data: {
-          unit: item.unit,
-          user: item.user,
+          idUser: item.idUser,
           kodeBrg: item.kodeBrg,
-          idJenis: item.idJenis,
           jumlah: item.jumlah,
           tglPermintaan: item.tglPermintaan,
           status: 0, // Pending
@@ -91,7 +91,7 @@ export async function POST(request: NextRequest) {
     // Delete all sementara
     await prisma.sementara.deleteMany({
       where: {
-        unit,
+        idUser,
         tglPermintaan: parseDateOnly(tglPermintaan),
         status: 0,
       },

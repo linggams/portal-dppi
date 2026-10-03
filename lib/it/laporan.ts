@@ -25,6 +25,8 @@ export interface ItLaporanSummary {
 
 const tiketInclude = {
   kategori: { select: { idKategori: true, nama: true } },
+  pemohon: { select: { username: true, jabatan: true } },
+  petugas: { select: { username: true } },
 } as const
 
 export type TiketLaporanRow = Prisma.ItTiketGetPayload<{
@@ -57,13 +59,14 @@ export function buildTiketLaporanWhere(
   }
 
   if (filters.username?.trim()) {
-    where.username = { contains: filters.username.trim(), mode: "insensitive" }
+    where.pemohon = {
+      username: { contains: filters.username.trim(), mode: "insensitive" },
+    }
   }
 
   if (filters.ditugaskanKe?.trim()) {
-    where.ditugaskanKe = {
-      contains: filters.ditugaskanKe.trim(),
-      mode: "insensitive",
+    where.petugas = {
+      username: { contains: filters.ditugaskanKe.trim(), mode: "insensitive" },
     }
   }
 
@@ -183,7 +186,7 @@ export function aggregateByTeknisi(tiket: TiketLaporanRow[]) {
   >()
 
   for (const t of tiket) {
-    const key = t.ditugaskanKe?.trim() || "Belum ditugaskan"
+    const key = t.petugas?.username?.trim() || "Belum ditugaskan"
     const cur = map.get(key) ?? {
       ditugaskanKe: key,
       total: 0,

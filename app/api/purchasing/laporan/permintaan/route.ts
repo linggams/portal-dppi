@@ -7,6 +7,7 @@ import {
   parsePaginationParams,
 } from "@/lib/shared/pagination"
 import { sortByKategoriThen } from "@/lib/purchasing/laporan-group"
+import { flattenActor, pemohonInclude } from "@/lib/purchasing/actor"
 
 // GET - Laporan permintaan (only for admin)
 export async function GET(request: NextRequest) {
@@ -32,7 +33,7 @@ export async function GET(request: NextRequest) {
         gte?: Date
         lte?: Date
       }
-      unit?: string
+      pemohon?: { username: string }
       status?: number
     } = {}
 
@@ -52,7 +53,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (unit) {
-      where.unit = unit
+      where.pemohon = { username: unit }
     }
 
     if (status !== null) {
@@ -63,6 +64,7 @@ export async function GET(request: NextRequest) {
       where,
       include: {
         stokbarang: { include: { jenisBarang: true } },
+        ...pemohonInclude,
       },
     })
 
@@ -79,7 +81,7 @@ export async function GET(request: NextRequest) {
     const approved = permintaan.filter((item) => item.status === 1).length
     const rejected = permintaan.filter((item) => item.status === 2).length
 
-    const paginated = paginateArray(permintaan, page, pageSize)
+    const paginated = paginateArray(permintaan.map(flattenActor), page, pageSize)
 
     return NextResponse.json({
       ...paginated,

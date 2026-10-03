@@ -36,13 +36,21 @@ export async function fetchCompletedTiketRows(
     ...(dateRange ? { tglSelesai: dateRange } : {}),
     ...(kategoriId ? { idKategori: kategoriId } : {}),
     ...(filters.username?.trim()
-      ? { ditugaskanKe: { contains: filters.username.trim(), mode: "insensitive" } }
+      ? {
+          petugas: {
+            username: { contains: filters.username.trim(), mode: "insensitive" as const },
+          },
+        }
       : {}),
   }
 
   const tiket = await prisma.itTiket.findMany({
     where,
-    include: { kategori: { select: { idKategori: true, nama: true } } },
+    include: {
+      kategori: { select: { idKategori: true, nama: true } },
+      pemohon: { select: { jabatan: true } },
+      petugas: { select: { username: true } },
+    },
     orderBy: { tglSelesai: "desc" },
   })
 
@@ -55,11 +63,11 @@ export async function fetchCompletedTiketRows(
       idMaintenance: null,
       nomorTiket: t.nomorTiket,
       tglKerja: tglKerja.toISOString(),
-      username: t.ditugaskanKe?.trim() || "—",
+      username: t.petugas?.username?.trim() || "—",
       idKategori: t.idKategori,
       kategoriNama: t.kategori.nama,
       judul: t.judul,
-      lokasi: t.jabatan,
+      lokasi: t.pemohon.jabatan,
       jenisPekerjaan: null,
       durasiMenit: minutesBetween(t.tglDibuat, t.tglSelesai),
       hasil: "selesai",
@@ -80,7 +88,11 @@ export async function fetchManualMaintenanceRows(
     ...(dateRange ? { tglKerja: dateRange } : {}),
     ...(kategoriId ? { idKategori: kategoriId } : {}),
     ...(filters.username?.trim()
-      ? { username: { contains: filters.username.trim(), mode: "insensitive" } }
+      ? {
+          pelaksana: {
+            username: { contains: filters.username.trim(), mode: "insensitive" as const },
+          },
+        }
       : {}),
     ...(filters.hasil && filters.hasil !== "all" ? { hasil: filters.hasil } : {}),
   }
@@ -90,6 +102,7 @@ export async function fetchManualMaintenanceRows(
     include: {
       kategori: { select: { idKategori: true, nama: true } },
       tiket: { select: { nomorTiket: true } },
+      pelaksana: { select: { username: true } },
     },
     orderBy: { tglKerja: "desc" },
   })
@@ -101,7 +114,7 @@ export async function fetchManualMaintenanceRows(
     idMaintenance: l.idMaintenance,
     nomorTiket: l.tiket?.nomorTiket ?? null,
     tglKerja: l.tglKerja.toISOString(),
-    username: l.username,
+    username: l.pelaksana.username,
     idKategori: l.idKategori,
     kategoriNama: l.kategori.nama,
     judul: l.judul,

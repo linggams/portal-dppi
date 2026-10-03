@@ -3,6 +3,7 @@ import { getSessionFromRequest } from "@/lib/get-session"
 import { prisma } from "@/lib/db/prisma"
 import { canManageItTiket } from "@/lib/it/constants"
 import { z } from "zod"
+import { requireUserId } from "@/lib/purchasing/actor"
 
 const komentarSchema = z.object({
   pesan: z.string().min(1),
@@ -29,7 +30,7 @@ export async function POST(
       return NextResponse.json({ error: "Not found" }, { status: 404 })
     }
 
-    const isOwner = tiket.username === session.user.username
+    const isOwner = tiket.idPemohon === requireUserId(session.user.id)
     const isStaff = canManageItTiket(session.user)
 
     if (!isOwner && !isStaff) {
@@ -42,10 +43,11 @@ export async function POST(
     const komentar = await prisma.itTiketKomentar.create({
       data: {
         idTiket: tiketId,
-        username: session.user.username,
+        idUser: requireUserId(session.user.id),
         pesan: data.pesan,
         tipe: "komentar",
       },
+      include: { penulis: { select: { username: true } } },
     })
 
     await prisma.itTiket.update({
@@ -53,7 +55,11 @@ export async function POST(
       data: { tglDiupdate: new Date() },
     })
 
-    return NextResponse.json(komentar, { status: 201 })
+    const { penulis, ...comment } = komentar
+    return NextResponse.json(
+      { ...comment, username: penulis.username },
+      { status: 201 }
+    )
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: error.issues }, { status: 400 })

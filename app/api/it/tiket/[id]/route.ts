@@ -10,6 +10,8 @@ import {
 } from "@/lib/it/constants"
 import type { AccessPrincipal } from "@/lib/auth/capabilities"
 import { z } from "zod"
+import { flattenTiket, tiketActorInclude } from "@/lib/it/tiket-view"
+import { requireUserId } from "@/lib/purchasing/actor"
 
 const updateSchema = z.object({
   status: z.number().int().min(0).max(6).optional(),
@@ -22,7 +24,11 @@ async function getTiketOr404(id: number) {
     where: { idTiket: id },
     include: {
       kategori: true,
-      komentar: { orderBy: { tglDibuat: "asc" } },
+      ...tiketActorInclude,
+      komentar: {
+        orderBy: { tglDibuat: "asc" as const },
+        include: { penulis: { select: { username: true } } },
+      },
     },
   })
 }
@@ -30,10 +36,10 @@ async function getTiketOr404(id: number) {
 function canAccessTiket(
   principal: AccessPrincipal,
   username: string,
-  tiket: { username: string }
+  tiket: { idPemohon: number }
 ) {
   if (canManageItTiket(principal)) return true
-  return tiket.username === username
+  return tiket.idPemohon === Number.parseInt(username, 10)
 }
 
 export async function GET(
@@ -53,11 +59,11 @@ export async function GET(
       return NextResponse.json({ error: "Not found" }, { status: 404 })
     }
 
-    if (!canAccessTiket(session.user, session.user.username, tiket)) {
+    if (!canAccessTiket(session.user, session.user.id, tiket)) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 
-    return NextResponse.json(tiket)
+    return NextResponse.json(flattenTiket(tiket))
   } catch (error) {
     console.error("Error fetching it tiket:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
@@ -88,7 +94,7 @@ export async function PATCH(
     const data = updateSchema.parse(body)
 
     if (data.action === "confirm_done") {
-      if (existing.username !== session.user.username) {
+      if (existing.idPemohon !== requireUserId(session.user.id)) {
         return NextResponse.json({ error: "Forbidden" }, { status: 403 })
       }
       if (existing.status !== IT_TIKET_STATUS.MENUNGGU_USER) {
@@ -105,12 +111,18 @@ export async function PATCH(
             status: IT_TIKET_STATUS.DITUTUP,
             tglSelesai: new Date(),
           },
-          include: { kategori: true, komentar: true },
+          include: {
+            kategori: true,
+            ...tiketActorInclude,
+            komentar: {
+              include: { penulis: { select: { username: true } } },
+            },
+          },
         })
         await tx.itTiketKomentar.create({
           data: {
             idTiket: tiketId,
-            username: session.user.username,
+            idUser: requireUserId(session.user.id),
             pesan: "User mengonfirmasi tiket selesai",
             tipe: "status",
           },
@@ -118,11 +130,11 @@ export async function PATCH(
         return t
       })
 
-      return NextResponse.json(updated)
+      return NextResponse.json(flattenTiket(updated))
     }
 
     if (data.action === "cancel") {
-      if (existing.username !== session.user.username) {
+      if (existing.idPemohon !== requireUserId(session.user.id)) {
         return NextResponse.json({ error: "Forbidden" }, { status: 403 })
       }
       if (!canUserCancelTiket(existing.status)) {
@@ -139,12 +151,18 @@ export async function PATCH(
         const t = await tx.itTiket.update({
           where: { idTiket: tiketId },
           data: { status: IT_TIKET_STATUS.DIBATALKAN },
-          include: { kategori: true, komentar: true },
+          include: {
+            kategori: true,
+            ...tiketActorInclude,
+            komentar: {
+              include: { penulis: { select: { username: true } } },
+            },
+          },
         })
         await tx.itTiketKomentar.create({
           data: {
             idTiket: tiketId,
-            username: session.user.username,
+            idUser: requireUserId(session.user.id),
             pesan: "Tiket dibatalkan oleh pemohon",
             tipe: "status",
           },
@@ -152,7 +170,7 @@ export async function PATCH(
         return t
       })
 
-      return NextResponse.json(updated)
+      return NextResponse.json(flattenTiket(updated))
     }
 
     if (!canManageItTiket(session.user)) {
@@ -161,21 +179,33 @@ export async function PATCH(
 
     const updateData: {
       status?: number
-      ditugaskanKe?: string | null
+      idPetugas?: number | null
       tglSelesai?: Date | null
     } = {}
 
     let statusNote = ""
 
     if (data.action === "assign_self") {
-      updateData.ditugaskanKe = session.user.username
+      updateData.idPetugas = requireUserId(session.user.id)
       updateData.status = IT_TIKET_STATUS.DITUGASKAN
       statusNote = `Ditugaskan ke ${session.user.username}`
     }
 
     if (data.ditugaskanKe !== undefined) {
-      updateData.ditugaskanKe = data.ditugaskanKe
-      if (data.ditugaskanKe) {
+      if (!data.ditugaskanKe) {
+        updateData.idPetugas = null
+      } else {
+        const petugas = await prisma.user.findUnique({
+          where: { username: data.ditugaskanKe },
+          select: { idUser: true },
+        })
+        if (!petugas) {
+          return NextResponse.json(
+            { error: "Petugas tidak ditemukan" },
+            { status: 400 }
+          )
+        }
+        updateData.idPetugas = petugas.idUser
         updateData.status = IT_TIKET_STATUS.DITUGASKAN
         statusNote = `Ditugaskan ke ${data.ditugaskanKe}`
       }
@@ -200,7 +230,11 @@ export async function PATCH(
         data: updateData,
         include: {
           kategori: true,
-          komentar: { orderBy: { tglDibuat: "asc" } },
+          ...tiketActorInclude,
+          komentar: {
+            orderBy: { tglDibuat: "asc" as const },
+            include: { penulis: { select: { username: true } } },
+          },
         },
       })
 
@@ -208,7 +242,7 @@ export async function PATCH(
         await tx.itTiketKomentar.create({
           data: {
             idTiket: tiketId,
-            username: session.user.username,
+            idUser: requireUserId(session.user.id),
             pesan: statusNote,
             tipe: "status",
           },
@@ -218,7 +252,7 @@ export async function PATCH(
       return t
     })
 
-    return NextResponse.json(updated)
+    return NextResponse.json(flattenTiket(updated))
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: error.issues }, { status: 400 })

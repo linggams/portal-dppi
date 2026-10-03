@@ -9,6 +9,8 @@ import {
   toPaginatedResult,
 } from "@/lib/shared/pagination"
 import { z } from "zod"
+import { flattenTiket, tiketActorInclude } from "@/lib/it/tiket-view"
+import { requireUserId } from "@/lib/purchasing/actor"
 
 const createSchema = z.object({
   judul: z.string().min(3).max(200),
@@ -30,7 +32,7 @@ export async function GET(request: NextRequest) {
 
     const where: {
       status?: number
-      username?: string
+      idPemohon?: number
     } = {}
 
     if (status !== null && status !== "" && status !== "all") {
@@ -45,21 +47,23 @@ export async function GET(request: NextRequest) {
     }
 
     if (!canManageItTiket(session.user) || mine) {
-      where.username = session.user.username
+      where.idPemohon = requireUserId(session.user.id)
     }
 
     const [total, tiket] = await Promise.all([
       prisma.itTiket.count({ where }),
       prisma.itTiket.findMany({
         where,
-        include: { kategori: true },
+        include: { kategori: true, ...tiketActorInclude },
         orderBy: [{ status: "asc" }, { tglDibuat: "desc" }],
         skip,
         take: pageSize,
       }),
     ])
 
-    return NextResponse.json(toPaginatedResult(tiket, total, page, pageSize))
+    return NextResponse.json(
+      toPaginatedResult(tiket.map(flattenTiket), total, page, pageSize)
+    )
   } catch (error) {
     console.error("Error fetching it tiket:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
@@ -81,26 +85,25 @@ export async function POST(request: NextRequest) {
     const tiket = await prisma.itTiket.create({
       data: {
         nomorTiket,
-        username: session.user.username,
-        jabatan: session.user.jabatan,
+        idPemohon: requireUserId(session.user.id),
         judul: data.judul,
         deskripsi: data.deskripsi,
         idKategori: data.idKategori,
         status: 0,
       },
-      include: { kategori: true },
+      include: { kategori: true, ...tiketActorInclude },
     })
 
     await prisma.itTiketKomentar.create({
       data: {
         idTiket: tiket.idTiket,
-        username: session.user.username,
+        idUser: requireUserId(session.user.id),
         pesan: "Tiket dibuat",
         tipe: "sistem",
       },
     })
 
-    return NextResponse.json(tiket, { status: 201 })
+    return NextResponse.json(flattenTiket(tiket), { status: 201 })
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: error.issues }, { status: 400 })

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getSessionFromRequest } from "@/lib/get-session"
 import { prisma } from "@/lib/db/prisma"
+import { requireUserId } from "@/lib/purchasing/actor"
 
 // POST - Submit semua pengajuan sementara menjadi pengajuan
 export async function POST(request: NextRequest) {
@@ -16,6 +17,7 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json()
     const { unit, tglPengajuan } = body
+    const idUser = requireUserId(session.user.id)
 
     if (session.user.username !== unit) {
       return NextResponse.json(
@@ -27,7 +29,7 @@ export async function POST(request: NextRequest) {
     // Get all sementara for this unit and date
     const sementaraList = await prisma.pengajuanSementara.findMany({
       where: {
-        unit,
+        idUser,
         tglPengajuan: new Date(tglPengajuan),
         status: 0,
       },
@@ -48,9 +50,8 @@ export async function POST(request: NextRequest) {
     for (const item of sementaraList) {
       const pengajuan = await prisma.pengajuan.create({
         data: {
-          unit: item.unit,
+          idUser: item.idUser,
           kodeBrg: item.kodeBrg,
-          idJenis: item.idJenis,
           jumlah: item.jumlah,
           satuan: item.satuan,
           hargabarang: item.hargabarang,
@@ -68,7 +69,7 @@ export async function POST(request: NextRequest) {
     // Delete all sementara
     await prisma.pengajuanSementara.deleteMany({
       where: {
-        unit,
+        idUser,
         tglPengajuan: new Date(tglPengajuan),
         status: 0,
       },

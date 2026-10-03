@@ -30,14 +30,14 @@ function buildWhereParts(
   unitOverride?: string
 ): Prisma.Sql[] {
   const parts: Prisma.Sql[] = [
-    Prisma.sql`tgl_pengajuan >= ${filters.startDate}::date`,
-    Prisma.sql`tgl_pengajuan <= ${filters.endDate}::date`,
+    Prisma.sql`p.tgl_pengajuan >= ${filters.startDate}::date`,
+    Prisma.sql`p.tgl_pengajuan <= ${filters.endDate}::date`,
   ]
 
   if (unitOverride) {
-    parts.push(Prisma.sql`unit = ${unitOverride}`)
+    parts.push(Prisma.sql`u.username = ${unitOverride}`)
   } else if (filters.unit?.trim()) {
-    parts.push(Prisma.sql`unit ILIKE ${`%${filters.unit.trim()}%`}`)
+    parts.push(Prisma.sql`u.username ILIKE ${`%${filters.unit.trim()}%`}`)
   }
 
   return parts
@@ -45,13 +45,13 @@ function buildWhereParts(
 
 function buildHavingClause(status: string | null | undefined): Prisma.Sql {
   if (status === "0") {
-    return Prisma.sql`HAVING BOOL_OR(status = 0)`
+    return Prisma.sql`HAVING BOOL_OR(p.status = 0)`
   }
   if (status === "1") {
-    return Prisma.sql`HAVING NOT BOOL_OR(status = 0) AND MIN(status) = 1 AND MAX(status) = 1`
+    return Prisma.sql`HAVING NOT BOOL_OR(p.status = 0) AND MIN(p.status) = 1 AND MAX(p.status) = 1`
   }
   if (status === "2") {
-    return Prisma.sql`HAVING MIN(status) = 2 AND MAX(status) = 2`
+    return Prisma.sql`HAVING MIN(p.status) = 2 AND MAX(p.status) = 2`
   }
   return Prisma.empty
 }
@@ -86,17 +86,18 @@ export async function fetchPengajuanGroups(
 
   const groupsCte = Prisma.sql`
     SELECT
-      unit,
-      tgl_pengajuan,
+      u.username AS unit,
+      p.tgl_pengajuan,
       COUNT(*)::int AS jumlah_item,
-      SUM(jumlah)::int AS total_qty,
-      SUM(total)::float AS total_nominal,
-      MIN(status)::int AS status_min,
-      MAX(status)::int AS status_max,
-      BOOL_OR(status = 0) AS has_pending
-    FROM atk_pengajuan
+      SUM(p.jumlah)::int AS total_qty,
+      SUM(p.total)::float AS total_nominal,
+      MIN(p.status)::int AS status_min,
+      MAX(p.status)::int AS status_max,
+      BOOL_OR(p.status = 0) AS has_pending
+    FROM atk_pengajuan p
+    JOIN "user" u ON u.id_user = p.id_user
     WHERE ${whereClause}
-    GROUP BY unit, tgl_pengajuan
+    GROUP BY u.id_user, u.username, p.tgl_pengajuan
     ${havingClause}
   `
 

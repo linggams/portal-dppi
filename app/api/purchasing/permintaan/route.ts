@@ -10,6 +10,7 @@ import {
   toPaginatedResult,
   wantsPagination,
 } from "@/lib/shared/pagination"
+import { flattenActor, pemohonInclude, requireUserId } from "@/lib/purchasing/actor"
 
 export async function GET(request: NextRequest) {
   try {
@@ -34,21 +35,21 @@ export async function GET(request: NextRequest) {
 
     const where: {
       status?: number
-      unit?: string
+      pemohon?: { idUser: number } | { username: string }
       tglPermintaan?: Date
     } = {}
     if (status !== null) {
       where.status = parseInt(status)
     }
     if (unit) {
-      where.unit = unit
+      where.pemohon = { username: unit }
     }
     if (tglPermintaan) {
       where.tglPermintaan = new Date(tglPermintaan)
     }
 
     if (isClientUser(session.user)) {
-      where.unit = session.user.username
+      where.pemohon = { idUser: requireUserId(session.user.id) }
     }
 
     if (paginate) {
@@ -57,14 +58,14 @@ export async function GET(request: NextRequest) {
         prisma.permintaan.count({ where }),
         prisma.permintaan.findMany({
           where,
-          include: { stokbarang: true },
+          include: { stokbarang: true, ...pemohonInclude },
           orderBy: { tglPermintaan: "desc" },
           skip,
           take: pageSize,
         }),
       ])
       return NextResponse.json(
-        toPaginatedResult(permintaan, total, page, pageSize)
+        toPaginatedResult(permintaan.map(flattenActor), total, page, pageSize)
       )
     }
 
@@ -72,13 +73,14 @@ export async function GET(request: NextRequest) {
       where,
       include: {
         stokbarang: true,
+        ...pemohonInclude,
       },
       orderBy: {
         tglPermintaan: "desc",
       },
     })
 
-    return NextResponse.json(permintaan)
+    return NextResponse.json(permintaan.map(flattenActor))
   } catch (error) {
     console.error("Error fetching permintaan:", error)
     return NextResponse.json(

@@ -14,6 +14,7 @@ import {
   fetchManualMaintenanceRows,
 } from "@/lib/it/maintenance-server"
 import { prisma } from "@/lib/db/prisma"
+import { requireUserId } from "@/lib/purchasing/actor"
 import {
   paginateArray,
   parsePaginationParams,
@@ -113,7 +114,7 @@ export async function POST(request: NextRequest) {
     const created = await prisma.itMaintenanceLog.create({
       data: {
         idKategori: data.idKategori,
-        username: session.user.username,
+        idUser: requireUserId(session.user.id),
         tglKerja: new Date(data.tglKerja),
         jenisPekerjaan: data.jenisPekerjaan ?? null,
         lokasi: data.lokasi?.trim() || null,

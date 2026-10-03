@@ -53,7 +53,7 @@ export async function POST(
       // Create pemasukan record
       await tx.pemasukan.create({
         data: {
-          unit: pengajuan.unit,
+          idUser: pengajuan.idUser,
           kodeBrg: pengajuan.kodeBrg,
           jumlah: pengajuan.jumlah,
           tglMasuk: new Date(),

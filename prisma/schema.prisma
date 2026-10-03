@@ -44,6 +44,17 @@ model User {
   accessMobil      Boolean @default(false) @map("access_mobil")
 
   role Role @relation(fields: [roleId], references: [idRole], onDelete: Restrict)
+  permintaan Permintaan[]
+  sementara Sementara[]
+  pengajuan Pengajuan[]
+  pengajuanSementara PengajuanSementara[]
+  pemasukan Pemasukan[]
+  pengeluaran Pengeluaran[]
+  tiket ItTiket[] @relation("TiketPemohon")
+  tiketDitugaskan ItTiket[] @relation("TiketPetugas")
+  tiketKomentar ItTiketKomentar[]
+  maintenanceLog ItMaintenanceLog[]
+  laporanKm MobilLaporanKm[]
 
   @@index([roleId])
   @@map("user")
@@ -89,62 +100,59 @@ model Stokbarang {
 }
 
 model Permintaan {
-  idPermintaan Int      @id @default(autoincrement()) @map("id_permintaan")
-  unit         String   @db.VarChar(20)
-  user     String   @db.VarChar(20)
-  kodeBrg      String   @map("kode_brg") @db.VarChar(7)
-  idJenis      Int      @map("id_jenis")
-  jumlah       Int
+  idPermintaan  Int      @id @default(autoincrement()) @map("id_permintaan")
+  idUser        Int      @map("id_user")
+  kodeBrg       String   @map("kode_brg") @db.VarChar(7)
+  jumlah        Int
   tglPermintaan DateTime @map("tgl_permintaan") @db.Date
-  status       Int      @default(0)
+  status        Int      @default(0)
 
+  pemohon    User       @relation(fields: [idUser], references: [idUser], onDelete: Restrict)
   stokbarang Stokbarang @relation(fields: [kodeBrg], references: [kodeBrg])
 
   @@map("atk_permintaan")
-  @@index([unit, tglPermintaan])
+  @@index([idUser, tglPermintaan])
   @@index([status])
 }
 
 model Sementara {
-  idSementara  Int      @id @default(autoincrement()) @map("id_sementara")
-  unit         String   @db.VarChar(50)
-  user     String   @db.VarChar(20)
-  kodeBrg      String   @map("kode_brg") @db.VarChar(7)
-  idJenis      Int      @map("id_jenis")
-  jumlah       Int
+  idSementara   Int      @id @default(autoincrement()) @map("id_sementara")
+  idUser        Int      @map("id_user")
+  kodeBrg       String   @map("kode_brg") @db.VarChar(7)
+  jumlah        Int
   tglPermintaan DateTime @map("tgl_permintaan") @db.Date
-  status       Int      @default(0)
+  status        Int      @default(0)
 
+  pemohon    User       @relation(fields: [idUser], references: [idUser], onDelete: Restrict)
   stokbarang Stokbarang @relation(fields: [kodeBrg], references: [kodeBrg])
 
   @@map("atk_sementara")
-  @@index([unit, tglPermintaan])
+  @@index([idUser, tglPermintaan])
 }
 
 model Pengajuan {
-  idPengajuan Int      @id @default(autoincrement()) @map("id_pengajuan")
-  unit        String   @db.VarChar(20)
-  kodeBrg     String   @map("kode_brg") @db.VarChar(7)
-  idJenis     Int      @map("id_jenis")
-  jumlah      Int
-  satuan      String   @db.VarChar(11)
-  hargabarang Float    @db.DoublePrecision
-  total       Float    @db.DoublePrecision
+  idPengajuan  Int      @id @default(autoincrement()) @map("id_pengajuan")
+  idUser       Int      @map("id_user")
+  kodeBrg      String   @map("kode_brg") @db.VarChar(7)
+  jumlah       Int
+  satuan       String   @db.VarChar(11)
+  hargabarang  Float    @db.DoublePrecision
+  total        Float    @db.DoublePrecision
   tglPengajuan DateTime @map("tgl_pengajuan") @db.Date
-  status      Int      @default(0)
+  status       Int      @default(0)
 
+  pemohon    User       @relation(fields: [idUser], references: [idUser], onDelete: Restrict)
   stokbarang Stokbarang @relation(fields: [kodeBrg], references: [kodeBrg])
 
   @@map("atk_pengajuan")
-  @@index([unit, tglPengajuan])
+  @@index([idUser, tglPengajuan])
   @@index([status])
 }
 
 model PengajuanSementara {
   idPengajuanSementara Int      @id @default(autoincrement()) @map("id_pengajuan_sementara")
-  unit                 String   @db.VarChar(20)
+  idUser               Int      @map("id_user")
   kodeBrg              String   @map("kode_brg") @db.VarChar(7)
-  idJenis              Int      @map("id_jenis")
   jumlah               Int
   satuan               String   @db.VarChar(20)
   hargabarang          Float    @db.DoublePrecision
@@ -152,38 +160,41 @@ model PengajuanSementara {
   tglPengajuan         DateTime @map("tgl_pengajuan") @db.Date
   status               Int      @default(0)
 
+  pemohon    User       @relation(fields: [idUser], references: [idUser], onDelete: Restrict)
   stokbarang Stokbarang @relation(fields: [kodeBrg], references: [kodeBrg])
 
   @@map("atk_pengajuan_sementara")
-  @@index([unit, tglPengajuan])
+  @@index([idUser, tglPengajuan])
 }
 
 model Pemasukan {
   id       Int      @id @default(autoincrement())
-  unit    String   @db.VarChar(30)
-  kodeBrg String   @map("kode_brg") @db.VarChar(7)
-  jumlah  Int
+  idUser   Int      @map("id_user")
+  kodeBrg  String   @map("kode_brg") @db.VarChar(7)
+  jumlah   Int
   tglMasuk DateTime @map("tgl_masuk") @db.Date
 
+  pemohon    User       @relation(fields: [idUser], references: [idUser], onDelete: Restrict)
   stokbarang Stokbarang @relation(fields: [kodeBrg], references: [kodeBrg])
 
   @@map("atk_pemasukan")
   @@index([tglMasuk])
-  @@index([unit])
+  @@index([idUser])
 }
 
 model Pengeluaran {
-  id       Int      @id @default(autoincrement())
-  unit    String   @db.VarChar(20)
-  kodeBrg String   @map("kode_brg") @db.VarChar(7)
-  jumlah  Int
+  id        Int      @id @default(autoincrement())
+  idUser    Int      @map("id_user")
+  kodeBrg   String   @map("kode_brg") @db.VarChar(7)
+  jumlah    Int
   tglKeluar DateTime @map("tgl_keluar") @db.Date
 
+  pemohon    User       @relation(fields: [idUser], references: [idUser], onDelete: Restrict)
   stokbarang Stokbarang @relation(fields: [kodeBrg], references: [kodeBrg])
 
   @@map("atk_pengeluaran")
   @@index([tglKeluar])
-  @@index([unit])
+  @@index([idUser])
 }
 
 model ItTiketKategori {
@@ -197,39 +208,41 @@ model ItTiketKategori {
 }
 
 model ItTiket {
-  idTiket      Int       @id @default(autoincrement()) @map("id_tiket")
-  nomorTiket   String    @unique @map("nomor_tiket") @db.VarChar(20)
-  username     String    @db.VarChar(20)
-  jabatan      String    @db.VarChar(50)
-  judul        String    @db.VarChar(200)
-  deskripsi    String    @db.Text
-  idKategori   Int       @map("id_kategori")
-  status       Int       @default(0)
-  ditugaskanKe String?   @map("ditugaskan_ke") @db.VarChar(20)
-  tglDibuat    DateTime  @default(now()) @map("tgl_dibuat")
-  tglDiupdate  DateTime  @updatedAt @map("tgl_diupdate")
-  tglSelesai   DateTime? @map("tgl_selesai")
+  idTiket    Int       @id @default(autoincrement()) @map("id_tiket")
+  nomorTiket String    @unique @map("nomor_tiket") @db.VarChar(20)
+  idPemohon  Int       @map("id_pemohon")
+  judul      String    @db.VarChar(200)
+  deskripsi  String    @db.Text
+  idKategori Int       @map("id_kategori")
+  status     Int       @default(0)
+  idPetugas  Int?      @map("id_petugas")
+  tglDibuat  DateTime  @default(now()) @map("tgl_dibuat")
+  tglDiupdate DateTime @updatedAt @map("tgl_diupdate")
+  tglSelesai DateTime? @map("tgl_selesai")
 
-  kategori ItTiketKategori  @relation(fields: [idKategori], references: [idKategori])
+  pemohon User @relation("TiketPemohon", fields: [idPemohon], references: [idUser], onDelete: Restrict)
+  petugas User? @relation("TiketPetugas", fields: [idPetugas], references: [idUser], onDelete: Restrict)
+  kategori ItTiketKategori @relation(fields: [idKategori], references: [idKategori])
   komentar ItTiketKomentar[]
   maintenanceLog ItMaintenanceLog[]
 
   @@map("it_tiket")
-  @@index([username])
+  @@index([idPemohon])
   @@index([status])
-  @@index([ditugaskanKe])
+  @@index([idPetugas])
   @@index([tglDibuat])
 }
 
 model ItTiketKomentar {
   idKomentar Int      @id @default(autoincrement()) @map("id_komentar")
   idTiket    Int      @map("id_tiket")
-  username   String   @db.VarChar(20)
+  idUser     Int      @map("id_user")
   pesan      String   @db.Text
   tipe       String   @default("komentar") @db.VarChar(20)
   tglDibuat  DateTime @default(now()) @map("tgl_dibuat")
 
-  tiket ItTiket @relation(fields: [idTiket], references: [idTiket], onDelete: Cascade)
+  penulis User    @relation(fields: [idUser], references: [idUser], onDelete: Restrict)
+  tiket   ItTiket @relation(fields: [idTiket], references: [idTiket], onDelete: Cascade)
 
   @@map("it_tiket_komentar")
   @@index([idTiket])
@@ -238,7 +251,7 @@ model ItTiketKomentar {
 model ItMaintenanceLog {
   idMaintenance  Int      @id @default(autoincrement()) @map("id_maintenance")
   idKategori     Int      @map("id_kategori")
-  username       String   @db.VarChar(20)
+  idUser         Int      @map("id_user")
   tglKerja       DateTime @map("tgl_kerja")
   jenisPekerjaan String?  @map("jenis_pekerjaan") @db.VarChar(30)
   lokasi         String?  @db.VarChar(100)
@@ -249,12 +262,13 @@ model ItMaintenanceLog {
   idTiket        Int?     @map("id_tiket")
   tglDibuat      DateTime @default(now()) @map("tgl_dibuat")
 
-  kategori ItTiketKategori @relation(fields: [idKategori], references: [idKategori])
-  tiket    ItTiket?         @relation(fields: [idTiket], references: [idTiket], onDelete: SetNull)
+  pelaksana User             @relation(fields: [idUser], references: [idUser], onDelete: Restrict)
+  kategori  ItTiketKategori @relation(fields: [idKategori], references: [idKategori])
+  tiket     ItTiket?        @relation(fields: [idTiket], references: [idTiket], onDelete: SetNull)
 
   @@map("it_maintenance_log")
   @@index([idKategori])
-  @@index([username])
+  @@index([idUser])
   @@index([tglKerja])
   @@index([idTiket])
 }
@@ -289,8 +303,7 @@ model MobilKendaraan {
 model MobilLaporanKm {
   idLaporan   Int      @id @default(autoincrement()) @map("id_laporan")
   idKendaraan Int      @map("id_kendaraan")
-  username    String   @db.VarChar(20)
-  jabatan     String   @db.VarChar(50)
+  idUser      Int      @map("id_user")
   tanggal     DateTime @db.Date
   kmAwal      Int      @map("km_awal")
   kmAkhir     Int      @map("km_akhir")
@@ -298,12 +311,13 @@ model MobilLaporanKm {
   tglDibuat   DateTime @default(now()) @map("tgl_dibuat")
   tglDiupdate DateTime @updatedAt @map("tgl_diupdate")
 
+  pemohon    User                     @relation(fields: [idUser], references: [idUser], onDelete: Restrict)
   kendaraan  MobilKendaraan           @relation(fields: [idKendaraan], references: [idKendaraan], onDelete: Restrict)
   perjalanan MobilLaporanPerjalanan[]
 
   @@unique([idKendaraan, tanggal])
   @@map("mobil_laporan_km")
-  @@index([username])
+  @@index([idUser])
   @@index([tanggal])
   @@index([idKendaraan])
 }

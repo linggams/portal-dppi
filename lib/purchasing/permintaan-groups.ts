@@ -30,14 +30,14 @@ function buildWhereParts(
   unitOverride?: string
 ): Prisma.Sql[] {
   const parts: Prisma.Sql[] = [
-    Prisma.sql`tgl_permintaan >= ${filters.startDate}::date`,
-    Prisma.sql`tgl_permintaan <= ${filters.endDate}::date`,
+    Prisma.sql`p.tgl_permintaan >= ${filters.startDate}::date`,
+    Prisma.sql`p.tgl_permintaan <= ${filters.endDate}::date`,
   ]
 
   if (unitOverride) {
-    parts.push(Prisma.sql`unit = ${unitOverride}`)
+    parts.push(Prisma.sql`u.username = ${unitOverride}`)
   } else if (filters.unit?.trim()) {
-    parts.push(Prisma.sql`unit ILIKE ${`%${filters.unit.trim()}%`}`)
+    parts.push(Prisma.sql`u.username ILIKE ${`%${filters.unit.trim()}%`}`)
   }
 
   return parts
@@ -45,13 +45,13 @@ function buildWhereParts(
 
 function buildHavingClause(status: string | null | undefined): Prisma.Sql {
   if (status === "0") {
-    return Prisma.sql`HAVING BOOL_OR(status = 0)`
+    return Prisma.sql`HAVING BOOL_OR(p.status = 0)`
   }
   if (status === "1") {
-    return Prisma.sql`HAVING NOT BOOL_OR(status = 0) AND MIN(status) = 1 AND MAX(status) = 1`
+    return Prisma.sql`HAVING NOT BOOL_OR(p.status = 0) AND MIN(p.status) = 1 AND MAX(p.status) = 1`
   }
   if (status === "2") {
-    return Prisma.sql`HAVING MIN(status) = 2 AND MAX(status) = 2`
+    return Prisma.sql`HAVING MIN(p.status) = 2 AND MAX(p.status) = 2`
   }
   return Prisma.empty
 }
@@ -86,17 +86,18 @@ export async function fetchPermintaanGroups(
 
   const groupsCte = Prisma.sql`
     SELECT
-      unit,
-      "user" AS instansi,
-      tgl_permintaan,
+      u.username AS unit,
+      u.jabatan AS instansi,
+      p.tgl_permintaan,
       COUNT(*)::int AS jumlah_item,
-      SUM(jumlah)::int AS total_qty,
-      MIN(status)::int AS status_min,
-      MAX(status)::int AS status_max,
-      BOOL_OR(status = 0) AS has_pending
-    FROM atk_permintaan
+      SUM(p.jumlah)::int AS total_qty,
+      MIN(p.status)::int AS status_min,
+      MAX(p.status)::int AS status_max,
+      BOOL_OR(p.status = 0) AS has_pending
+    FROM atk_permintaan p
+    JOIN "user" u ON u.id_user = p.id_user
     WHERE ${whereClause}
-    GROUP BY unit, "user", tgl_permintaan
+    GROUP BY u.id_user, u.username, u.jabatan, p.tgl_permintaan
     ${havingClause}
   `
 

@@ -9,6 +9,7 @@ import {
   type ItLaporanTab,
 } from "@/lib/it/laporan"
 import { prisma } from "@/lib/db/prisma"
+import { flattenTiket } from "@/lib/it/tiket-view"
 import {
   paginateArray,
   parsePaginationParams,
@@ -44,13 +45,15 @@ export async function GET(request: NextRequest) {
       where,
       include: {
         kategori: { select: { idKategori: true, nama: true } },
+        pemohon: { select: { username: true, jabatan: true } },
+        petugas: { select: { username: true } },
       },
       orderBy: { tglDibuat: "desc" },
     })
 
     const summary = computeItLaporanSummary(tiket)
 
-    let list: unknown[] = tiket
+    let list: unknown[] = tiket.map(flattenTiket)
     if (tab === "kategori") {
       list = aggregateByKategori(tiket)
     } else if (tab === "teknisi") {

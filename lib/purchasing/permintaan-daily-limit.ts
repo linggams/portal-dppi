@@ -18,7 +18,7 @@ export async function hasSubmittedPermintaanOnDate(
 ): Promise<boolean> {
   const existing = await prisma.permintaan.findFirst({
     where: {
-      unit,
+      pemohon: { username: unit },
       tglPermintaan: parseDateOnly(dateStr),
     },
     select: { idPermintaan: true },

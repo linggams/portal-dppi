@@ -62,8 +62,7 @@ function toPerjalanan(row: {
 export function toMobilLaporan(row: {
   idLaporan: number
   idKendaraan: number
-  username: string
-  jabatan: string
+  pemohon: { username: string; jabatan: string }
   tanggal: Date
   kmAwal: number
   kmAkhir: number
@@ -99,8 +98,8 @@ export function toMobilLaporan(row: {
   return {
     idLaporan: row.idLaporan,
     idKendaraan: row.idKendaraan,
-    username: row.username,
-    jabatan: row.jabatan,
+    username: row.pemohon.username,
+    jabatan: row.pemohon.jabatan,
     tanggal: row.tanggal.toISOString().slice(0, 10),
     kmAwal: row.kmAwal,
     kmAkhir: row.kmAkhir,
