@@ -2,22 +2,19 @@ import { NextRequest, NextResponse } from "next/server"
 import { getSessionFromRequest } from "@/lib/get-session"
 import { canManagePurchasingMaster } from "@/lib/auth/permissions"
 import { prisma } from "@/lib/db/prisma"
+import { parsePaginationParams } from "@/lib/shared/pagination"
 import {
-  paginateArray,
-  parsePaginationParams,
-} from "@/lib/shared/pagination"
-import { sortByKategoriThen } from "@/lib/purchasing/laporan-group"
+  attachLaporanKeys,
+  paginateByCompleteGroups,
+  sortLaporanRows,
+} from "@/lib/purchasing/laporan-group"
 
-// GET - Laporan stok (only for admin)
 export async function GET(request: NextRequest) {
   try {
     const session = await getSessionFromRequest(request)
 
     if (!session || !canManagePurchasingMaster(session.user)) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
     const { page, pageSize } = parsePaginationParams(
@@ -28,19 +25,23 @@ export async function GET(request: NextRequest) {
       include: { jenisBarang: true },
     })
 
-    sortByKategoriThen(stok, "stok", (a, b) =>
-      a.namaBrg.localeCompare(b.namaBrg, "id")
+    const flat = attachLaporanKeys(
+      stok as unknown as Record<string, unknown>[],
+      "stok"
+    )
+    sortLaporanRows(flat, "stok", (a, b) =>
+      String(a.namaBrg ?? "").localeCompare(String(b.namaBrg ?? ""), "id")
     )
 
-    const totalStok = stok.reduce((sum: number, item) => sum + item.stok, 0)
-    const totalSisa = stok.reduce((sum: number, item) => sum + item.sisa, 0)
-    const totalKeluar = stok.reduce(
-      (sum: number, item) => sum + item.keluar,
+    const totalStok = flat.reduce((sum, item) => sum + Number(item.stok ?? 0), 0)
+    const totalSisa = flat.reduce((sum, item) => sum + Number(item.sisa ?? 0), 0)
+    const totalKeluar = flat.reduce(
+      (sum, item) => sum + Number(item.keluar ?? 0),
       0
     )
-    const lowStock = stok.filter((item) => item.sisa <= 10).length
+    const lowStock = flat.filter((item) => Number(item.sisa) <= 10).length
 
-    const paginated = paginateArray(stok, page, pageSize)
+    const paginated = paginateByCompleteGroups(flat, "stok", page, pageSize)
 
     return NextResponse.json({
       ...paginated,
@@ -49,7 +50,7 @@ export async function GET(request: NextRequest) {
         totalSisa,
         totalKeluar,
         lowStock,
-        totalItems: stok.length,
+        totalItems: flat.length,
       },
     })
   } catch (error) {

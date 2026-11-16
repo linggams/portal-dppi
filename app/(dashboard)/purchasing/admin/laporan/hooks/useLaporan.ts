@@ -11,7 +11,14 @@ import {
   readPaginatedJson,
 } from "@/lib/shared/pagination"
 import { formatDate, formatRupiah } from "../utils"
-import { groupLaporan, groupMeta } from "@/lib/purchasing/laporan-group"
+import {
+  buildLaporanSections,
+  formatMonthLabel,
+  isTransaksiTab,
+  leafMeta,
+  unitLabel,
+  usersFooter,
+} from "@/lib/purchasing/laporan-group"
 import type { LaporanFilters, LaporanSummary } from "../types"
 
 export function useLaporan() {
@@ -42,15 +49,22 @@ export function useLaporan() {
   const buildParams = useCallback(
     (currentPage: number, size?: number) => {
       const params = new URLSearchParams()
-      if (filters.startDate) params.append("start_date", filters.startDate)
-      if (filters.endDate) params.append("end_date", filters.endDate)
-      if (filters.unit) params.append("unit", filters.unit)
-      if (filters.status !== "all") params.append("status", filters.status)
+      if (activeTab !== "stok") {
+        if (filters.startDate) params.append("start_date", filters.startDate)
+        if (filters.endDate) params.append("end_date", filters.endDate)
+        if (filters.unit) params.append("unit", filters.unit)
+        if (
+          (activeTab === "permintaan" || activeTab === "pengajuan") &&
+          filters.status !== "all"
+        ) {
+          params.append("status", filters.status)
+        }
+      }
       params.set("page", String(currentPage))
       if (size) params.set("page_size", String(size))
       return params
     },
-    [filters]
+    [activeTab, filters]
   )
 
   const fetchData = useCallback(
@@ -94,26 +108,32 @@ export function useLaporan() {
   const getHeaders = (tab: string) => {
     switch (tab) {
       case "permintaan":
-        return ["Tanggal", "Unit", "Nama Barang", "Jumlah", "Satuan", "Status"]
+        return ["Nama Barang", "Jumlah", "Satuan", "User", "Status"]
       case "pengajuan":
         return [
-          "Tanggal",
-          "Unit",
           "Nama Barang",
           "Jumlah",
           "Satuan",
           "Harga",
           "Total",
+          "User",
           "Status",
         ]
       case "pemasukan":
       case "pengeluaran":
-        return ["Tanggal", "Unit", "Nama Barang", "Jumlah", "Satuan"]
+        return ["Nama Barang", "Jumlah", "Satuan", "User"]
       case "stok":
         return ["Kode Barang", "Nama Barang", "Stok", "Keluar", "Sisa", "Satuan"]
       default:
         return []
     }
+  }
+
+  const statusLabel = (status: unknown) => {
+    const n = Number(status)
+    if (n === 0) return "Pending"
+    if (n === 1) return "Disetujui"
+    return "Ditolak"
   }
 
   const getRowData = (
@@ -123,47 +143,29 @@ export function useLaporan() {
     switch (tab) {
       case "permintaan":
         return [
-          formatDate(String(item.tglPermintaan ?? "")),
-          String(item.unit ?? ""),
           String((item.stokbarang as { namaBrg?: string })?.namaBrg ?? ""),
           String(item.jumlah ?? ""),
           String((item.stokbarang as { satuan?: string })?.satuan ?? ""),
-          (item.status === 0
-            ? "Pending"
-            : item.status === 1
-              ? "Disetujui"
-              : "Ditolak") as string,
+          unitLabel(item),
+          statusLabel(item.status),
         ]
       case "pengajuan":
         return [
-          formatDate(String(item.tglPengajuan ?? "")),
-          String(item.unit ?? ""),
           String((item.stokbarang as { namaBrg?: string })?.namaBrg ?? ""),
           String(item.jumlah ?? ""),
           String(item.satuan ?? ""),
           formatRupiah(Number(item.hargabarang ?? 0)),
           formatRupiah(Number(item.total ?? 0)),
-          (item.status === 0
-            ? "Pending"
-            : item.status === 1
-              ? "Disetujui"
-              : "Ditolak") as string,
+          unitLabel(item),
+          statusLabel(item.status),
         ]
       case "pemasukan":
-        return [
-          formatDate(String(item.tglMasuk ?? "")),
-          String(item.unit ?? ""),
-          String((item.stokbarang as { namaBrg?: string })?.namaBrg ?? ""),
-          String(item.jumlah ?? ""),
-          String((item.stokbarang as { satuan?: string })?.satuan ?? ""),
-        ]
       case "pengeluaran":
         return [
-          formatDate(String(item.tglKeluar ?? "")),
-          String(item.unit ?? ""),
           String((item.stokbarang as { namaBrg?: string })?.namaBrg ?? ""),
           String(item.jumlah ?? ""),
           String((item.stokbarang as { satuan?: string })?.satuan ?? ""),
+          unitLabel(item),
         ]
       case "stok":
         return [
@@ -204,190 +206,331 @@ export function useLaporan() {
       }
 
       const headers = getHeaders(activeTab)
-      const groups = groupLaporan(allRows, activeTab)
-      const colCount = headers.length
+      const sections = buildLaporanSections(allRows, activeTab)
+      const transaksi = isTransaksiTab(activeTab)
+      const landscape = activeTab === "pengajuan"
+      const pageMargins: [number, number, number, number] = [28, 36, 28, 28]
+      const contentWidth = landscape
+        ? 841.89 - pageMargins[0] - pageMargins[2]
+        : 595.28 - pageMargins[0] - pageMargins[2]
 
-      const span = (text: string, style: string) => [
-        { text, style, colSpan: colCount },
-        ...Array.from({ length: colCount - 1 }, () => ({})),
-      ]
+      // Indeks kolom numerik (kanan) — selaras UI
+      const rightAlignCols: Record<string, number[]> = {
+        permintaan: [1],
+        pengajuan: [1, 3, 4],
+        pemasukan: [1],
+        pengeluaran: [1],
+        stok: [2, 3, 4],
+      }
+      const numericCols = new Set(rightAlignCols[activeTab] ?? [])
 
-      const subtotalCells = (group: (typeof groups)[number]) => {
-        const label = { text: "Subtotal", style: "subtotal" }
-        const empty = { text: "", style: "subtotal" }
-        const qty = { text: String(group.jumlah), style: "subtotal" }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const widthsByTab: Record<string, any[]> = {
+        permintaan: ["*", 44, 44, 72, 58],
+        pengajuan: ["*", 40, 40, 64, 70, 72, 54],
+        pemasukan: ["*", 48, 48, 80],
+        pengeluaran: ["*", 48, 48, 80],
+        stok: [58, "*", 42, 42, 42, 48],
+      }
+      const widths =
+        widthsByTab[activeTab] || new Array(headers.length).fill("*")
+
+      const cell = (
+        text: string,
+        style: string,
+        colIndex?: number,
+        extra?: Record<string, unknown>
+      ) => ({
+        text,
+        style,
+        alignment:
+          colIndex !== undefined && numericCols.has(colIndex)
+            ? "right"
+            : style === "tableHeader"
+              ? "center"
+              : "left",
+        ...extra,
+      })
+
+      const empty = (style: string) => ({ text: "", style })
+
+      /** Subtotal/grand: label di kolom nama, angka di kolom jumlah/nilai — mirror UI */
+      const summaryRow = (
+        label: string,
+        style: string,
+        values: {
+          jumlah?: number
+          total?: number
+          stok?: number
+          keluar?: number
+          sisa?: number
+        }
+      ) => {
         if (activeTab === "pengajuan") {
           return [
-            { ...label, colSpan: 3 },
-            {},
-            {},
-            qty,
-            empty,
-            empty,
-            { text: formatRupiah(group.total), style: "subtotal" },
-            empty,
+            cell(label, style, 0),
+            cell(String(values.jumlah ?? 0), style, 1),
+            empty(style),
+            empty(style),
+            cell(formatRupiah(values.total ?? 0), style, 4),
+            empty(style),
+            empty(style),
           ]
         }
         if (activeTab === "stok") {
           return [
-            { ...label, colSpan: 2 },
+            { text: label, style, colSpan: 2 },
             {},
-            { text: String(group.stok), style: "subtotal" },
-            { text: String(group.keluar), style: "subtotal" },
-            { text: String(group.sisa), style: "subtotal" },
-            empty,
+            cell(String(values.stok ?? 0), style, 2),
+            cell(String(values.keluar ?? 0), style, 3),
+            cell(String(values.sisa ?? 0), style, 4),
+            empty(style),
           ]
         }
+        if (activeTab === "permintaan") {
+          return [
+            cell(label, style, 0),
+            cell(String(values.jumlah ?? 0), style, 1),
+            empty(style),
+            empty(style),
+            empty(style),
+          ]
+        }
+        // pemasukan / pengeluaran
         return [
-          { ...label, colSpan: 3 },
-          {},
-          {},
-          qty,
-          empty,
-          ...(activeTab === "permintaan" ? [empty] : []),
+          cell(label, style, 0),
+          cell(String(values.jumlah ?? 0), style, 1),
+          empty(style),
+          empty(style),
         ]
       }
 
-      const grand = groups.reduce(
-        (sum, group) => ({
-          jumlah: sum.jumlah + group.jumlah,
-          total: sum.total + group.total,
-          stok: sum.stok + group.stok,
-          keluar: sum.keluar + group.keluar,
-          sisa: sum.sisa + group.sisa,
+      const grand = sections.reduce(
+        (sum, s) => ({
+          jumlah: sum.jumlah + s.jumlah,
+          total: sum.total + s.total,
+          stok: sum.stok + s.stok,
+          keluar: sum.keluar + s.keluar,
+          sisa: sum.sisa + s.sisa,
         }),
         { jumlah: 0, total: 0, stok: 0, keluar: 0, sisa: 0 }
       )
 
-      const grandCells = () => {
-        const label = { text: "Total keseluruhan", style: "grandTotal" }
-        const empty = { text: "", style: "grandTotal" }
-        if (activeTab === "pengajuan") {
-          return [
-            { ...label, colSpan: 3 },
-            {},
-            {},
-            { text: String(grand.jumlah), style: "grandTotal" },
-            empty,
-            empty,
-            { text: formatRupiah(grand.total), style: "grandTotal" },
-            empty,
-          ]
-        }
-        if (activeTab === "stok") {
-          return [
-            { ...label, colSpan: 2 },
-            {},
-            { text: String(grand.stok), style: "grandTotal" },
-            { text: String(grand.keluar), style: "grandTotal" },
-            { text: String(grand.sisa), style: "grandTotal" },
-            empty,
-          ]
-        }
-        return [
-          { ...label, colSpan: 3 },
-          {},
-          {},
-          { text: String(grand.jumlah), style: "grandTotal" },
-          empty,
-          ...(activeTab === "permintaan" ? [empty] : []),
-        ]
+      const gridLayout = {
+        hLineWidth: () => 0.7,
+        vLineWidth: () => 0.7,
+        hLineColor: () => "#9ca3af",
+        vLineColor: () => "#9ca3af",
+        paddingLeft: () => 6,
+        paddingRight: () => 6,
+        paddingTop: () => 4,
+        paddingBottom: () => 4,
+      }
+
+      const barLayout = {
+        hLineWidth: () => 0.7,
+        vLineWidth: () => 0.7,
+        hLineColor: () => "#9ca3af",
+        vLineColor: () => "#9ca3af",
+        paddingLeft: () => 8,
+        paddingRight: () => 8,
+        paddingTop: () => 6,
+        paddingBottom: () => 6,
+        fillColor: () => "#e5e7eb",
       }
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const body: any[] = [
-        headers.map((h) => ({ text: h, style: "tableHeader" })),
+      const content: any[] = [
+        ...companyPdfHeader({ lineWidth: contentWidth, afterLine: 8 }),
+        {
+          text: `LAPORAN ${String(activeTab).toUpperCase()}`,
+          style: "title",
+          alignment: "center",
+          margin: [0, 2, 0, 2],
+        },
       ]
-      for (const group of groups) {
-        body.push(
-          span(
-            `${group.kategori}    ${groupMeta(group, activeTab)}`,
-            "groupHeader"
-          )
-        )
-        for (const item of group.rows) {
-          body.push(
-            getRowData(item, activeTab).map((cell) => ({
-              text: cell,
-              style: "tableCell",
-            }))
-          )
-        }
-        body.push(subtotalCells(group))
+
+      if (activeTab !== "stok" && filters.startDate && filters.endDate) {
+        content.push({
+          text: `${formatDate(filters.startDate)} – ${formatDate(filters.endDate)}`,
+          style: "subheader",
+          alignment: "center",
+          margin: [0, 0, 0, 12],
+        })
+      } else {
+        content.push({ text: " ", margin: [0, 0, 0, 8] })
       }
-      body.push(grandCells())
+
+      for (const section of sections) {
+        const sectionTitle = transaksi
+          ? `${formatMonthLabel(section.title)}   ·   ${section.itemCount} item${
+              section.users.length > 0
+                ? ` · ${section.users.length} user`
+                : ""
+            }`
+          : `${section.title}   ·   ${section.itemCount} item`
+
+        content.push({
+          columns: [
+            {
+              canvas: [
+                {
+                  type: "rect",
+                  x: 0,
+                  y: 0,
+                  w: 3,
+                  h: 12,
+                  color: "#2563eb",
+                },
+              ],
+              width: 8,
+            },
+            {
+              text: sectionTitle,
+              style: "sectionTitle",
+              width: "*",
+              margin: [0, 0, 0, 0],
+            },
+          ],
+          columnGap: 4,
+          margin: [0, 10, 0, 6],
+        })
+
+        for (const group of section.groups) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const block: any[] = []
+
+          if (transaksi) {
+            block.push({
+              table: {
+                widths: ["*", "auto"],
+                body: [
+                  [
+                    {
+                      text: `Kategori: ${group.label}`,
+                      style: "unitTitle",
+                      border: [true, true, false, true],
+                    },
+                    {
+                      text: leafMeta(group, activeTab),
+                      style: "unitMeta",
+                      alignment: "right",
+                      border: [false, true, true, true],
+                    },
+                  ],
+                ],
+              },
+              layout: {
+                ...barLayout,
+                vLineWidth: (i: number) => (i === 1 ? 0 : 0.7),
+              },
+              margin: [0, 0, 0, 0],
+            })
+          }
+
+          const headerRow = headers.map((h, i) => cell(h, "tableHeader", i))
+          const dataRows = group.rows.map((item) =>
+            getRowData(item, activeTab).map((text, i) =>
+              cell(text, "tableCell", i)
+            )
+          )
+
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const tableBody: any[] = [
+            headerRow,
+            ...dataRows,
+            summaryRow(`Subtotal ${group.label}`, "subtotal", group),
+          ]
+
+          if (transaksi && group.users.length > 0) {
+            tableBody.push([
+              {
+                text: usersFooter(group.users),
+                style: "usersFooter",
+                colSpan: headers.length,
+              },
+              ...new Array(headers.length - 1).fill({}),
+            ])
+          }
+
+          block.push({
+            table: {
+              widths,
+              headerRows: 1,
+              body: tableBody,
+            },
+            layout: {
+              ...gridLayout,
+              fillColor: (rowIndex: number) => {
+                if (rowIndex === 0) return "#f3f4f6"
+                return null
+              },
+            },
+            margin: [0, 0, 0, 8],
+          })
+
+          content.push({
+            stack: block,
+            unbreakable: group.rows.length <= 12,
+          })
+        }
+
+        if (transaksi) {
+          content.push({
+            table: {
+              widths,
+              body: [
+                summaryRow(
+                  `Subtotal ${formatMonthLabel(section.title)}`,
+                  "sectionTotal",
+                  section
+                ),
+              ],
+            },
+            layout: {
+              ...gridLayout,
+              fillColor: () => "#f3f4f6",
+            },
+            margin: [0, 0, 0, 8],
+          })
+        }
+      }
+
+      content.push({
+        table: {
+          widths,
+          body: [summaryRow("Total keseluruhan", "grandTotal", grand)],
+        },
+        layout: {
+          ...gridLayout,
+          fillColor: () => "#e5e7eb",
+        },
+        margin: [0, 4, 0, 0],
+      })
 
       const filename = `laporan-${activeTab}-${new Date().toISOString().split("T")[0]}.pdf`
-      const period =
-        filters.startDate && filters.endDate
-          ? `${formatDate(filters.startDate)} – ${formatDate(filters.endDate)}`
-          : ""
-
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const widthsByTab: Record<string, any[]> = {
-        permintaan: ["auto", "auto", "*", "auto", "auto", "auto"],
-        pengajuan: ["auto", "auto", "*", "auto", "auto", "auto", "auto", "auto"],
-        pemasukan: ["auto", "auto", "*", "auto", "auto"],
-        pengeluaran: ["auto", "auto", "*", "auto", "auto"],
-        stok: ["auto", "*", "auto", "auto", "auto", "auto"],
-      }
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const docDefinition: any = {
         pageSize: "A4",
-        pageOrientation: "portrait",
-        pageMargins: [30, 50, 30, 30],
-        content: [
-          ...companyPdfHeader({ lineWidth: 760, afterLine: 10 }),
-          {
-            text: `LAPORAN ${String(activeTab).toUpperCase()}`,
-            style: "title",
-            alignment: "center",
-            margin: [0, 0, 0, 4],
-          },
-          ...(period
-            ? [
-                {
-                  text: period,
-                  style: "subheader",
-                  alignment: "center",
-                  margin: [0, 0, 0, 14],
-                },
-              ]
-            : []),
-          {
-            table: {
-              headerRows: 1,
-              widths: widthsByTab[activeTab] || new Array(headers.length).fill("*"),
-              body,
-            },
-            layout: "lightHorizontalLines",
-          },
-        ],
+        pageOrientation: landscape ? "landscape" : "portrait",
+        pageMargins,
+        content,
         styles: {
-          header: { fontSize: 14, bold: true },
-          subheader: { fontSize: 9 },
+          header: { fontSize: 13, bold: true },
+          subheader: { fontSize: 8, color: "#4b5563" },
           title: { fontSize: 12, bold: true },
-          tableHeader: {
-            bold: true,
-            fontSize: 9,
-            fillColor: "#f3f4f6",
-            alignment: "center",
-          },
-          groupHeader: {
-            bold: true,
-            fontSize: 9,
-            fillColor: "#e5e7eb",
-          },
-          subtotal: { bold: true, fontSize: 9 },
-          grandTotal: {
-            bold: true,
-            fontSize: 9,
-            fillColor: "#f3f4f6",
-          },
-          tableCell: { fontSize: 9 },
+          sectionTitle: { fontSize: 10, bold: true },
+          unitTitle: { fontSize: 9, bold: true },
+          unitMeta: { fontSize: 8, color: "#6b7280" },
+          usersFooter: { fontSize: 7, color: "#6b7280", italics: true },
+          tableHeader: { bold: true, fontSize: 8 },
+          subtotal: { bold: true, fontSize: 8 },
+          sectionTotal: { bold: true, fontSize: 8 },
+          grandTotal: { bold: true, fontSize: 9 },
+          tableCell: { fontSize: 8 },
         },
-        defaultStyle: { fontSize: 9 },
+        defaultStyle: { fontSize: 8 },
       }
 
       downloadPdf(docDefinition, filename)
@@ -412,7 +555,5 @@ export function useLaporan() {
     pageSize,
     fetchData: handleFetch,
     handleExport,
-    getHeaders,
-    getRowData,
   }
 }

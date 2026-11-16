@@ -2,23 +2,20 @@ import { NextRequest, NextResponse } from "next/server"
 import { getSessionFromRequest } from "@/lib/get-session"
 import { canManagePurchasingMaster } from "@/lib/auth/permissions"
 import { prisma } from "@/lib/db/prisma"
+import { parsePaginationParams } from "@/lib/shared/pagination"
 import {
-  paginateArray,
-  parsePaginationParams,
-} from "@/lib/shared/pagination"
-import { sortByKategoriThen } from "@/lib/purchasing/laporan-group"
+  attachLaporanKeys,
+  paginateByCompleteGroups,
+  sortLaporanRows,
+} from "@/lib/purchasing/laporan-group"
 import { flattenActor, pemohonInclude } from "@/lib/purchasing/actor"
 
-// GET - Laporan pemasukan (only for admin)
 export async function GET(request: NextRequest) {
   try {
     const session = await getSessionFromRequest(request)
 
     if (!session || !canManagePurchasingMaster(session.user)) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
     const searchParams = request.nextUrl.searchParams
@@ -28,10 +25,7 @@ export async function GET(request: NextRequest) {
     const { page, pageSize } = parsePaginationParams(searchParams)
 
     const where: {
-      tglMasuk?: {
-        gte?: Date
-        lte?: Date
-      }
+      tglMasuk?: { gte?: Date; lte?: Date }
       pemohon?: { username: string }
     } = {}
 
@@ -41,13 +35,9 @@ export async function GET(request: NextRequest) {
         lte: new Date(endDate),
       }
     } else if (startDate) {
-      where.tglMasuk = {
-        gte: new Date(startDate),
-      }
+      where.tglMasuk = { gte: new Date(startDate) }
     } else if (endDate) {
-      where.tglMasuk = {
-        lte: new Date(endDate),
-      }
+      where.tglMasuk = { lte: new Date(endDate) }
     }
 
     if (unit) {
@@ -62,23 +52,29 @@ export async function GET(request: NextRequest) {
       },
     })
 
-    sortByKategoriThen(pemasukan, "pemasukan", (a, b) =>
-      b.tglMasuk.getTime() - a.tglMasuk.getTime()
+    const flat = attachLaporanKeys(
+      pemasukan.map(flattenActor) as Record<string, unknown>[],
+      "pemasukan"
     )
+    sortLaporanRows(flat, "pemasukan", () => 0)
 
-    const totalJumlah = pemasukan.reduce(
-      (sum: number, item) => sum + item.jumlah,
+    const totalJumlah = flat.reduce(
+      (sum, item) => sum + Number(item.jumlah ?? 0),
       0
     )
-    const totalItems = pemasukan.length
 
-    const paginated = paginateArray(pemasukan.map(flattenActor), page, pageSize)
+    const paginated = paginateByCompleteGroups(
+      flat,
+      "pemasukan",
+      page,
+      pageSize
+    )
 
     return NextResponse.json({
       ...paginated,
       summary: {
         totalJumlah,
-        totalItems,
+        totalItems: flat.length,
       },
     })
   } catch (error) {

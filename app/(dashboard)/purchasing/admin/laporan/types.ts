@@ -8,6 +8,12 @@ export interface LaporanFilters {
 export interface LaporanSummary {
   totalItems?: number
   totalJumlah?: number
+  totalHarga?: number
   pending?: number
   approved?: number
+  rejected?: number
+  totalStok?: number
+  totalKeluar?: number
+  totalSisa?: number
+  lowStock?: number
 }

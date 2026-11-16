@@ -2,23 +2,20 @@ import { NextRequest, NextResponse } from "next/server"
 import { getSessionFromRequest } from "@/lib/get-session"
 import { canManagePurchasingMaster } from "@/lib/auth/permissions"
 import { prisma } from "@/lib/db/prisma"
+import { parsePaginationParams } from "@/lib/shared/pagination"
 import {
-  paginateArray,
-  parsePaginationParams,
-} from "@/lib/shared/pagination"
-import { sortByKategoriThen } from "@/lib/purchasing/laporan-group"
+  attachLaporanKeys,
+  paginateByCompleteGroups,
+  sortLaporanRows,
+} from "@/lib/purchasing/laporan-group"
 import { flattenActor, pemohonInclude } from "@/lib/purchasing/actor"
 
-// GET - Laporan pengajuan (only for admin)
 export async function GET(request: NextRequest) {
   try {
     const session = await getSessionFromRequest(request)
 
     if (!session || !canManagePurchasingMaster(session.user)) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
     const searchParams = request.nextUrl.searchParams
@@ -29,10 +26,7 @@ export async function GET(request: NextRequest) {
     const { page, pageSize } = parsePaginationParams(searchParams)
 
     const where: {
-      tglPengajuan?: {
-        gte?: Date
-        lte?: Date
-      }
+      tglPengajuan?: { gte?: Date; lte?: Date }
       pemohon?: { username: string }
       status?: number
     } = {}
@@ -43,21 +37,18 @@ export async function GET(request: NextRequest) {
         lte: new Date(endDate),
       }
     } else if (startDate) {
-      where.tglPengajuan = {
-        gte: new Date(startDate),
-      }
+      where.tglPengajuan = { gte: new Date(startDate) }
     } else if (endDate) {
-      where.tglPengajuan = {
-        lte: new Date(endDate),
-      }
+      where.tglPengajuan = { lte: new Date(endDate) }
     }
 
     if (unit) {
       where.pemohon = { username: unit }
     }
 
-    if (status !== null) {
-      where.status = parseInt(status)
+    if (status !== null && status !== "" && status !== "all") {
+      const parsed = Number.parseInt(status, 10)
+      if (Number.isFinite(parsed)) where.status = parsed
     }
 
     const pengajuan = await prisma.pengajuan.findMany({
@@ -68,24 +59,31 @@ export async function GET(request: NextRequest) {
       },
     })
 
-    sortByKategoriThen(pengajuan, "pengajuan", (a, b) =>
-      b.tglPengajuan.getTime() - a.tglPengajuan.getTime()
+    const flat = attachLaporanKeys(
+      pengajuan.map(flattenActor) as Record<string, unknown>[],
+      "pengajuan"
     )
+    sortLaporanRows(flat, "pengajuan", () => 0)
 
-    const totalJumlah = pengajuan.reduce(
-      (sum: number, item) => sum + item.jumlah,
+    const totalJumlah = flat.reduce(
+      (sum, item) => sum + Number(item.jumlah ?? 0),
       0
     )
-    const totalHarga = pengajuan.reduce(
-      (sum: number, item) => sum + item.total,
+    const totalHarga = flat.reduce(
+      (sum, item) => sum + Number(item.total ?? 0),
       0
     )
-    const totalItems = pengajuan.length
-    const pending = pengajuan.filter((item) => item.status === 0).length
-    const approved = pengajuan.filter((item) => item.status === 1).length
-    const rejected = pengajuan.filter((item) => item.status === 2).length
+    const totalItems = flat.length
+    const pending = flat.filter((item) => Number(item.status) === 0).length
+    const approved = flat.filter((item) => Number(item.status) === 1).length
+    const rejected = flat.filter((item) => Number(item.status) === 2).length
 
-    const paginated = paginateArray(pengajuan.map(flattenActor), page, pageSize)
+    const paginated = paginateByCompleteGroups(
+      flat,
+      "pengajuan",
+      page,
+      pageSize
+    )
 
     return NextResponse.json({
       ...paginated,

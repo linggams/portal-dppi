@@ -1,5 +1,4 @@
 export { LaporanFiltersComponent } from "./LaporanFilters"
-export { LaporanKategoriTables } from "./LaporanKategoriTables"
+export { LaporanGroupedTables, SubtotalRow } from "./LaporanGroupedTables"
 export { LaporanSummaryCards } from "./LaporanSummaryCards"
 export { LaporanTabCard } from "./LaporanTabCard"
-

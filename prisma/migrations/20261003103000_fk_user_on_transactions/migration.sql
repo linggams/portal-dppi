@@ -15,7 +15,8 @@ SELECT
 FROM (
   VALUES
     ('Nisa', 'PPIC HBI'),
-    ('Heni Sparepart', 'Sparepart')
+    ('Heni Sparepart', 'Sparepart'),
+    ('fadli', 'IT Support')
 ) AS v(username, jabatan)
 WHERE NOT EXISTS (
   SELECT 1 FROM "user" u WHERE trim(u.username) = v.username

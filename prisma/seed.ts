@@ -6,6 +6,7 @@ if (!process.env.DATABASE_URL) {
 import { PrismaClient } from '@prisma/client'
 import { Pool } from 'pg'
 import { PrismaPg } from '@prisma/adapter-pg'
+import bcrypt from 'bcryptjs'
 import { SYSTEM_ROLES } from '../lib/auth/capabilities'
 
 const databaseUrl = process.env.DATABASE_URL || 'postgresql://postgres:mokmok@localhost:5432/atk?schema=public'
@@ -70,6 +71,36 @@ async function main() {
       accessPurchasing: false,
       accessIt: false,
       accessMobil: false,
+    },
+  })
+
+  const adminPassword = await bcrypt.hash('atk123456', 10)
+  await prisma.user.upsert({
+    where: { username: 'admin' },
+    update: {
+      password: adminPassword,
+      roleId: adminRole.idRole,
+      level: 'administrator',
+      jabatan: 'Administrator',
+      managePurchasing: true,
+      manageIt: true,
+      manageMobil: true,
+      accessPurchasing: true,
+      accessIt: true,
+      accessMobil: true,
+    },
+    create: {
+      username: 'admin',
+      password: adminPassword,
+      level: 'administrator',
+      jabatan: 'Administrator',
+      roleId: adminRole.idRole,
+      managePurchasing: true,
+      manageIt: true,
+      manageMobil: true,
+      accessPurchasing: true,
+      accessIt: true,
+      accessMobil: true,
     },
   })
 

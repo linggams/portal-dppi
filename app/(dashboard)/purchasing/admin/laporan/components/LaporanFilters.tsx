@@ -16,13 +16,28 @@ interface Props {
   filters: LaporanFiltersType
   onFiltersChange: (f: LaporanFiltersType) => void
   onFetch: () => void
+  /** Tab stok: sembunyikan filter tanggal/unit/status */
+  mode?: "transaksi" | "stok"
+  showStatus?: boolean
 }
 
 export function LaporanFiltersComponent({
   filters,
   onFiltersChange,
   onFetch,
+  mode = "transaksi",
+  showStatus = true,
 }: Props) {
+  if (mode === "stok") {
+    return (
+      <div className="mr-auto flex min-w-0 flex-wrap items-center gap-2">
+        <Button type="button" onClick={onFetch}>
+          Tampilkan
+        </Button>
+      </div>
+    )
+  }
+
   return (
     <div className="mr-auto flex min-w-0 flex-wrap items-center gap-2">
       <DatePicker
@@ -43,20 +58,22 @@ export function LaporanFiltersComponent({
         value={filters.unit}
         onChange={(e) => onFiltersChange({ ...filters, unit: e.target.value })}
       />
-      <Select
-        value={filters.status}
-        onValueChange={(v) => onFiltersChange({ ...filters, status: v })}
-      >
-        <SelectTrigger className="w-[140px]">
-          <SelectValue placeholder="Status" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="all">Semua</SelectItem>
-          <SelectItem value="0">Pending</SelectItem>
-          <SelectItem value="1">Disetujui</SelectItem>
-          <SelectItem value="2">Ditolak</SelectItem>
-        </SelectContent>
-      </Select>
+      {showStatus ? (
+        <Select
+          value={filters.status}
+          onValueChange={(v) => onFiltersChange({ ...filters, status: v })}
+        >
+          <SelectTrigger className="w-[140px]">
+            <SelectValue placeholder="Status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Semua</SelectItem>
+            <SelectItem value="0">Pending</SelectItem>
+            <SelectItem value="1">Disetujui</SelectItem>
+            <SelectItem value="2">Ditolak</SelectItem>
+          </SelectContent>
+        </Select>
+      ) : null}
       <Button type="button" onClick={onFetch}>
         Tampilkan
       </Button>

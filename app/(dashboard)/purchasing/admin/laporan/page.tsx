@@ -8,15 +8,22 @@ import { Button } from "@/components/ui/button"
 import { TableCell, TableRow } from "@/components/ui/table"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { TablePagination } from "@/components/ui/table-pagination"
-import { groupLaporan } from "@/lib/purchasing/laporan-group"
+import {
+  buildLaporanSections,
+  formatMonthLabel,
+  unitLabel,
+  type LaporanLeafGroup,
+  type LaporanSection,
+} from "@/lib/purchasing/laporan-group"
 import { useLaporan } from "./hooks/useLaporan"
 import {
   LaporanFiltersComponent,
-  LaporanKategoriTables,
+  LaporanGroupedTables,
   LaporanSummaryCards,
   LaporanTabCard,
+  SubtotalRow,
 } from "./components"
-import { formatDate, formatRupiah, getStatusBadge } from "./utils"
+import { formatRupiah, getStatusBadge } from "./utils"
 
 export default function LaporanPage() {
   const {
@@ -36,6 +43,19 @@ export default function LaporanPage() {
     handleExport,
   } = useLaporan()
 
+  const sections = buildLaporanSections(data, activeTab)
+
+  const grand = sections.reduce(
+    (sum, s) => ({
+      jumlah: sum.jumlah + s.jumlah,
+      total: sum.total + s.total,
+      stok: sum.stok + s.stok,
+      keluar: sum.keluar + s.keluar,
+      sisa: sum.sisa + s.sisa,
+    }),
+    { jumlah: 0, total: 0, stok: 0, keluar: 0, sisa: 0 }
+  )
+
   return (
     <DashboardLayout title="Laporan">
       <PageActions>
@@ -43,6 +63,10 @@ export default function LaporanPage() {
           filters={filters}
           onFiltersChange={setFilters}
           onFetch={fetchData}
+          mode={activeTab === "stok" ? "stok" : "transaksi"}
+          showStatus={
+            activeTab === "permintaan" || activeTab === "pengajuan"
+          }
         />
         <Button
           variant="outline"
@@ -68,294 +92,401 @@ export default function LaporanPage() {
           </TabsList>
 
           <TabsContent value="permintaan">
-            <div className="space-y-4">
-              <LaporanTabCard
-                title="Laporan Permintaan Barang"
-                loading={loading}
-                hasData={data.length > 0}
-              >
-              <LaporanKategoriTables
-                tab="permintaan"
-                groups={groupLaporan(data, "permintaan")}
-                columns={[
-                  "Tanggal",
-                  "Unit",
-                  "Nama Barang",
-                  "Jumlah",
-                  "Satuan",
-                  "Status",
-                ]}
-                renderRow={(item) => (
-                  <TableRow key={Number(item.idPermintaan)}>
-                    <TableCell>
-                      {formatDate(String(item.tglPermintaan ?? ""))}
-                    </TableCell>
-                    <TableCell className="font-medium">
-                      {String(item.unit)}
-                    </TableCell>
-                    <TableCell>
-                      {(item.stokbarang as { namaBrg?: string })?.namaBrg ?? ""}
-                    </TableCell>
-                    <TableCell>{String(item.jumlah)}</TableCell>
-                    <TableCell>
-                      {(item.stokbarang as { satuan?: string })?.satuan ?? ""}
-                    </TableCell>
-                    <TableCell>
-                      {getStatusBadge(Number(item.status ?? 0))}
-                    </TableCell>
-                  </TableRow>
-                )}
-                renderSubtotal={(group) => (
-                  <TableRow>
-                    <TableCell colSpan={3} className="font-medium">
-                      Subtotal
-                    </TableCell>
-                    <TableCell className="font-medium">{group.jumlah}</TableCell>
-                    <TableCell colSpan={2} />
-                  </TableRow>
-                )}
-              />
-              </LaporanTabCard>
-              <TablePagination
-                page={page}
-                totalPages={totalPages}
-                total={total}
-                pageSize={pageSize}
-                onPageChange={setPage}
-              />
-            </div>
+            <TransaksiTab
+              title="Laporan Permintaan Barang"
+              loading={loading}
+              hasData={data.length > 0}
+              tab="permintaan"
+              sections={sections}
+              columns={["Nama Barang", "Jumlah", "Satuan", "User", "Status"]}
+              formatSectionTitle={formatMonthLabel}
+              renderRow={(item) => (
+                <>
+                  <TableCell>
+                    {(item.stokbarang as { namaBrg?: string })?.namaBrg ?? ""}
+                  </TableCell>
+                  <TableCell>{String(item.jumlah)}</TableCell>
+                  <TableCell>
+                    {(item.stokbarang as { satuan?: string })?.satuan ?? ""}
+                  </TableCell>
+                  <TableCell>{unitLabel(item)}</TableCell>
+                  <TableCell>
+                    {getStatusBadge(Number(item.status ?? 0))}
+                  </TableCell>
+                </>
+              )}
+              renderLeafSubtotal={(group) => (
+                <SubtotalRow label={`Subtotal ${group.label}`} colSpanLabel={1}>
+                  <TableCell className="font-medium">{group.jumlah}</TableCell>
+                  <TableCell />
+                  <TableCell />
+                  <TableCell />
+                </SubtotalRow>
+              )}
+              renderSectionSubtotal={(section) => (
+                <SubtotalRow
+                  label={`Subtotal ${formatMonthLabel(section.title)}`}
+                  colSpanLabel={1}
+                  tone="section"
+                >
+                  <TableCell className="font-medium">{section.jumlah}</TableCell>
+                  <TableCell />
+                  <TableCell />
+                  <TableCell />
+                </SubtotalRow>
+              )}
+              renderGrandTotal={() => (
+                <SubtotalRow
+                  label="Total keseluruhan"
+                  colSpanLabel={1}
+                  tone="grand"
+                >
+                  <TableCell className="font-medium">{grand.jumlah}</TableCell>
+                  <TableCell />
+                  <TableCell />
+                  <TableCell />
+                </SubtotalRow>
+              )}
+              page={page}
+              totalPages={totalPages}
+              total={total}
+              pageSize={pageSize}
+              onPageChange={setPage}
+            />
           </TabsContent>
 
           <TabsContent value="pengajuan">
-            <div className="space-y-4">
-              <LaporanTabCard
-                title="Laporan Pengajuan Barang"
-                loading={loading}
-                hasData={data.length > 0}
-              >
-              <LaporanKategoriTables
-                tab="pengajuan"
-                groups={groupLaporan(data, "pengajuan")}
-                columns={[
-                  "Tanggal",
-                  "Unit",
-                  "Nama Barang",
-                  "Jumlah",
-                  "Satuan",
-                  "Harga",
-                  "Total",
-                  "Status",
-                ]}
-                renderRow={(item) => (
-                  <TableRow key={Number(item.idPengajuan)}>
-                    <TableCell>
-                      {formatDate(String(item.tglPengajuan ?? ""))}
-                    </TableCell>
-                    <TableCell className="font-medium">
-                      {String(item.unit)}
-                    </TableCell>
-                    <TableCell>
-                      {(item.stokbarang as { namaBrg?: string })?.namaBrg ?? ""}
-                    </TableCell>
-                    <TableCell>{String(item.jumlah)}</TableCell>
-                    <TableCell>{String(item.satuan)}</TableCell>
-                    <TableCell>
-                      {formatRupiah(Number(item.hargabarang ?? 0))}
-                    </TableCell>
-                    <TableCell className="font-medium">
-                      {formatRupiah(Number(item.total ?? 0))}
-                    </TableCell>
-                    <TableCell>
-                      {getStatusBadge(Number(item.status ?? 0))}
-                    </TableCell>
-                  </TableRow>
-                )}
-                renderSubtotal={(group) => (
-                  <TableRow>
-                    <TableCell colSpan={3} className="font-medium">
-                      Subtotal
-                    </TableCell>
-                    <TableCell className="font-medium">{group.jumlah}</TableCell>
-                    <TableCell />
-                    <TableCell />
-                    <TableCell className="font-medium">
-                      {formatRupiah(group.total)}
-                    </TableCell>
-                    <TableCell />
-                  </TableRow>
-                )}
-              />
-              </LaporanTabCard>
-              <TablePagination
-                page={page}
-                totalPages={totalPages}
-                total={total}
-                pageSize={pageSize}
-                onPageChange={setPage}
-              />
-            </div>
+            <TransaksiTab
+              title="Laporan Pengajuan Barang"
+              loading={loading}
+              hasData={data.length > 0}
+              tab="pengajuan"
+              sections={sections}
+              columns={[
+                "Nama Barang",
+                "Jumlah",
+                "Satuan",
+                "Harga",
+                "Total",
+                "User",
+                "Status",
+              ]}
+              formatSectionTitle={formatMonthLabel}
+              renderRow={(item) => (
+                <>
+                  <TableCell>
+                    {(item.stokbarang as { namaBrg?: string })?.namaBrg ?? ""}
+                  </TableCell>
+                  <TableCell>{String(item.jumlah)}</TableCell>
+                  <TableCell>{String(item.satuan)}</TableCell>
+                  <TableCell>
+                    {formatRupiah(Number(item.hargabarang ?? 0))}
+                  </TableCell>
+                  <TableCell className="font-medium">
+                    {formatRupiah(Number(item.total ?? 0))}
+                  </TableCell>
+                  <TableCell>{unitLabel(item)}</TableCell>
+                  <TableCell>
+                    {getStatusBadge(Number(item.status ?? 0))}
+                  </TableCell>
+                </>
+              )}
+              renderLeafSubtotal={(group) => (
+                <SubtotalRow label={`Subtotal ${group.label}`} colSpanLabel={1}>
+                  <TableCell className="font-medium">{group.jumlah}</TableCell>
+                  <TableCell />
+                  <TableCell />
+                  <TableCell className="font-medium">
+                    {formatRupiah(group.total)}
+                  </TableCell>
+                  <TableCell />
+                  <TableCell />
+                </SubtotalRow>
+              )}
+              renderSectionSubtotal={(section) => (
+                <SubtotalRow
+                  label={`Subtotal ${formatMonthLabel(section.title)}`}
+                  colSpanLabel={1}
+                  tone="section"
+                >
+                  <TableCell className="font-medium">{section.jumlah}</TableCell>
+                  <TableCell />
+                  <TableCell />
+                  <TableCell className="font-medium">
+                    {formatRupiah(section.total)}
+                  </TableCell>
+                  <TableCell />
+                  <TableCell />
+                </SubtotalRow>
+              )}
+              renderGrandTotal={() => (
+                <SubtotalRow
+                  label="Total keseluruhan"
+                  colSpanLabel={1}
+                  tone="grand"
+                >
+                  <TableCell className="font-medium">{grand.jumlah}</TableCell>
+                  <TableCell />
+                  <TableCell />
+                  <TableCell className="font-medium">
+                    {formatRupiah(grand.total)}
+                  </TableCell>
+                  <TableCell />
+                  <TableCell />
+                </SubtotalRow>
+              )}
+              page={page}
+              totalPages={totalPages}
+              total={total}
+              pageSize={pageSize}
+              onPageChange={setPage}
+            />
           </TabsContent>
 
           <TabsContent value="pemasukan">
-            <div className="space-y-4">
-              <LaporanTabCard
-                title="Laporan Pemasukan Barang"
-                loading={loading}
-                hasData={data.length > 0}
-              >
-              <LaporanKategoriTables
-                tab="pemasukan"
-                groups={groupLaporan(data, "pemasukan")}
-                columns={["Tanggal", "Unit", "Nama Barang", "Jumlah", "Satuan"]}
-                renderRow={(item) => (
-                  <TableRow key={`pemasukan-${String(item.id)}`}>
-                    <TableCell>
-                      {formatDate(String(item.tglMasuk ?? ""))}
-                    </TableCell>
-                    <TableCell className="font-medium">
-                      {String(item.unit)}
-                    </TableCell>
-                    <TableCell>
-                      {(item.stokbarang as { namaBrg?: string })?.namaBrg ?? ""}
-                    </TableCell>
-                    <TableCell>{String(item.jumlah)}</TableCell>
-                    <TableCell>
-                      {(item.stokbarang as { satuan?: string })?.satuan ?? ""}
-                    </TableCell>
-                  </TableRow>
-                )}
-                renderSubtotal={(group) => (
-                  <TableRow>
-                    <TableCell colSpan={3} className="font-medium">
-                      Subtotal
-                    </TableCell>
-                    <TableCell className="font-medium">{group.jumlah}</TableCell>
-                    <TableCell />
-                  </TableRow>
-                )}
-              />
-              </LaporanTabCard>
-              <TablePagination
-                page={page}
-                totalPages={totalPages}
-                total={total}
-                pageSize={pageSize}
-                onPageChange={setPage}
-              />
-            </div>
+            <TransaksiTab
+              title="Laporan Pemasukan Barang"
+              loading={loading}
+              hasData={data.length > 0}
+              tab="pemasukan"
+              sections={sections}
+              columns={["Nama Barang", "Jumlah", "Satuan", "User"]}
+              formatSectionTitle={formatMonthLabel}
+              renderRow={(item) => (
+                <>
+                  <TableCell>
+                    {(item.stokbarang as { namaBrg?: string })?.namaBrg ?? ""}
+                  </TableCell>
+                  <TableCell>{String(item.jumlah)}</TableCell>
+                  <TableCell>
+                    {(item.stokbarang as { satuan?: string })?.satuan ?? ""}
+                  </TableCell>
+                  <TableCell>{unitLabel(item)}</TableCell>
+                </>
+              )}
+              renderLeafSubtotal={(group) => (
+                <SubtotalRow label={`Subtotal ${group.label}`} colSpanLabel={1}>
+                  <TableCell className="font-medium">{group.jumlah}</TableCell>
+                  <TableCell />
+                  <TableCell />
+                </SubtotalRow>
+              )}
+              renderSectionSubtotal={(section) => (
+                <SubtotalRow
+                  label={`Subtotal ${formatMonthLabel(section.title)}`}
+                  colSpanLabel={1}
+                  tone="section"
+                >
+                  <TableCell className="font-medium">{section.jumlah}</TableCell>
+                  <TableCell />
+                  <TableCell />
+                </SubtotalRow>
+              )}
+              renderGrandTotal={() => (
+                <SubtotalRow
+                  label="Total keseluruhan"
+                  colSpanLabel={1}
+                  tone="grand"
+                >
+                  <TableCell className="font-medium">{grand.jumlah}</TableCell>
+                  <TableCell />
+                  <TableCell />
+                </SubtotalRow>
+              )}
+              page={page}
+              totalPages={totalPages}
+              total={total}
+              pageSize={pageSize}
+              onPageChange={setPage}
+            />
           </TabsContent>
 
           <TabsContent value="pengeluaran">
-            <div className="space-y-4">
-              <LaporanTabCard
-                title="Laporan Pengeluaran Barang"
-                loading={loading}
-                hasData={data.length > 0}
-              >
-              <LaporanKategoriTables
-                tab="pengeluaran"
-                groups={groupLaporan(data, "pengeluaran")}
-                columns={["Tanggal", "Unit", "Nama Barang", "Jumlah", "Satuan"]}
-                renderRow={(item) => (
-                  <TableRow key={`pengeluaran-${String(item.id)}`}>
-                    <TableCell>
-                      {formatDate(String(item.tglKeluar ?? ""))}
-                    </TableCell>
-                    <TableCell className="font-medium">
-                      {String(item.unit)}
-                    </TableCell>
-                    <TableCell>
-                      {(item.stokbarang as { namaBrg?: string })?.namaBrg ?? ""}
-                    </TableCell>
-                    <TableCell>{String(item.jumlah)}</TableCell>
-                    <TableCell>
-                      {(item.stokbarang as { satuan?: string })?.satuan ?? ""}
-                    </TableCell>
-                  </TableRow>
-                )}
-                renderSubtotal={(group) => (
-                  <TableRow>
-                    <TableCell colSpan={3} className="font-medium">
-                      Subtotal
-                    </TableCell>
-                    <TableCell className="font-medium">{group.jumlah}</TableCell>
-                    <TableCell />
-                  </TableRow>
-                )}
-              />
-              </LaporanTabCard>
-              <TablePagination
-                page={page}
-                totalPages={totalPages}
-                total={total}
-                pageSize={pageSize}
-                onPageChange={setPage}
-              />
-            </div>
+            <TransaksiTab
+              title="Laporan Pengeluaran Barang"
+              loading={loading}
+              hasData={data.length > 0}
+              tab="pengeluaran"
+              sections={sections}
+              columns={["Nama Barang", "Jumlah", "Satuan", "User"]}
+              formatSectionTitle={formatMonthLabel}
+              renderRow={(item) => (
+                <>
+                  <TableCell>
+                    {(item.stokbarang as { namaBrg?: string })?.namaBrg ?? ""}
+                  </TableCell>
+                  <TableCell>{String(item.jumlah)}</TableCell>
+                  <TableCell>
+                    {(item.stokbarang as { satuan?: string })?.satuan ?? ""}
+                  </TableCell>
+                  <TableCell>{unitLabel(item)}</TableCell>
+                </>
+              )}
+              renderLeafSubtotal={(group) => (
+                <SubtotalRow label={`Subtotal ${group.label}`} colSpanLabel={1}>
+                  <TableCell className="font-medium">{group.jumlah}</TableCell>
+                  <TableCell />
+                  <TableCell />
+                </SubtotalRow>
+              )}
+              renderSectionSubtotal={(section) => (
+                <SubtotalRow
+                  label={`Subtotal ${formatMonthLabel(section.title)}`}
+                  colSpanLabel={1}
+                  tone="section"
+                >
+                  <TableCell className="font-medium">{section.jumlah}</TableCell>
+                  <TableCell />
+                  <TableCell />
+                </SubtotalRow>
+              )}
+              renderGrandTotal={() => (
+                <SubtotalRow
+                  label="Total keseluruhan"
+                  colSpanLabel={1}
+                  tone="grand"
+                >
+                  <TableCell className="font-medium">{grand.jumlah}</TableCell>
+                  <TableCell />
+                  <TableCell />
+                </SubtotalRow>
+              )}
+              page={page}
+              totalPages={totalPages}
+              total={total}
+              pageSize={pageSize}
+              onPageChange={setPage}
+            />
           </TabsContent>
 
           <TabsContent value="stok">
-            <div className="space-y-4">
-              <LaporanTabCard
-                title="Laporan Stok Barang"
-                loading={loading}
-                hasData={data.length > 0}
-              >
-              <LaporanKategoriTables
-                tab="stok"
-                groups={groupLaporan(data, "stok")}
-                columns={[
-                  "Kode Barang",
-                  "Nama Barang",
-                  "Stok",
-                  "Keluar",
-                  "Sisa",
-                  "Satuan",
-                ]}
-                renderRow={(item) => (
-                  <TableRow key={Number(item.idKodeBrg)}>
-                    <TableCell>{String(item.kodeBrg)}</TableCell>
-                    <TableCell className="font-medium">
-                      {String(item.namaBrg)}
-                    </TableCell>
-                    <TableCell>{String(item.stok)}</TableCell>
-                    <TableCell>{String(item.keluar)}</TableCell>
-                    <TableCell
-                      className={
-                        Number(item.sisa) <= 10
-                          ? "font-semibold text-destructive"
-                          : "font-medium"
-                      }
-                    >
-                      {String(item.sisa)}
-                    </TableCell>
-                    <TableCell>{String(item.satuan)}</TableCell>
-                  </TableRow>
-                )}
-                renderSubtotal={(group) => (
-                  <TableRow>
-                    <TableCell colSpan={2} className="font-medium">
-                      Subtotal
-                    </TableCell>
-                    <TableCell className="font-medium">{group.stok}</TableCell>
-                    <TableCell className="font-medium">{group.keluar}</TableCell>
-                    <TableCell className="font-medium">{group.sisa}</TableCell>
-                    <TableCell />
-                  </TableRow>
-                )}
-              />
-              </LaporanTabCard>
-              <TablePagination
-                page={page}
-                totalPages={totalPages}
-                total={total}
-                pageSize={pageSize}
-                onPageChange={setPage}
-              />
-            </div>
+            <TransaksiTab
+              title="Laporan Stok Barang"
+              loading={loading}
+              hasData={data.length > 0}
+              tab="stok"
+              sections={sections}
+              columns={[
+                "Kode Barang",
+                "Nama Barang",
+                "Stok",
+                "Keluar",
+                "Sisa",
+                "Satuan",
+              ]}
+              renderRow={(item) => (
+                <>
+                  <TableCell>{String(item.kodeBrg)}</TableCell>
+                  <TableCell className="font-medium">
+                    {String(item.namaBrg)}
+                  </TableCell>
+                  <TableCell>{String(item.stok)}</TableCell>
+                  <TableCell>{String(item.keluar)}</TableCell>
+                  <TableCell
+                    className={
+                      Number(item.sisa) <= 10
+                        ? "font-semibold text-destructive"
+                        : "font-medium"
+                    }
+                  >
+                    {String(item.sisa)}
+                  </TableCell>
+                  <TableCell>{String(item.satuan)}</TableCell>
+                </>
+              )}
+              renderLeafSubtotal={(group) => (
+                <SubtotalRow
+                  label={`Subtotal ${group.label}`}
+                  colSpanLabel={2}
+                >
+                  <TableCell className="font-medium">{group.stok}</TableCell>
+                  <TableCell className="font-medium">{group.keluar}</TableCell>
+                  <TableCell className="font-medium">{group.sisa}</TableCell>
+                  <TableCell />
+                </SubtotalRow>
+              )}
+              renderGrandTotal={() => (
+                <SubtotalRow
+                  label="Total keseluruhan"
+                  colSpanLabel={2}
+                  tone="grand"
+                >
+                  <TableCell className="font-medium">{grand.stok}</TableCell>
+                  <TableCell className="font-medium">{grand.keluar}</TableCell>
+                  <TableCell className="font-medium">{grand.sisa}</TableCell>
+                  <TableCell />
+                </SubtotalRow>
+              )}
+              page={page}
+              totalPages={totalPages}
+              total={total}
+              pageSize={pageSize}
+              onPageChange={setPage}
+            />
           </TabsContent>
         </Tabs>
       </div>
     </DashboardLayout>
+  )
+}
+
+function TransaksiTab({
+  title,
+  loading,
+  hasData,
+  tab,
+  sections,
+  columns,
+  formatSectionTitle,
+  renderRow,
+  renderLeafSubtotal,
+  renderSectionSubtotal,
+  renderGrandTotal,
+  page,
+  totalPages,
+  total,
+  pageSize,
+  onPageChange,
+}: {
+  title: string
+  loading: boolean
+  hasData: boolean
+  tab: string
+  sections: LaporanSection[]
+  columns: string[]
+  formatSectionTitle?: (title: string) => string
+  renderRow: (item: Record<string, unknown>) => React.ReactNode
+  renderLeafSubtotal: (group: LaporanLeafGroup) => React.ReactNode
+  renderSectionSubtotal?: (section: LaporanSection) => React.ReactNode
+  renderGrandTotal?: () => React.ReactNode
+  page: number
+  totalPages: number
+  total: number
+  pageSize: number
+  onPageChange: (p: number) => void
+}) {
+  return (
+    <div className="space-y-4">
+      <LaporanTabCard title={title} loading={loading} hasData={hasData}>
+        <LaporanGroupedTables
+          tab={tab}
+          sections={sections}
+          columns={columns}
+          leafHeaderPrefix="Kategori"
+          formatSectionTitle={formatSectionTitle}
+          renderRow={(item) => <TableRow>{renderRow(item)}</TableRow>}
+          renderLeafSubtotal={renderLeafSubtotal}
+          renderSectionSubtotal={renderSectionSubtotal}
+          renderGrandTotal={hasData ? renderGrandTotal : undefined}
+        />
+      </LaporanTabCard>
+      <TablePagination
+        page={page}
+        totalPages={totalPages}
+        total={total}
+        pageSize={pageSize}
+        onPageChange={onPageChange}
+      />
+    </div>
   )
 }
