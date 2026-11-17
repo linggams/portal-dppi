@@ -14,10 +14,10 @@ export interface User {
   roleId: number
   level?: string
   managePurchasing: boolean
-  manageIt: boolean
+  manageItms: boolean
   manageMobil: boolean
   accessPurchasing: boolean
-  accessIt: boolean
+  accessItms: boolean
   accessMobil: boolean
   role: UserRole | null
 }

@@ -1,12 +1,13 @@
 # DPPI
 
-Aplikasi pengajuan barang (Purchasing) dan tiket gangguan IT — Next.js + PostgreSQL + Prisma.
+Aplikasi pengajuan barang (Purchasing), IT Management, dan administrasi operasional — Next.js + PostgreSQL + Prisma.
 
 ## Dokumentasi
 
 - [docs/SETUP.md](./docs/SETUP.md) — instalasi development & database
 - [docs/SERVICE-PM2.md](./docs/SERVICE-PM2.md) — production Windows (PM2)
 - [docs/architecture.md](./docs/architecture.md) — struktur modul & level user
+- [docs/itms.md](./docs/itms.md) — IT Management System
 
 ## Perintah cepat
 

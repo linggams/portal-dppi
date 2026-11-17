@@ -4,13 +4,13 @@ export type { ApplicantModules }
 
 export const EMPTY_APPLICANT_MODULES: ApplicantModules = {
   accessPurchasing: false,
-  accessIt: false,
+  accessItms: false,
   accessMobil: false,
 }
 
 export const ALL_APPLICANT_MODULES: ApplicantModules = {
   accessPurchasing: true,
-  accessIt: true,
+  accessItms: true,
   accessMobil: true,
 }
 
@@ -21,9 +21,9 @@ export const APPLICANT_MODULE_OPTIONS = [
     description: "Permintaan ATK, lihat stok",
   },
   {
-    key: "accessIt" as const,
-    label: "IT Support",
-    description: "Buat tiket, antrian gangguan",
+    key: "accessItms" as const,
+    label: "IT Management",
+    description: "Create tickets, knowledge base, my assets",
   },
   {
     key: "accessMobil" as const,
@@ -35,7 +35,7 @@ export const APPLICANT_MODULE_OPTIONS = [
 export function hasAnyApplicantModule(modules: ApplicantModules) {
   return (
     modules.accessPurchasing ||
-    modules.accessIt ||
+    modules.accessItms ||
     modules.accessMobil
   )
 }
@@ -47,7 +47,7 @@ function resolveApplicantModules(
   if (!isPemohon) return EMPTY_APPLICANT_MODULES
   return {
     accessPurchasing: Boolean(modules?.accessPurchasing),
-    accessIt: Boolean(modules?.accessIt),
+    accessItms: Boolean(modules?.accessItms),
     accessMobil: Boolean(modules?.accessMobil),
   }
 }

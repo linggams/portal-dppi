@@ -20,16 +20,20 @@ export function canAccessPlatform(input: AccessInput): boolean {
   return resolveCapabilities(input).platform
 }
 
-export function canAccessItStaff(input: AccessInput): boolean {
-  return resolveCapabilities(input).itStaff
-}
-
 export function canAccessPurchasingUser(input: AccessInput): boolean {
   return resolveCapabilities(input).purchasingUser
 }
 
-export function canAccessItUser(input: AccessInput): boolean {
-  return resolveCapabilities(input).itUser
+export function canAccessItmsStaff(input: AccessInput): boolean {
+  return resolveCapabilities(input).itmsStaff
+}
+
+export function canAccessItmsUser(input: AccessInput): boolean {
+  return resolveCapabilities(input).itmsUser
+}
+
+export function canAccessItms(input: AccessInput): boolean {
+  return canAccessItmsUser(input) || canAccessItmsStaff(input)
 }
 
 export function canManagePurchasingMaster(input: AccessInput): boolean {
@@ -55,7 +59,7 @@ export function getDefaultHomePath(input: AccessInput): string {
     return SYSTEM_ROLE_HOME_PATH.administrator
   }
   if (caps.purchasingUser) return "/purchasing/user/dashboard"
-  if (caps.itUser) return "/it/user/tiket"
+  if (caps.itmsUser) return "/itms/portal"
   if (caps.mobilUser) return "/mobil/user/laporan"
 
   return SYSTEM_ROLE_HOME_PATH.user
@@ -86,12 +90,12 @@ export function canAccessUiPath(input: AccessInput, pathname: string): boolean {
     return canHandlePurchasingWorkflow(input)
   }
 
-  if (pathname.startsWith("/it/staff")) {
-    return canAccessItStaff(input)
+  if (pathname.startsWith("/itms/console")) {
+    return canAccessItmsStaff(input)
   }
 
-  if (pathname.startsWith("/it/user")) {
-    return canAccessItUser(input)
+  if (pathname.startsWith("/itms/portal") || pathname.startsWith("/itms")) {
+    return canAccessItms(input)
   }
 
   if (pathname.startsWith("/mobil/user")) {

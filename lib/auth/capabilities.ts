@@ -5,13 +5,13 @@ import {
 
 export type ManagerModules = {
   managePurchasing: boolean
-  manageIt: boolean
+  manageItms: boolean
   manageMobil: boolean
 }
 
 export type ApplicantModules = {
   accessPurchasing: boolean
-  accessIt: boolean
+  accessItms: boolean
   accessMobil: boolean
 }
 
@@ -20,8 +20,8 @@ export type RoleCapabilities = {
   purchasingUser: boolean
   purchasingWorkflow: boolean
   purchasingMaster: boolean
-  itUser: boolean
-  itStaff: boolean
+  itmsUser: boolean
+  itmsStaff: boolean
   mobilUser: boolean
   mobilWorkflow: boolean
 }
@@ -38,8 +38,6 @@ export type RoleCapabilityFields = {
   canAccessPurchasingUser: boolean
   canHandlePurchasingWorkflow: boolean
   canManagePurchasingMaster: boolean
-  canAccessItUser: boolean
-  canAccessItStaff: boolean
 }
 
 export const EMPTY_CAPABILITIES: RoleCapabilities = {
@@ -47,8 +45,8 @@ export const EMPTY_CAPABILITIES: RoleCapabilities = {
   purchasingUser: false,
   purchasingWorkflow: false,
   purchasingMaster: false,
-  itUser: false,
-  itStaff: false,
+  itmsUser: false,
+  itmsStaff: false,
   mobilUser: false,
   mobilWorkflow: false,
 }
@@ -64,15 +62,15 @@ const SYSTEM_ROLE_CAPABILITIES: Record<AppUserLevel, RoleCapabilities> = {
     purchasingUser: true,
     purchasingWorkflow: true,
     purchasingMaster: true,
-    itUser: true,
-    itStaff: true,
+    itmsUser: true,
+    itmsStaff: true,
     mobilUser: true,
     mobilWorkflow: true,
   },
   user: {
     ...EMPTY_CAPABILITIES,
     purchasingUser: true,
-    itUser: true,
+    itmsUser: true,
     mobilUser: true,
   },
 }
@@ -82,29 +80,25 @@ export const SYSTEM_ROLES = [
     code: "administrator" as const,
     name: "Pengelola",
     description:
-      "Akses penuh: kelola user, stok, approve, tiket IT, dan mobil",
+      "Akses penuh: kelola user, stok, approve, IT Management, dan mobil",
     isSystem: true,
     homePath: SYSTEM_ROLE_HOME_PATH.administrator,
     canAccessPlatform: true,
     canAccessPurchasingUser: true,
     canHandlePurchasingWorkflow: true,
     canManagePurchasingMaster: true,
-    canAccessItUser: true,
-    canAccessItStaff: true,
   },
   {
     code: "user" as const,
     name: "Pemohon",
     description:
-      "Ajukan permintaan ATK, tiket gangguan, dan laporan KM mobil",
+      "Ajukan permintaan ATK, tiket IT Management, dan laporan KM mobil",
     isSystem: true,
     homePath: SYSTEM_ROLE_HOME_PATH.user,
     canAccessPlatform: false,
     canAccessPurchasingUser: true,
     canHandlePurchasingWorkflow: false,
     canManagePurchasingMaster: false,
-    canAccessItUser: true,
-    canAccessItStaff: false,
   },
 ] as const
 
@@ -120,8 +114,8 @@ export function capabilitiesFromRole(
     purchasingUser: role.canAccessPurchasingUser,
     purchasingWorkflow: role.canHandlePurchasingWorkflow,
     purchasingMaster: role.canManagePurchasingMaster,
-    itUser: role.canAccessItUser,
-    itStaff: role.canAccessItStaff,
+    itmsUser: false,
+    itmsStaff: false,
     mobilUser: false,
     mobilWorkflow: false,
   }
@@ -139,9 +133,8 @@ export function applyUserModules(
       purchasingUser: false,
       purchasingWorkflow: manager.managePurchasing,
       purchasingMaster: manager.managePurchasing,
-      itUser: false,
-      itStaff: manager.manageIt,
-      // Pengelola modul mobil juga boleh input laporan KM
+      itmsUser: false,
+      itmsStaff: manager.manageItms,
       mobilUser: manager.manageMobil,
       mobilWorkflow: manager.manageMobil,
     }
@@ -152,8 +145,8 @@ export function applyUserModules(
     purchasingUser: applicant.accessPurchasing,
     purchasingWorkflow: false,
     purchasingMaster: false,
-    itUser: applicant.accessIt,
-    itStaff: false,
+    itmsUser: applicant.accessItms,
+    itmsStaff: false,
     mobilUser: applicant.accessMobil,
     mobilWorkflow: false,
   }
@@ -162,7 +155,7 @@ export function applyUserModules(
 export function homePathFromCapabilities(caps: RoleCapabilities): string {
   if (caps.platform) return SYSTEM_ROLE_HOME_PATH.administrator
   if (caps.purchasingUser) return "/purchasing/user/dashboard"
-  if (caps.itUser) return "/it/user/tiket"
+  if (caps.itmsUser) return "/itms/portal"
   if (caps.mobilUser) return "/mobil/user/laporan"
   return "/unauthorized"
 }
@@ -176,6 +169,8 @@ export function hydrateCapabilities(
   return {
     ...EMPTY_CAPABILITIES,
     ...caps,
+    itmsUser: caps.itmsUser ?? false,
+    itmsStaff: caps.itmsStaff ?? false,
     mobilWorkflow: caps.mobilWorkflow ?? platform,
     mobilUser: caps.mobilUser ?? !platform,
   }

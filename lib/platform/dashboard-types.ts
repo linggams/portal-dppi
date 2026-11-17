@@ -2,7 +2,7 @@ export const STOK_KRITIS_THRESHOLD = 5
 export const DASHBOARD_LIST_LIMIT = 5
 export const DASHBOARD_LIST_DAYS = 30
 
-export type PlatformDashboardTab = "purchasing" | "it" | "mobil"
+export type PlatformDashboardTab = "purchasing" | "itms" | "mobil"
 
 export interface DashboardUserStats {
   total: number
@@ -34,11 +34,12 @@ export interface DashboardStokKritisItem {
   satuan: string
 }
 
-export interface DashboardTiketItem {
-  idTiket: number
-  nomorTiket: string
-  judul: string
-  status: number
+export interface DashboardItmsTicketItem {
+  idTicket: number
+  number: string
+  title: string
+  status: string
+  priority: string
 }
 
 export interface DashboardPurchasingStats {
@@ -50,12 +51,12 @@ export interface DashboardPurchasingStats {
   stokKritisTotal: number
 }
 
-export interface DashboardItStats {
+export interface DashboardItmsStats {
   total: number
-  baru: number
-  aktif: number
-  selesai: number
-  tiketBaru: DashboardTiketItem[]
+  open: number
+  unassigned: number
+  resolved: number
+  newTickets: DashboardItmsTicketItem[]
 }
 
 export interface DashboardMobilLaporanItem {
@@ -78,6 +79,6 @@ export interface DashboardMobilStats {
 export interface PlatformDashboardStats {
   users: DashboardUserStats
   purchasing: DashboardPurchasingStats
-  it: DashboardItStats
+  itms: DashboardItmsStats
   mobil: DashboardMobilStats
 }

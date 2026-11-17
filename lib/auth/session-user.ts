@@ -32,10 +32,10 @@ export function buildSessionAuthUser(user: {
   jabatan: string
   level: string
   managePurchasing?: boolean
-  manageIt?: boolean
+  manageItms?: boolean
   manageMobil?: boolean
   accessPurchasing?: boolean
-  accessIt?: boolean
+  accessItms?: boolean
   accessMobil?: boolean
   role?: RoleForSession | null
 }): SessionAuthUser {
@@ -47,12 +47,12 @@ export function buildSessionAuthUser(user: {
     roleCaps,
     {
       managePurchasing: Boolean(user.managePurchasing),
-      manageIt: Boolean(user.manageIt),
+      manageItms: Boolean(user.manageItms),
       manageMobil: Boolean(user.manageMobil),
     },
     {
       accessPurchasing: Boolean(user.accessPurchasing),
-      accessIt: Boolean(user.accessIt),
+      accessItms: Boolean(user.accessItms),
       accessMobil: Boolean(user.accessMobil),
     }
   )

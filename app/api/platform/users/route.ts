@@ -14,13 +14,13 @@ import { z } from "zod"
 
 const managerModulesSchema = z.object({
   managePurchasing: z.boolean(),
-  manageIt: z.boolean(),
+  manageItms: z.boolean(),
   manageMobil: z.boolean(),
 })
 
 const applicantModulesSchema = z.object({
   accessPurchasing: z.boolean(),
-  accessIt: z.boolean(),
+  accessItms: z.boolean(),
   accessMobil: z.boolean(),
 })
 

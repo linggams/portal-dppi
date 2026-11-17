@@ -56,7 +56,7 @@ const initialFormData: UserFormData = {
 function modulesFromUser(user: User): ManagerModules {
   return {
     managePurchasing: Boolean(user.managePurchasing),
-    manageIt: Boolean(user.manageIt),
+    manageItms: Boolean(user.manageItms),
     manageMobil: Boolean(user.manageMobil),
   }
 }
@@ -64,7 +64,7 @@ function modulesFromUser(user: User): ManagerModules {
 function accessModulesFromUser(user: User): ApplicantModules {
   return {
     accessPurchasing: Boolean(user.accessPurchasing),
-    accessIt: Boolean(user.accessIt),
+    accessItms: Boolean(user.accessItms),
     accessMobil: Boolean(user.accessMobil),
   }
 }

@@ -11,7 +11,6 @@ import { SYSTEM_ROLES } from '../lib/auth/capabilities'
 
 const databaseUrl = process.env.DATABASE_URL || 'postgresql://postgres:mokmok@localhost:5432/atk?schema=public'
 
-// Create PostgreSQL adapter for Prisma 7
 const pool = new Pool({ connectionString: databaseUrl })
 const adapter = new PrismaPg(pool)
 
@@ -34,8 +33,6 @@ async function main() {
         canAccessPurchasingUser: role.canAccessPurchasingUser,
         canHandlePurchasingWorkflow: role.canHandlePurchasingWorkflow,
         canManagePurchasingMaster: role.canManagePurchasingMaster,
-        canAccessItUser: role.canAccessItUser,
-        canAccessItStaff: role.canAccessItStaff,
       },
       create: { ...role },
     })
@@ -45,7 +42,6 @@ async function main() {
     where: { code: 'administrator' },
   })
 
-  // Seed User
   console.log('👤 Seeding User...')
   await prisma.user.upsert({
     where: { username: 'sheva' },
@@ -53,10 +49,10 @@ async function main() {
       roleId: adminRole.idRole,
       level: 'administrator',
       managePurchasing: true,
-      manageIt: true,
+      manageItms: true,
       manageMobil: true,
       accessPurchasing: false,
-      accessIt: false,
+      accessItms: false,
       accessMobil: false,
     },
     create: {
@@ -66,10 +62,10 @@ async function main() {
       jabatan: 'Purchasing',
       roleId: adminRole.idRole,
       managePurchasing: true,
-      manageIt: true,
+      manageItms: true,
       manageMobil: true,
       accessPurchasing: false,
-      accessIt: false,
+      accessItms: false,
       accessMobil: false,
     },
   })
@@ -83,10 +79,10 @@ async function main() {
       level: 'administrator',
       jabatan: 'Administrator',
       managePurchasing: true,
-      manageIt: true,
+      manageItms: true,
       manageMobil: true,
       accessPurchasing: true,
-      accessIt: true,
+      accessItms: true,
       accessMobil: true,
     },
     create: {
@@ -96,30 +92,51 @@ async function main() {
       jabatan: 'Administrator',
       roleId: adminRole.idRole,
       managePurchasing: true,
-      manageIt: true,
+      manageItms: true,
       manageMobil: true,
       accessPurchasing: true,
-      accessIt: true,
+      accessItms: true,
       accessMobil: true,
     },
   })
 
-  // Seed IT ticket categories
-  console.log('🎫 Seeding IT kategori...')
-  const itKategori = [
+  console.log('🎫 Seeding ITMS categories & SLA...')
+  const itmsCategories = [
     'Hardware',
     'Software',
-    'Jaringan / Internet',
-    'Email & Akun',
+    'Network',
+    'Email & Accounts',
     'Printer',
-    'Lainnya',
+    'Access Request',
+    'Other',
   ]
-
-  for (const nama of itKategori) {
-    const existing = await prisma.itTiketKategori.findFirst({ where: { nama } })
+  for (const name of itmsCategories) {
+    const existing = await prisma.itmsCategory.findFirst({ where: { name } })
     if (!existing) {
-      await prisma.itTiketKategori.create({ data: { nama, aktif: true } })
+      await prisma.itmsCategory.create({ data: { name, active: true } })
     }
+  }
+
+  const slaDefaults: Array<{
+    priority: 'p1' | 'p2' | 'p3' | 'p4'
+    responseMinutes: number
+    resolutionMinutes: number
+  }> = [
+    { priority: 'p1', responseMinutes: 15, resolutionMinutes: 240 },
+    { priority: 'p2', responseMinutes: 60, resolutionMinutes: 480 },
+    { priority: 'p3', responseMinutes: 240, resolutionMinutes: 1440 },
+    { priority: 'p4', responseMinutes: 480, resolutionMinutes: 2400 },
+  ]
+  for (const policy of slaDefaults) {
+    await prisma.itmsSlaPolicy.upsert({
+      where: { priority: policy.priority },
+      update: {
+        responseMinutes: policy.responseMinutes,
+        resolutionMinutes: policy.resolutionMinutes,
+        active: true,
+      },
+      create: { ...policy, active: true },
+    })
   }
 
   console.log('✅ Seed completed successfully!')

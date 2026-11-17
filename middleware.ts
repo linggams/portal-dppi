@@ -16,23 +16,20 @@ function getLegacyRedirect(pathname: string): string | null {
   if (pathname.startsWith("/admin/")) {
     return pathname.replace("/admin/", "/purchasing/admin/")
   }
-  if (pathname.startsWith("/user/tiket")) {
-    return pathname.replace("/user/tiket", "/it/user/tiket")
+  if (pathname.startsWith("/user/tiket") || pathname.startsWith("/it/user")) {
+    return "/itms/portal/tickets"
   }
   if (pathname.startsWith("/user/")) {
     return pathname.replace("/user/", "/purchasing/user/")
   }
-  if (pathname.startsWith("/it/user")) {
-    return null
+  if (pathname === "/it" || pathname.startsWith("/it/")) {
+    return pathname.startsWith("/it/staff")
+      ? "/itms/console"
+      : "/itms/portal"
   }
-  if (pathname === "/it/dashboard" || pathname === "/it/staff/dashboard") {
-    return "/it/staff/tiket"
-  }
-  if (pathname.startsWith("/it/staff")) {
-    return null
-  }
-  if (pathname.startsWith("/it/")) {
-    return pathname.replace("/it/", "/it/staff/")
+
+  if (pathname === "/itms") {
+    return "/itms/portal"
   }
 
   return null

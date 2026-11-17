@@ -17,9 +17,10 @@ import {
   ChevronRight,
   Inbox,
   List,
-  Wrench,
-  Monitor,
   Car,
+  Boxes,
+  Headset,
+  Shield,
 } from "lucide-react"
 import {
   Sidebar,
@@ -36,7 +37,6 @@ import {
   SidebarMenuSubButton,
   SidebarMenuSubItem,
   SidebarRail,
-  SidebarTrigger,
 } from "@/components/ui/sidebar"
 import {
   Collapsible,
@@ -47,8 +47,8 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { BrandMark } from "@/components/layout/BrandMark"
 import { USER_LEVEL_LABEL, normalizeUserLevel } from "@/lib/auth/user-level"
 import {
-  canAccessItStaff,
-  canAccessItUser,
+  canAccessItmsStaff,
+  canAccessItmsUser,
   canAccessMobilUser,
   canAccessPlatform,
   canAccessPurchasingUser,
@@ -206,42 +206,72 @@ function getUserPurchasingMenu(kategori: Kategori[]): NavLink[] {
   ]
 }
 
-function getStaffItMenu(): NavLink[] {
+function getItmsConsoleMenu(): NavLink[] {
   return [
     {
-      title: "Antrian",
-      href: "/it/staff/tiket",
+      title: "Dashboard",
+      href: "/itms/console",
+      icon: LayoutDashboard,
+    },
+    {
+      title: "Ticket Queue",
+      href: "/itms/console/tickets",
       icon: Inbox,
     },
     {
-      title: "Maintenance",
-      href: "/it/staff/maintenance",
-      icon: Wrench,
-    },
-    {
-      title: "Kategori",
-      href: "/it/staff/kategori",
+      title: "Categories",
+      href: "/itms/console/categories",
       icon: Tag,
     },
     {
-      title: "Laporan",
-      href: "/it/staff/laporan",
-      icon: BarChart3,
+      title: "SOP Register",
+      href: "/itms/console/sop",
+      icon: ClipboardList,
+    },
+    {
+      title: "NIST Mapping",
+      href: "/itms/console/nist",
+      icon: Shield,
+    },
+    {
+      title: "Assets",
+      href: "/itms/console/assets",
+      icon: Boxes,
     },
   ]
 }
 
-function getUserItMenu(): NavLink[] {
+function getItmsPortalMenu(): NavLink[] {
   return [
     {
-      title: "Tiket Saya",
-      href: "/it/user/tiket",
+      title: "Home",
+      href: "/itms/portal",
+      icon: LayoutDashboard,
+    },
+    {
+      title: "My Tickets",
+      href: "/itms/portal/tickets",
       icon: List,
     },
     {
-      title: "Antrian",
-      href: "/it/user/antrian",
-      icon: Inbox,
+      title: "Create Ticket",
+      href: "/itms/portal/tickets/new",
+      icon: Headset,
+    },
+    {
+      title: "SOP Library",
+      href: "/itms/portal/sop",
+      icon: ClipboardList,
+    },
+    {
+      title: "NIST Mapping",
+      href: "/itms/portal/nist",
+      icon: Shield,
+    },
+    {
+      title: "My Assets",
+      href: "/itms/portal/assets",
+      icon: Boxes,
     },
   ]
 }
@@ -449,9 +479,9 @@ export function AppSidebar() {
     return []
   }, [principal, kategori])
 
-  const itItems = useMemo(() => {
-    if (canAccessItStaff(principal)) return getStaffItMenu()
-    if (canAccessItUser(principal)) return getUserItMenu()
+  const itmsItems = useMemo(() => {
+    if (canAccessItmsStaff(principal)) return getItmsConsoleMenu()
+    if (canAccessItmsUser(principal)) return getItmsPortalMenu()
     return []
   }, [principal])
 
@@ -488,7 +518,6 @@ export function AppSidebar() {
     >
       <SidebarHeader className="group-data-[collapsible=icon]:items-center">
         <div className="flex h-10 w-full items-center gap-2 px-0 group-data-[collapsible=icon]:size-8 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-0">
-          <SidebarTrigger className="size-8 shrink-0" />
           <BrandMark className="h-10 min-w-0 flex-1 group-data-[collapsible=icon]:hidden" />
         </div>
       </SidebarHeader>
@@ -531,7 +560,7 @@ export function AppSidebar() {
         </SidebarGroup>
 
         {purchasingItems.length > 0 ||
-        itItems.length > 0 ||
+        itmsItems.length > 0 ||
         mobilItems.length > 0 ? (
           <SidebarGroup className="group-data-[collapsible=icon]:p-2">
             <SidebarGroupLabel>Modul</SidebarGroupLabel>
@@ -547,11 +576,11 @@ export function AppSidebar() {
                   />
                 ) : null}
 
-                {itItems.length > 0 ? (
+                {itmsItems.length > 0 ? (
                   <ModuleNav
-                    title="IT Support"
-                    icon={Monitor}
-                    items={itItems}
+                    title="IT Management"
+                    icon={Headset}
+                    items={itmsItems}
                     pathname={pathname}
                     search={search}
                   />

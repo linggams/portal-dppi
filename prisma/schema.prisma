@@ -21,8 +21,6 @@ model Role {
   canAccessPurchasingUser     Boolean @default(false) @map("can_access_purchasing_user")
   canHandlePurchasingWorkflow Boolean @default(false) @map("can_handle_purchasing_workflow")
   canManagePurchasingMaster   Boolean @default(false) @map("can_manage_purchasing_master")
-  canAccessItUser             Boolean @default(false) @map("can_access_it_user")
-  canAccessItStaff            Boolean @default(false) @map("can_access_it_staff")
 
   users User[]
 
@@ -33,14 +31,15 @@ model User {
   idUser   Int       @id @default(autoincrement()) @map("id_user")
   username String    @unique @db.VarChar(20)
   password String    @db.VarChar(255)
+  email    String?   @db.VarChar(120)
   level    UserLevel
   jabatan  String    @db.VarChar(50)
   roleId   Int       @map("id_role")
   managePurchasing Boolean @default(false) @map("manage_purchasing")
-  manageIt         Boolean @default(false) @map("manage_it")
+  manageItms       Boolean @default(false) @map("manage_itms")
   manageMobil      Boolean @default(false) @map("manage_mobil")
   accessPurchasing Boolean @default(false) @map("access_purchasing")
-  accessIt         Boolean @default(false) @map("access_it")
+  accessItms       Boolean @default(false) @map("access_itms")
   accessMobil      Boolean @default(false) @map("access_mobil")
 
   role Role @relation(fields: [roleId], references: [idRole], onDelete: Restrict)
@@ -50,11 +49,18 @@ model User {
   pengajuanSementara PengajuanSementara[]
   pemasukan Pemasukan[]
   pengeluaran Pengeluaran[]
-  tiket ItTiket[] @relation("TiketPemohon")
-  tiketDitugaskan ItTiket[] @relation("TiketPetugas")
-  tiketKomentar ItTiketKomentar[]
-  maintenanceLog ItMaintenanceLog[]
   laporanKm MobilLaporanKm[]
+  itmsTicketsRequested ItmsTicket[] @relation("ItmsTicketRequester")
+  itmsTicketsAssigned  ItmsTicket[] @relation("ItmsTicketAssignee")
+  itmsTicketComments   ItmsTicketComment[]
+  itmsTicketEvents     ItmsTicketEvent[]
+  itmsKbOwned          ItmsKbDocument[] @relation("ItmsKbOwner")
+  itmsKbVersionsAuthored ItmsKbVersion[] @relation("ItmsKbVersionAuthor")
+  itmsKbVersionsApproved ItmsKbVersion[] @relation("ItmsKbVersionApprover")
+  itmsKbAcknowledgments  ItmsKbAcknowledgment[]
+  itmsAssetsHeld         ItmsAsset[] @relation("ItmsAssetHolder")
+  itmsAssetAssignments   ItmsAssetAssignment[]
+  itmsNotifications      ItmsNotification[]
 
   @@index([roleId])
   @@map("user")
@@ -197,80 +203,312 @@ model Pengeluaran {
   @@index([idUser])
 }
 
-model ItTiketKategori {
-  idKategori Int      @id @default(autoincrement()) @map("id_kategori")
-  nama       String   @db.VarChar(100)
-  aktif      Boolean  @default(true)
-  tiket      ItTiket[]
-  maintenanceLog ItMaintenanceLog[]
+// ─── ITMS (IT Management System) ───
 
-  @@map("it_tiket_kategori")
+enum ItmsTicketType {
+  incident
+  service_request
 }
 
-model ItTiket {
-  idTiket    Int       @id @default(autoincrement()) @map("id_tiket")
-  nomorTiket String    @unique @map("nomor_tiket") @db.VarChar(20)
-  idPemohon  Int       @map("id_pemohon")
-  judul      String    @db.VarChar(200)
-  deskripsi  String    @db.Text
-  idKategori Int       @map("id_kategori")
-  status     Int       @default(0)
-  idPetugas  Int?      @map("id_petugas")
-  tglDibuat  DateTime  @default(now()) @map("tgl_dibuat")
-  tglDiupdate DateTime @updatedAt @map("tgl_diupdate")
-  tglSelesai DateTime? @map("tgl_selesai")
+enum ItmsTicketStatus {
+  new
+  assigned
+  in_progress
+  pending
+  resolved
+  closed
+  cancelled
+}
 
-  pemohon User @relation("TiketPemohon", fields: [idPemohon], references: [idUser], onDelete: Restrict)
-  petugas User? @relation("TiketPetugas", fields: [idPetugas], references: [idUser], onDelete: Restrict)
-  kategori ItTiketKategori @relation(fields: [idKategori], references: [idKategori])
-  komentar ItTiketKomentar[]
-  maintenanceLog ItMaintenanceLog[]
+enum ItmsPriority {
+  p1
+  p2
+  p3
+  p4
+}
 
-  @@map("it_tiket")
-  @@index([idPemohon])
+enum ItmsImpact {
+  high
+  medium
+  low
+}
+
+enum ItmsUrgency {
+  high
+  medium
+  low
+}
+
+model ItmsCategory {
+  idCategory      Int      @id @default(autoincrement()) @map("id_category")
+  name            String   @db.VarChar(100)
+  parentId        Int?     @map("parent_id")
+  active          Boolean  @default(true)
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  parent   ItmsCategory?  @relation("ItmsCategoryTree", fields: [parentId], references: [idCategory], onDelete: SetNull)
+  children ItmsCategory[] @relation("ItmsCategoryTree")
+  tickets  ItmsTicket[]
+
+  @@map("itms_category")
+  @@index([parentId])
+  @@index([active])
+}
+
+model ItmsSlaPolicy {
+  idPolicy           Int          @id @default(autoincrement()) @map("id_policy")
+  priority           ItmsPriority @unique
+  responseMinutes    Int          @map("response_minutes")
+  resolutionMinutes  Int          @map("resolution_minutes")
+  active             Boolean      @default(true)
+  createdAt          DateTime     @default(now()) @map("created_at")
+  updatedAt          DateTime     @updatedAt @map("updated_at")
+
+  tickets ItmsTicket[]
+
+  @@map("itms_sla_policy")
+}
+
+model ItmsTicket {
+  idTicket          Int              @id @default(autoincrement()) @map("id_ticket")
+  number            String           @unique @db.VarChar(32)
+  type              ItmsTicketType   @default(incident)
+  title             String           @db.VarChar(200)
+  description       String           @db.Text
+  idCategory        Int              @map("id_category")
+  impact            ItmsImpact       @default(low)
+  urgency           ItmsUrgency      @default(low)
+  priority          ItmsPriority     @default(p4)
+  status            ItmsTicketStatus @default(new)
+  idRequester       Int              @map("id_requester")
+  idAssignee        Int?             @map("id_assignee")
+  idSlaPolicy       Int?             @map("id_sla_policy")
+  idAsset           Int?             @map("id_asset")
+  idKbDocument      Int?             @map("id_kb_document")
+  dueResponseAt     DateTime?        @map("due_response_at")
+  dueResolutionAt   DateTime?        @map("due_resolution_at")
+  firstRespondedAt  DateTime?        @map("first_responded_at")
+  resolvedAt        DateTime?        @map("resolved_at")
+  closedAt          DateTime?        @map("closed_at")
+  pendingStartedAt  DateTime?        @map("pending_started_at")
+  slaPausedMinutes  Int              @default(0) @map("sla_paused_minutes")
+  csatScore         Int?             @map("csat_score")
+  csatComment       String?          @map("csat_comment") @db.VarChar(500)
+  createdAt         DateTime         @default(now()) @map("created_at")
+  updatedAt         DateTime         @updatedAt @map("updated_at")
+
+  category   ItmsCategory       @relation(fields: [idCategory], references: [idCategory])
+  requester  User               @relation("ItmsTicketRequester", fields: [idRequester], references: [idUser], onDelete: Restrict)
+  assignee   User?              @relation("ItmsTicketAssignee", fields: [idAssignee], references: [idUser], onDelete: Restrict)
+  slaPolicy  ItmsSlaPolicy?     @relation(fields: [idSlaPolicy], references: [idPolicy], onDelete: SetNull)
+  asset      ItmsAsset?         @relation(fields: [idAsset], references: [idAsset], onDelete: SetNull)
+  kbDocument ItmsKbDocument?    @relation(fields: [idKbDocument], references: [idDocument], onDelete: SetNull)
+  comments   ItmsTicketComment[]
+  events     ItmsTicketEvent[]
+
+  @@map("itms_ticket")
+  @@index([idRequester])
+  @@index([idAssignee])
   @@index([status])
-  @@index([idPetugas])
-  @@index([tglDibuat])
+  @@index([priority])
+  @@index([idCategory])
+  @@index([idAsset])
+  @@index([idKbDocument])
+  @@index([createdAt])
+  @@index([dueResolutionAt])
 }
 
-model ItTiketKomentar {
-  idKomentar Int      @id @default(autoincrement()) @map("id_komentar")
-  idTiket    Int      @map("id_tiket")
-  idUser     Int      @map("id_user")
-  pesan      String   @db.Text
-  tipe       String   @default("komentar") @db.VarChar(20)
-  tglDibuat  DateTime @default(now()) @map("tgl_dibuat")
+model ItmsTicketComment {
+  idComment  Int      @id @default(autoincrement()) @map("id_comment")
+  idTicket   Int      @map("id_ticket")
+  idAuthor   Int      @map("id_author")
+  body       String   @db.Text
+  isInternal Boolean  @default(false) @map("is_internal")
+  createdAt  DateTime @default(now()) @map("created_at")
 
-  penulis User    @relation(fields: [idUser], references: [idUser], onDelete: Restrict)
-  tiket   ItTiket @relation(fields: [idTiket], references: [idTiket], onDelete: Cascade)
+  ticket ItmsTicket @relation(fields: [idTicket], references: [idTicket], onDelete: Cascade)
+  author User       @relation(fields: [idAuthor], references: [idUser], onDelete: Restrict)
 
-  @@map("it_tiket_komentar")
-  @@index([idTiket])
+  @@map("itms_ticket_comment")
+  @@index([idTicket])
+  @@index([idAuthor])
 }
 
-model ItMaintenanceLog {
-  idMaintenance  Int      @id @default(autoincrement()) @map("id_maintenance")
-  idKategori     Int      @map("id_kategori")
-  idUser         Int      @map("id_user")
-  tglKerja       DateTime @map("tgl_kerja")
-  jenisPekerjaan String?  @map("jenis_pekerjaan") @db.VarChar(30)
-  lokasi         String?  @db.VarChar(100)
-  judul          String   @db.VarChar(200)
-  uraian         String   @db.Text
-  durasiMenit    Int?     @map("durasi_menit")
-  hasil          String   @default("selesai") @db.VarChar(30)
-  idTiket        Int?     @map("id_tiket")
-  tglDibuat      DateTime @default(now()) @map("tgl_dibuat")
+model ItmsTicketEvent {
+  idEvent   Int      @id @default(autoincrement()) @map("id_event")
+  idTicket  Int      @map("id_ticket")
+  idActor   Int?     @map("id_actor")
+  type      String   @db.VarChar(50)
+  payload   Json?
+  createdAt DateTime @default(now()) @map("created_at")
 
-  pelaksana User             @relation(fields: [idUser], references: [idUser], onDelete: Restrict)
-  kategori  ItTiketKategori @relation(fields: [idKategori], references: [idKategori])
-  tiket     ItTiket?        @relation(fields: [idTiket], references: [idTiket], onDelete: SetNull)
+  ticket ItmsTicket @relation(fields: [idTicket], references: [idTicket], onDelete: Cascade)
+  actor  User?      @relation(fields: [idActor], references: [idUser], onDelete: SetNull)
 
-  @@map("it_maintenance_log")
-  @@index([idKategori])
+  @@map("itms_ticket_event")
+  @@index([idTicket])
+  @@index([createdAt])
+}
+
+enum ItmsKbKind {
+  sop
+  article
+}
+
+enum ItmsKbStatus {
+  draft
+  in_review
+  published
+  archived
+}
+
+enum ItmsKbVisibility {
+  internal_all
+  it_only
+}
+
+model ItmsKbDocument {
+  idDocument       Int              @id @default(autoincrement()) @map("id_document")
+  kind             ItmsKbKind
+  number           String?          @db.VarChar(40)
+  title            String           @db.VarChar(200)
+  idOwner          Int              @map("id_owner")
+  status           ItmsKbStatus     @default(draft)
+  visibility       ItmsKbVisibility @default(internal_all)
+  idCurrentVersion Int?             @unique @map("id_current_version")
+  effectiveDate    DateTime?        @map("effective_date") @db.Date
+  nextReviewAt     DateTime?        @map("next_review_at") @db.Date
+  tags             String           @default("") @db.VarChar(255)
+  helpfulYes       Int              @default(0) @map("helpful_yes")
+  helpfulNo        Int              @default(0) @map("helpful_no")
+  createdAt        DateTime         @default(now()) @map("created_at")
+  updatedAt        DateTime         @updatedAt @map("updated_at")
+
+  owner          User              @relation("ItmsKbOwner", fields: [idOwner], references: [idUser], onDelete: Restrict)
+  currentVersion ItmsKbVersion?    @relation("ItmsKbCurrentVersion", fields: [idCurrentVersion], references: [idVersion], onDelete: SetNull)
+  versions       ItmsKbVersion[]   @relation("ItmsKbDocumentVersions")
+  acknowledgments ItmsKbAcknowledgment[]
+  tickets        ItmsTicket[]
+
+  @@map("itms_kb_document")
+  @@index([kind])
+  @@index([status])
+  @@index([idOwner])
+  @@index([title])
+}
+
+model ItmsKbVersion {
+  idVersion    Int      @id @default(autoincrement()) @map("id_version")
+  idDocument   Int      @map("id_document")
+  version      Int
+  body         String   @db.Text
+  changeNote   String   @default("") @map("change_note") @db.VarChar(255)
+  idAuthor     Int      @map("id_author")
+  idApprovedBy Int?     @map("id_approved_by")
+  approvedAt   DateTime? @map("approved_at")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  document   ItmsKbDocument @relation("ItmsKbDocumentVersions", fields: [idDocument], references: [idDocument], onDelete: Cascade)
+  author     User           @relation("ItmsKbVersionAuthor", fields: [idAuthor], references: [idUser], onDelete: Restrict)
+  approvedBy User?          @relation("ItmsKbVersionApprover", fields: [idApprovedBy], references: [idUser], onDelete: SetNull)
+  currentFor ItmsKbDocument? @relation("ItmsKbCurrentVersion")
+  acknowledgments ItmsKbAcknowledgment[]
+
+  @@unique([idDocument, version])
+  @@map("itms_kb_version")
+  @@index([idDocument])
+  @@index([idAuthor])
+}
+
+model ItmsKbAcknowledgment {
+  idAck        Int      @id @default(autoincrement()) @map("id_ack")
+  idVersion    Int      @map("id_version")
+  idDocument   Int      @map("id_document")
+  idUser       Int      @map("id_user")
+  acknowledgedAt DateTime @default(now()) @map("acknowledged_at")
+
+  version  ItmsKbVersion  @relation(fields: [idVersion], references: [idVersion], onDelete: Cascade)
+  document ItmsKbDocument @relation(fields: [idDocument], references: [idDocument], onDelete: Cascade)
+  user     User           @relation(fields: [idUser], references: [idUser], onDelete: Cascade)
+
+  @@unique([idVersion, idUser])
+  @@map("itms_kb_acknowledgment")
+  @@index([idDocument])
   @@index([idUser])
-  @@index([tglKerja])
-  @@index([idTiket])
+}
+
+enum ItmsAssetStatus {
+  in_stock
+  assigned
+  in_repair
+  retired
+  disposed
+  lost
+}
+
+model ItmsAsset {
+  idAsset       Int             @id @default(autoincrement()) @map("id_asset")
+  tag           String          @unique @db.VarChar(40)
+  type          String          @db.VarChar(50)
+  serialNumber  String?         @map("serial_number") @db.VarChar(100)
+  brand         String          @default("") @db.VarChar(80)
+  model         String          @default("") @db.VarChar(80)
+  specs         String          @default("") @db.Text
+  purchaseDate  DateTime?       @map("purchase_date") @db.Date
+  purchasePrice Decimal?        @map("purchase_price") @db.Decimal(14, 2)
+  vendor        String          @default("") @db.VarChar(100)
+  warrantyUntil DateTime?       @map("warranty_until") @db.Date
+  location      String          @default("") @db.VarChar(100)
+  status        ItmsAssetStatus @default(in_stock)
+  idHolder      Int?            @map("id_holder")
+  notes         String          @default("") @db.Text
+  createdAt     DateTime        @default(now()) @map("created_at")
+  updatedAt     DateTime        @updatedAt @map("updated_at")
+
+  holder      User?                 @relation("ItmsAssetHolder", fields: [idHolder], references: [idUser], onDelete: SetNull)
+  assignments ItmsAssetAssignment[]
+  tickets     ItmsTicket[]
+
+  @@map("itms_asset")
+  @@index([type])
+  @@index([status])
+  @@index([idHolder])
+  @@index([warrantyUntil])
+}
+
+model ItmsAssetAssignment {
+  idAssignment  Int       @id @default(autoincrement()) @map("id_assignment")
+  idAsset       Int       @map("id_asset")
+  idUser        Int       @map("id_user")
+  assignedAt    DateTime  @default(now()) @map("assigned_at")
+  returnedAt    DateTime? @map("returned_at")
+  conditionNote String    @default("") @map("condition_note") @db.VarChar(255)
+
+  asset ItmsAsset @relation(fields: [idAsset], references: [idAsset], onDelete: Cascade)
+  user  User      @relation(fields: [idUser], references: [idUser], onDelete: Restrict)
+
+  @@map("itms_asset_assignment")
+  @@index([idAsset])
+  @@index([idUser])
+  @@index([returnedAt])
+}
+
+model ItmsNotification {
+  idNotification Int       @id @default(autoincrement()) @map("id_notification")
+  idUser         Int       @map("id_user")
+  type           String    @db.VarChar(50)
+  title          String    @db.VarChar(200)
+  body           String    @db.VarChar(500)
+  href           String?   @db.VarChar(255)
+  readAt         DateTime? @map("read_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
+
+  user User @relation(fields: [idUser], references: [idUser], onDelete: Cascade)
+
+  @@map("itms_notification")
+  @@index([idUser, readAt])
+  @@index([createdAt])
 }
 
 model MobilJenis {

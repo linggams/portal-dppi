@@ -4,13 +4,13 @@ export type { ManagerModules }
 
 export const EMPTY_MANAGER_MODULES: ManagerModules = {
   managePurchasing: false,
-  manageIt: false,
+  manageItms: false,
   manageMobil: false,
 }
 
 export const ALL_MANAGER_MODULES: ManagerModules = {
   managePurchasing: true,
-  manageIt: true,
+  manageItms: true,
   manageMobil: true,
 }
 
@@ -21,9 +21,9 @@ export const MANAGER_MODULE_OPTIONS = [
     description: "Antrian, stok, approve ATK",
   },
   {
-    key: "manageIt" as const,
-    label: "IT Support",
-    description: "Antrian tiket, maintenance",
+    key: "manageItms" as const,
+    label: "IT Management",
+    description: "IT Management console",
   },
   {
     key: "manageMobil" as const,
@@ -35,7 +35,7 @@ export const MANAGER_MODULE_OPTIONS = [
 export function hasAnyManagerModule(modules: ManagerModules) {
   return (
     modules.managePurchasing ||
-    modules.manageIt ||
+    modules.manageItms ||
     modules.manageMobil
   )
 }
@@ -47,7 +47,7 @@ function resolveManagerModules(
   if (!isPengelola) return EMPTY_MANAGER_MODULES
   return {
     managePurchasing: Boolean(modules?.managePurchasing),
-    manageIt: Boolean(modules?.manageIt),
+    manageItms: Boolean(modules?.manageItms),
     manageMobil: Boolean(modules?.manageMobil),
   }
 }

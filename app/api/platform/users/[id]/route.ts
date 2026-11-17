@@ -11,13 +11,13 @@ import { z } from "zod"
 
 const managerModulesSchema = z.object({
   managePurchasing: z.boolean(),
-  manageIt: z.boolean(),
+  manageItms: z.boolean(),
   manageMobil: z.boolean(),
 })
 
 const applicantModulesSchema = z.object({
   accessPurchasing: z.boolean(),
-  accessIt: z.boolean(),
+  accessItms: z.boolean(),
   accessMobil: z.boolean(),
 })
 
@@ -135,10 +135,10 @@ export async function PUT(
         return NextResponse.json({ error: modulesResult.error }, { status: 400 })
       }
       updateData.managePurchasing = modulesResult.modules.managePurchasing
-      updateData.manageIt = modulesResult.modules.manageIt
+      updateData.manageItms = modulesResult.modules.manageItms
       updateData.manageMobil = modulesResult.modules.manageMobil
       updateData.accessPurchasing = modulesResult.modules.accessPurchasing
-      updateData.accessIt = modulesResult.modules.accessIt
+      updateData.accessItms = modulesResult.modules.accessItms
       updateData.accessMobil = modulesResult.modules.accessMobil
     }
 

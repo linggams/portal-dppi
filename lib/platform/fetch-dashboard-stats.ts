@@ -1,5 +1,4 @@
 import { prisma } from "@/lib/db/prisma"
-import { IT_TIKET_STATUS } from "@/lib/it/constants"
 import { fetchPermintaanGroups } from "@/lib/purchasing/permintaan-groups"
 import { fetchPengajuanGroups } from "@/lib/purchasing/pengajuan-groups"
 import { getTodayDateWIB } from "@/lib/purchasing/permintaan-daily-limit-types"
@@ -7,7 +6,7 @@ import {
   DASHBOARD_LIST_DAYS,
   DASHBOARD_LIST_LIMIT,
   STOK_KRITIS_THRESHOLD,
-  type DashboardItStats,
+  type DashboardItmsStats,
   type DashboardMobilStats,
   type DashboardPermintaanItem,
   type DashboardPengajuanItem,
@@ -152,47 +151,43 @@ async function fetchPurchasingStats(): Promise<DashboardPurchasingStats> {
   }
 }
 
-async function fetchItStats(): Promise<DashboardItStats> {
-  const [total, baru, aktif, selesai, tiketBaru] = await Promise.all([
-    prisma.itTiket.count(),
-    prisma.itTiket.count({ where: { status: IT_TIKET_STATUS.BARU } }),
-    prisma.itTiket.count({
-      where: {
-        status: {
-          in: [
-            IT_TIKET_STATUS.DITUGASKAN,
-            IT_TIKET_STATUS.SEDANG_DIKERJAKAN,
-            IT_TIKET_STATUS.MENUNGGU_USER,
-          ],
-        },
-      },
+async function fetchItmsStats(): Promise<DashboardItmsStats> {
+  const openStatuses = [
+    "new",
+    "assigned",
+    "in_progress",
+    "pending",
+  ] as const
+
+  const [total, open, unassigned, resolved, newTickets] = await Promise.all([
+    prisma.itmsTicket.count(),
+    prisma.itmsTicket.count({ where: { status: { in: [...openStatuses] } } }),
+    prisma.itmsTicket.count({
+      where: { status: { in: [...openStatuses] }, idAssignee: null },
     }),
-    prisma.itTiket.count({
-      where: {
-        status: {
-          in: [IT_TIKET_STATUS.SELESAI, IT_TIKET_STATUS.DITUTUP],
-        },
-      },
+    prisma.itmsTicket.count({
+      where: { status: { in: ["resolved", "closed"] } },
     }),
-    prisma.itTiket.findMany({
-      where: { status: IT_TIKET_STATUS.BARU },
-      orderBy: { tglDibuat: "desc" },
+    prisma.itmsTicket.findMany({
+      where: { status: "new" },
+      orderBy: { createdAt: "desc" },
       take: DASHBOARD_LIST_LIMIT,
       select: {
-        idTiket: true,
-        nomorTiket: true,
-        judul: true,
+        idTicket: true,
+        number: true,
+        title: true,
         status: true,
+        priority: true,
       },
     }),
   ])
 
   return {
     total,
-    baru,
-    aktif,
-    selesai,
-    tiketBaru,
+    open,
+    unassigned,
+    resolved,
+    newTickets,
   }
 }
 
@@ -252,12 +247,12 @@ async function fetchMobilStats(): Promise<DashboardMobilStats> {
 }
 
 export async function fetchPlatformDashboardStats(): Promise<PlatformDashboardStats> {
-  const [users, purchasing, it, mobil] = await Promise.all([
+  const [users, purchasing, itms, mobil] = await Promise.all([
     fetchUserStats(),
     fetchPurchasingStats(),
-    fetchItStats(),
+    fetchItmsStats(),
     fetchMobilStats(),
   ])
 
-  return { users, purchasing, it, mobil }
+  return { users, purchasing, itms, mobil }
 }

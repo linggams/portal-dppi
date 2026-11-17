@@ -12,7 +12,7 @@ import {
 import { DashboardPendingPermintaanList } from "@/components/dashboard/pending-permintaan-list"
 import { DashboardPendingPengajuanList } from "@/components/dashboard/pending-pengajuan-list"
 import { DashboardStokKritisList } from "@/components/dashboard/stok-kritis-list"
-import { DashboardTiketBaruList } from "@/components/dashboard/tiket-baru-list"
+import { DashboardItmsBaruList } from "@/components/dashboard/itms-baru-list"
 import { DashboardMobilLaporanList } from "@/components/dashboard/mobil-laporan-list"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -20,18 +20,18 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
   canHandleMobilWorkflow,
   canHandlePurchasingWorkflow,
-  canAccessItStaff,
+  canAccessItmsStaff,
 } from "@/lib/auth/permissions"
 import type {
   PlatformDashboardStats,
   PlatformDashboardTab,
 } from "@/lib/platform/dashboard-types"
 
-const TAB_ORDER: PlatformDashboardTab[] = ["purchasing", "it", "mobil"]
+const TAB_ORDER: PlatformDashboardTab[] = ["purchasing", "itms", "mobil"]
 
 function isDashboardTab(value: string | null): value is PlatformDashboardTab {
   return (
-    value === "purchasing" || value === "it" || value === "mobil"
+    value === "purchasing" || value === "itms" || value === "mobil"
   )
 }
 
@@ -66,7 +66,7 @@ function PlatformDashboardContent() {
     if (!principal) return TAB_ORDER
     const tabs: PlatformDashboardTab[] = []
     if (canHandlePurchasingWorkflow(principal)) tabs.push("purchasing")
-    if (canAccessItStaff(principal)) tabs.push("it")
+    if (canAccessItmsStaff(principal)) tabs.push("itms")
     if (canHandleMobilWorkflow(principal)) tabs.push("mobil")
     return tabs.length > 0 ? tabs : TAB_ORDER
   }, [principal])
@@ -122,10 +122,10 @@ function PlatformDashboardContent() {
               {!loading ? badge(stats?.purchasing.permintaanPendingToday) : ""}
             </TabsTrigger>
           ) : null}
-          {availableTabs.includes("it") ? (
-            <TabsTrigger value="it">
-              IT Support
-              {!loading ? badge(stats?.it.baru) : ""}
+          {availableTabs.includes("itms") ? (
+            <TabsTrigger value="itms">
+              IT Management
+              {!loading ? badge(stats?.itms.open) : ""}
             </TabsTrigger>
           ) : null}
           {availableTabs.includes("mobil") ? (
@@ -231,24 +231,27 @@ function PlatformDashboardContent() {
           </Tabs>
         </TabsContent>
 
-        <TabsContent value="it" className="space-y-6">
+        <TabsContent value="itms" className="space-y-6">
           {loading ? (
             <StatsSkeleton />
           ) : (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <StatCard label="Tiket Baru" value={stats?.it.baru ?? 0} />
-              <StatCard label="Sedang Diproses" value={stats?.it.aktif ?? 0} />
-              <StatCard label="Selesai" value={stats?.it.selesai ?? 0} />
-              <StatCard label="Total Tiket" value={stats?.it.total ?? 0} />
+              <StatCard
+                label="New"
+                value={stats?.itms.newTickets.length ?? 0}
+              />
+              <StatCard label="Open" value={stats?.itms.open ?? 0} />
+              <StatCard label="Unassigned" value={stats?.itms.unassigned ?? 0} />
+              <StatCard label="Total" value={stats?.itms.total ?? 0} />
             </div>
           )}
 
           <section className="space-y-3">
-            <h2 className="text-sm font-medium">Tiket IT Baru</h2>
+            <h2 className="text-sm font-medium">New IT tickets</h2>
             {loading ? (
               <Skeleton className="h-48" />
             ) : (
-              <DashboardTiketBaruList items={stats?.it.tiketBaru ?? []} />
+              <DashboardItmsBaruList items={stats?.itms.newTickets ?? []} />
             )}
           </section>
         </TabsContent>
