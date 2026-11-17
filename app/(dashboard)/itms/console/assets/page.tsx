@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react"
 import Link from "next/link"
-import { Eye, Plus } from "lucide-react"
+import { Eye } from "lucide-react"
 import { DashboardLayout, ContentEmpty, PageActions } from "@/components/layout"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -66,10 +66,7 @@ export default function ItmsConsoleAssetsPage() {
     <DashboardLayout title="Assets">
       <PageActions>
         <Button asChild>
-          <Link href="/itms/console/assets/new">
-            <Plus className="size-4" />
-            Add asset
-          </Link>
+          <Link href="/itms/console/assets/new">Add asset</Link>
         </Button>
       </PageActions>
 

@@ -3,8 +3,8 @@ import { z } from "zod"
 import type { Prisma } from "@prisma/client"
 import { getSessionFromRequest } from "@/lib/get-session"
 import {
-  canAccessItms,
   canAccessItmsStaff,
+  canReadItmsLibrary,
 } from "@/lib/auth/permissions"
 import { prisma } from "@/lib/db/prisma"
 
@@ -61,7 +61,7 @@ export async function GET(
 ) {
   try {
     const session = await getSessionFromRequest(request)
-    if (!session || !canAccessItms(session.user)) {
+    if (!session || !canReadItmsLibrary(session.user)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
@@ -110,7 +110,7 @@ export async function PATCH(
 ) {
   try {
     const session = await getSessionFromRequest(request)
-    if (!session || !canAccessItms(session.user)) {
+    if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
@@ -132,6 +132,9 @@ export async function PATCH(
     const body = patchSchema.parse(await request.json())
 
     if (body.action === "acknowledge") {
+      if (!canReadItmsLibrary(session.user)) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+      }
       if (
         existing.status !== "published" ||
         !existing.currentVersion ||

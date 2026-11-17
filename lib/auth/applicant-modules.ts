@@ -23,7 +23,7 @@ export const APPLICANT_MODULE_OPTIONS = [
   {
     key: "accessItms" as const,
     label: "IT Management",
-    description: "Create tickets, browse SOPs, my assets",
+    description: "Create tickets, my assets (SOP & NIST readable for all pemohon)",
   },
   {
     key: "accessMobil" as const,

@@ -36,6 +36,13 @@ export function canAccessItms(input: AccessInput): boolean {
   return canAccessItmsUser(input) || canAccessItmsStaff(input)
 }
 
+/** Read-only SOP Register + NIST Mapping for any operational user (pemohon / staff). */
+export function canReadItmsLibrary(input: AccessInput): boolean {
+  if (canAccessItms(input)) return true
+  const caps = resolveCapabilities(input)
+  return caps.purchasingUser || caps.mobilUser || caps.purchasingWorkflow || caps.purchasingMaster || caps.mobilWorkflow
+}
+
 export function canManagePurchasingMaster(input: AccessInput): boolean {
   return resolveCapabilities(input).purchasingMaster
 }
@@ -92,6 +99,14 @@ export function canAccessUiPath(input: AccessInput, pathname: string): boolean {
 
   if (pathname.startsWith("/itms/console")) {
     return canAccessItmsStaff(input)
+  }
+
+  if (
+    pathname.startsWith("/itms/portal/sop") ||
+    pathname.startsWith("/itms/portal/nist") ||
+    pathname.startsWith("/itms/portal/knowledge")
+  ) {
+    return canReadItmsLibrary(input)
   }
 
   if (pathname.startsWith("/itms/portal") || pathname.startsWith("/itms")) {

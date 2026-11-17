@@ -16,17 +16,25 @@ UI label: **IT Management**. Technical routes/API remain under `/itms`. UI copy 
 
 | Kind | Console | Portal | Purpose |
 |------|---------|--------|---------|
-| SOP | `/itms/console/sop` | `/itms/portal/sop` | Controlled procedures (number, effective/review dates, acknowledgment) |
-| NIST Mapping | `/itms/console/nist` | `/itms/portal/nist` | Mapping IT offerings to NIST CSF 2.0 |
+| SOP Register | `/itms/console/sop` | `/itms/portal/sop` | Controlled procedures (number, effective/review dates, acknowledgment). **Read** for all pemohon / operational users; manage on console. |
+| NIST Mapping | `/itms/console/nist` | `/itms/portal/nist` | Mapping IT offerings to NIST CSF 2.0. **Read** for all pemohon / operational users. |
 
 Legacy `/itms/*/knowledge` URLs redirect to SOP.
 
 API: `GET /api/itms/knowledge` (SOP documents only).
 
-Initial SOP content can be (re)imported from `D:\dev\sop-it`:
+SOP content ships as a seed fixture (`prisma/data/sop-documents.json`) and is
+loaded by `pnpm db:seed`.
 
 ```bash
-pnpm db:import-sop-it
+pnpm db:seed                 # roles, users, categories, SLA, SOP documents
+pnpm db:import-sop-it        # SOP-only upsert from the same fixture
+```
+
+To refresh the fixture from local `D:\dev\sop-it` (dev machine only):
+
+```bash
+pnpm db:generate-sop-fixture
 ```
 
 ## Features

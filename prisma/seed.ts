@@ -8,6 +8,7 @@ import { Pool } from 'pg'
 import { PrismaPg } from '@prisma/adapter-pg'
 import bcrypt from 'bcryptjs'
 import { SYSTEM_ROLES } from '../lib/auth/capabilities'
+import { seedSopDocuments } from './seed-sop'
 
 const databaseUrl = process.env.DATABASE_URL || 'postgresql://postgres:mokmok@localhost:5432/atk?schema=public'
 
@@ -138,6 +139,8 @@ async function main() {
       create: { ...policy, active: true },
     })
   }
+
+  await seedSopDocuments(prisma)
 
   console.log('✅ Seed completed successfully!')
 }

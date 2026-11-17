@@ -1,37 +1,16 @@
 "use client"
 
 import { SidebarTrigger } from "@/components/ui/sidebar"
-import { Badge } from "@/components/ui/badge"
 import { ThemeToggle } from "@/components/ui/theme-toggle"
-import { usePageTitleValue } from "@/components/layout/page-title-context"
-import { cn } from "@/lib/utils"
+import { BrandMark } from "@/components/layout/BrandMark"
 
-interface HeaderProps {
-  roleName: string
-}
-
-export function Header({ roleName }: HeaderProps) {
-  const pageTitle = usePageTitleValue()
-
+export function Header() {
   return (
     <header className="sticky top-0 z-40 flex h-14 w-full shrink-0 items-center gap-2 border-b bg-background/95 px-4 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      {pageTitle ? (
-        <h1
-          className={cn(
-            "min-w-0 truncate text-base font-semibold tracking-tight md:text-lg"
-          )}
-        >
-          {pageTitle}
-        </h1>
-      ) : null}
-      <Badge variant="secondary" className="hidden sm:inline-flex">
-        {roleName}
-      </Badge>
+      <BrandMark className="shrink-0" />
+      <SidebarTrigger className="size-8 shrink-0" />
       <div className="flex-1" />
-      <div className="flex items-center gap-1">
-        <ThemeToggle />
-        <SidebarTrigger className="size-8" />
-      </div>
+      <ThemeToggle />
     </header>
   )
 }

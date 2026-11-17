@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useMemo } from "react"
+import { useState, useEffect, useMemo, useCallback } from "react"
 import Link from "next/link"
 import { usePathname, useSearchParams } from "next/navigation"
 import { signOut, useSession } from "next-auth/react"
@@ -29,7 +29,6 @@ import {
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
-  SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
@@ -44,7 +43,6 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { BrandMark } from "@/components/layout/BrandMark"
 import { USER_LEVEL_LABEL, normalizeUserLevel } from "@/lib/auth/user-level"
 import {
   canAccessItmsStaff,
@@ -54,6 +52,7 @@ import {
   canAccessPurchasingUser,
   canHandleMobilWorkflow,
   canManagePurchasingMaster,
+  canReadItmsLibrary,
   getDefaultHomePath,
   shouldFetchPurchasingKategori,
 } from "@/lib/auth/permissions"
@@ -74,9 +73,20 @@ interface NavLink {
 const ITEM_CLASS =
   "hover:!bg-sidebar-primary hover:!text-sidebar-primary-foreground hover:[&>svg]:!text-sidebar-primary-foreground data-[active=true]:!bg-sidebar-primary data-[active=true]:!text-sidebar-primary-foreground data-[active=true]:[&>svg]:!text-sidebar-primary-foreground data-[state=open]:hover:!bg-sidebar-primary data-[state=open]:hover:!text-sidebar-primary-foreground"
 
+const SUB_ITEM_CLASS = `${ITEM_CLASS} h-auto items-start [&>span:last-child]:whitespace-normal [&>span:last-child]:break-words`
+
 function splitHref(href: string) {
   const [path, query] = href.split("?")
   return { path, query: query ?? "" }
+}
+
+function isDetailOrActionSegment(segment: string) {
+  // Keep parent nav active on resource detail/create routes, e.g.
+  // /tickets/12, /sop/new, /laporan/baru — but not sibling sections
+  // like /console/tickets matching /console.
+  if (!segment) return false
+  if (segment === "new" || segment === "baru" || segment === "edit") return true
+  return /^\d+$/.test(segment)
 }
 
 function isActive(
@@ -101,7 +111,10 @@ function isActive(
   if (!currentPath.startsWith(`${hrefPath}/`)) return false
 
   const rest = currentPath.slice(hrefPath.length + 1)
-  return !rest.startsWith("data")
+  const first = rest.split("/")[0] ?? ""
+  // Purchasing sibling list pages (…/permintaan/data)
+  if (first === "data") return false
+  return isDetailOrActionSegment(first)
 }
 
 function isNavTreeActive(
@@ -259,7 +272,7 @@ function getItmsPortalMenu(): NavLink[] {
       icon: Headset,
     },
     {
-      title: "SOP Library",
+      title: "SOP Register",
       href: "/itms/portal/sop",
       icon: ClipboardList,
     },
@@ -272,6 +285,22 @@ function getItmsPortalMenu(): NavLink[] {
       title: "My Assets",
       href: "/itms/portal/assets",
       icon: Boxes,
+    },
+  ]
+}
+
+/** SOP + NIST only — for pemohon without full ITMS access. */
+function getItmsReadOnlyMenu(): NavLink[] {
+  return [
+    {
+      title: "SOP Register",
+      href: "/itms/portal/sop",
+      icon: ClipboardList,
+    },
+    {
+      title: "NIST Mapping",
+      href: "/itms/portal/nist",
+      icon: Shield,
     },
   ]
 }
@@ -320,7 +349,7 @@ function NavLeaf({
 
   return (
     <SidebarMenuSubItem>
-      <SidebarMenuSubButton asChild isActive={active} className={ITEM_CLASS}>
+      <SidebarMenuSubButton asChild isActive={active} className={SUB_ITEM_CLASS}>
         <Link href={item.href}>
           <Icon />
           <span>{item.title}</span>
@@ -362,10 +391,10 @@ function NavNested({
     >
       <SidebarMenuSubItem>
         <CollapsibleTrigger asChild>
-          <SidebarMenuSubButton className={`cursor-pointer ${ITEM_CLASS}`}>
+          <SidebarMenuSubButton className={`cursor-pointer ${SUB_ITEM_CLASS}`}>
             <Icon />
             <span>{item.title}</span>
-            <ChevronRight className="ml-auto size-4 shrink-0 transition-transform group-data-[state=open]/nested:rotate-90" />
+            <ChevronRight className="ml-auto mt-0.5 size-4 shrink-0 transition-transform group-data-[state=open]/nested:rotate-90" />
           </SidebarMenuSubButton>
         </CollapsibleTrigger>
         <CollapsibleContent>
@@ -391,37 +420,43 @@ function ModuleNav({
   items,
   pathname,
   search,
+  open,
+  onOpenChange,
 }: {
   title: string
   icon: React.ComponentType<{ className?: string }>
   items: NavLink[]
   pathname: string
   search: string
+  open: boolean
+  onOpenChange: (open: boolean) => void
 }) {
   const treeActive = isNavTreeActive(pathname, search, items)
-  const [open, setOpen] = useState(treeActive)
 
   useEffect(() => {
-    if (treeActive) setOpen(true)
-  }, [treeActive])
+    if (treeActive) onOpenChange(true)
+  }, [treeActive, onOpenChange])
 
   return (
     <Collapsible
       asChild
       open={open}
-      onOpenChange={setOpen}
+      onOpenChange={onOpenChange}
       className="group/module"
     >
       <SidebarMenuItem>
         <CollapsibleTrigger asChild>
-          <SidebarMenuButton tooltip={title} className={`cursor-pointer ${ITEM_CLASS}`}>
+          <SidebarMenuButton
+            tooltip={title}
+            className={`cursor-pointer ${ITEM_CLASS} h-auto min-h-8 items-start [&>span:last-child]:whitespace-normal`}
+          >
             <Icon />
             <span>{title}</span>
-            <ChevronRight className="ml-auto size-4 shrink-0 transition-transform group-data-[state=open]/module:rotate-90 group-data-[collapsible=icon]:hidden" />
+            <ChevronRight className="ml-auto mt-0.5 size-4 shrink-0 transition-transform group-data-[state=open]/module:rotate-90 group-data-[collapsible=icon]:hidden" />
           </SidebarMenuButton>
         </CollapsibleTrigger>
         <CollapsibleContent>
-          <SidebarMenuSub>
+          <SidebarMenuSub className="mr-0 pr-0">
             {items.map((item) => (
               <NavNested
                 key={item.title + item.href}
@@ -448,7 +483,18 @@ export function AppSidebar() {
   const { data: session } = useSession()
   const principal = session?.user ?? EMPTY_PRINCIPAL
   const [kategori, setKategori] = useState<Kategori[]>([])
+  const [openModule, setOpenModule] = useState<string | null>(null)
   const fetchKategoriEnabled = shouldFetchPurchasingKategori(principal)
+
+  const openPurchasing = useCallback((next: boolean) => {
+    setOpenModule(next ? "Purchasing" : null)
+  }, [])
+  const openItms = useCallback((next: boolean) => {
+    setOpenModule(next ? "IT Management" : null)
+  }, [])
+  const openMobil = useCallback((next: boolean) => {
+    setOpenModule(next ? "Penggunaan Mobil" : null)
+  }, [])
 
   useEffect(() => {
     const fetchKategori = async () => {
@@ -482,6 +528,7 @@ export function AppSidebar() {
   const itmsItems = useMemo(() => {
     if (canAccessItmsStaff(principal)) return getItmsConsoleMenu()
     if (canAccessItmsUser(principal)) return getItmsPortalMenu()
+    if (canReadItmsLibrary(principal)) return getItmsReadOnlyMenu()
     return []
   }, [principal])
 
@@ -516,12 +563,7 @@ export function AppSidebar() {
       collapsible="icon"
       className="top-14! h-[calc(100svh-3.5rem)]!"
     >
-      <SidebarHeader className="group-data-[collapsible=icon]:items-center">
-        <div className="flex h-10 w-full items-center gap-2 px-0 group-data-[collapsible=icon]:size-8 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-0">
-          <BrandMark className="h-10 min-w-0 flex-1 group-data-[collapsible=icon]:hidden" />
-        </div>
-      </SidebarHeader>
-      <SidebarContent className="group-data-[collapsible=icon]:items-center">
+      <SidebarContent className="group-data-[collapsible=icon]:items-center [scrollbar-gutter:stable]">
         <SidebarGroup className="group-data-[collapsible=icon]:p-2">
           <SidebarGroupLabel>Utama</SidebarGroupLabel>
           <SidebarGroupContent>
@@ -573,6 +615,8 @@ export function AppSidebar() {
                     items={purchasingItems}
                     pathname={pathname}
                     search={search}
+                    open={openModule === "Purchasing"}
+                    onOpenChange={openPurchasing}
                   />
                 ) : null}
 
@@ -583,6 +627,8 @@ export function AppSidebar() {
                     items={itmsItems}
                     pathname={pathname}
                     search={search}
+                    open={openModule === "IT Management"}
+                    onOpenChange={openItms}
                   />
                 ) : null}
 
@@ -593,6 +639,8 @@ export function AppSidebar() {
                     items={mobilItems}
                     pathname={pathname}
                     search={search}
+                    open={openModule === "Penggunaan Mobil"}
+                    onOpenChange={openMobil}
                   />
                 ) : null}
               </SidebarMenu>

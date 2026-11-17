@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react"
 import Link from "next/link"
-import { Eye, Plus } from "lucide-react"
+import { Eye } from "lucide-react"
 import { DashboardLayout, ContentEmpty, PageActions } from "@/components/layout"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -72,10 +72,7 @@ export default function ItmsMyTicketsPage() {
     <DashboardLayout title="My Tickets">
       <PageActions>
         <Button asChild>
-          <Link href="/itms/portal/tickets/new">
-            <Plus className="size-4" />
-            Create Ticket
-          </Link>
+          <Link href="/itms/portal/tickets/new">Create Ticket</Link>
         </Button>
       </PageActions>
 

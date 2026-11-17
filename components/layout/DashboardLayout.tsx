@@ -32,13 +32,13 @@ export function DashboardLayout({
       <PageTitleProvider>
         <PageActionsProvider>
           {title ? <SetPageTitle title={title} /> : null}
-          <Header roleName={user.roleName || user.level} />
+          <Header />
           <div className="flex min-h-0 w-full flex-1 overflow-hidden">
             <Suspense fallback={null}>
               <AppSidebar />
             </Suspense>
             <SidebarInset className="min-h-0 overflow-hidden">
-              <PageActionsBar />
+              <PageActionsBar roleName={user.roleName || user.level} />
               <div className="relative min-h-0 flex-1 overflow-y-auto [scrollbar-gutter:stable] focus:outline-none">
                 <div className="w-full space-y-6 px-4 py-6">
                   {children}

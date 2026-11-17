@@ -8,7 +8,7 @@ interface PageActionsProps {
 }
 
 /**
- * Daftarkan tombol aksi halaman; dirender di PageActionsBar (full width, border-b seperti header).
+ * Daftarkan tombol/filter halaman; dirender di kanan PageActionsBar (setelah judul + role).
  */
 export function PageActions({ children }: PageActionsProps) {
   const setActions = useRegisterPageActions()

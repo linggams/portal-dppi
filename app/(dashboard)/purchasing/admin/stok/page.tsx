@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { ArrowDown, ArrowUp } from "lucide-react"
 import { PageActions } from "@/components/layout"
 import { DashboardLayout } from "@/components/layout/DashboardLayout"
 import { Button } from "@/components/ui/button"
@@ -111,24 +110,18 @@ export default function StokPage() {
           <Button
             type="button"
             variant={sort && sortDir === "asc" ? "default" : "outline"}
-            size="icon"
             disabled={!sort}
-            aria-label="Urutkan menaik"
-            title="Menaik"
             onClick={() => setSortDir("asc")}
           >
-            <ArrowUp />
+            Naik
           </Button>
           <Button
             type="button"
             variant={sort && sortDir === "desc" ? "default" : "outline"}
-            size="icon"
             disabled={!sort}
-            aria-label="Urutkan menurun"
-            title="Menurun"
             onClick={() => setSortDir("desc")}
           >
-            <ArrowDown />
+            Turun
           </Button>
         </div>
             <Button

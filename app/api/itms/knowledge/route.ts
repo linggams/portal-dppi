@@ -3,8 +3,8 @@ import { z } from "zod"
 import type { Prisma } from "@prisma/client"
 import { getSessionFromRequest } from "@/lib/get-session"
 import {
-  canAccessItms,
   canAccessItmsStaff,
+  canReadItmsLibrary,
 } from "@/lib/auth/permissions"
 import { prisma } from "@/lib/db/prisma"
 import {
@@ -26,7 +26,7 @@ const createSchema = z.object({
 export async function GET(request: NextRequest) {
   try {
     const session = await getSessionFromRequest(request)
-    if (!session || !canAccessItms(session.user)) {
+    if (!session || !canReadItmsLibrary(session.user)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 

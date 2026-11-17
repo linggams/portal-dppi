@@ -3,7 +3,7 @@
 import { Suspense, useCallback, useEffect, useState } from "react"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
-import { Eye, FileText, Plus, Search } from "lucide-react"
+import { Eye, FileText, Search } from "lucide-react"
 import { DashboardLayout, ContentEmpty, PageActions } from "@/components/layout"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -158,10 +158,7 @@ function ItmsDocumentListPageInner({
         </form>
         {area === "console" ? (
           <Button asChild>
-            <Link href={`${base}/new`}>
-              <Plus className="size-4" />
-              New SOP
-            </Link>
+            <Link href={`${base}/new`}>New SOP</Link>
           </Button>
         ) : null}
       </PageActions>

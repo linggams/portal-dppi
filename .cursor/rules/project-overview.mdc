@@ -23,7 +23,7 @@ Permission: `lib/auth/permissions.ts`. Arsitektur: `docs/architecture.md`.
 
 ## Layout halaman
 
-Ikuti `.cursor/rules/dashboard-pages.mdc` untuk shell, `PageActions`, filter horizontal, tabel tanpa Card, dan judul hanya di header.
+Ikuti `.cursor/rules/dashboard-pages.mdc` untuk shell, `PageActions`, filter horizontal, tabel tanpa Card, BrandMark di kiri Header, dan judul + role di kiri PageActionsBar.
 
 ## Konvensi umum
 
