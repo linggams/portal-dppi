@@ -111,7 +111,6 @@ function ItmsDocumentListPageInner({
     try {
       const params = new URLSearchParams({
         page: String(page),
-        kind: "sop",
       })
       if (publishedOnly) params.set("published", "true")
       if (query) params.set("q", query)

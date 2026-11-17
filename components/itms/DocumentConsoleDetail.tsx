@@ -28,7 +28,7 @@ import { cn } from "@/lib/utils"
 
 type DocDetail = {
   idDocument: number
-  kind: "sop"
+  kind: string
   number: string | null
   title: string
   status: ItmsKbStatus

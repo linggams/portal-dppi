@@ -54,7 +54,6 @@ type TicketDetailData = {
     idDocument: number
     title: string
     number: string | null
-    kind: string
   } | null
   comments: Array<{
     idComment: number
@@ -120,8 +119,8 @@ export function ItmsTicketDetail({
       fetch("/api/itms/assets?page=1&page_size=50").then(async (r) =>
         r.ok ? readPaginatedJson(await r.json()).data : []
       ),
-      fetch("/api/itms/knowledge?page=1&published=true&kind=sop").then(
-        async (r) => (r.ok ? readPaginatedJson(await r.json()).data : [])
+      fetch("/api/itms/knowledge?page=1&published=true").then(async (r) =>
+        r.ok ? readPaginatedJson(await r.json()).data : []
       ),
     ])
       .then(([assetRows, sopRows]) => {
@@ -319,7 +318,7 @@ export function ItmsTicketDetail({
           <div>
             <span className="text-muted-foreground">Related SOP</span>
             <p>
-              {ticket.kbDocument?.kind === "sop" ? (
+              {ticket.kbDocument ? (
                 <Link
                   className="underline"
                   href={`${basePath}/sop/${ticket.kbDocument.idDocument}`}

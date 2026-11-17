@@ -9,7 +9,7 @@ import { formatTicketDate } from "@/lib/itms/format"
 
 type DocDetail = {
   idDocument: number
-  kind: "sop"
+  kind: string
   number: string | null
   title: string
   tags: string

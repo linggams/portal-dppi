@@ -149,7 +149,6 @@ export async function POST(request: NextRequest) {
       idTicket: ticket.idTicket,
       number: ticket.number,
       title: ticket.title,
-      idRequester: ticket.idRequester,
     }).catch((err) => console.error("ITMS notify create:", err))
 
     return NextResponse.json(ticket, { status: 201 })

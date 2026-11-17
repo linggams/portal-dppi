@@ -29,7 +29,7 @@ export default function ItmsCreateTicketPage() {
   const router = useRouter()
   const [categories, setCategories] = useState<Category[]>([])
   const [assets, setAssets] = useState<AssetOpt[]>([])
-  const [articles, setArticles] = useState<KbOpt[]>([])
+  const [sops, setSops] = useState<KbOpt[]>([])
   const [submitting, setSubmitting] = useState(false)
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
@@ -55,15 +55,13 @@ export default function ItmsCreateTicketPage() {
       fetch("/api/itms/assets?mine=true&page=1").then(async (r) =>
         r.ok ? readPaginatedJson<AssetOpt>(await r.json()).data : []
       ),
-      fetch(
-        "/api/itms/knowledge?published=true&kind=sop&page=1"
-      ).then(async (r) =>
+      fetch("/api/itms/knowledge?published=true&page=1").then(async (r) =>
         r.ok ? readPaginatedJson<KbOpt>(await r.json()).data : []
       ),
     ])
       .then(([assetRows, sopRows]) => {
         setAssets(assetRows)
-        setArticles(sopRows)
+        setSops(sopRows)
       })
       .catch(() => undefined)
   }, [])
@@ -224,7 +222,7 @@ export default function ItmsCreateTicketPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="none">None</SelectItem>
-                {articles.map((a) => (
+                {sops.map((a) => (
                   <SelectItem key={a.idDocument} value={String(a.idDocument)}>
                     {a.title}
                   </SelectItem>

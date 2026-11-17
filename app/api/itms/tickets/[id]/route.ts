@@ -54,7 +54,7 @@ async function loadTicket(id: number) {
       assignee: { select: { idUser: true, username: true } },
       asset: { select: { idAsset: true, tag: true, type: true } },
       kbDocument: {
-        select: { idDocument: true, title: true, number: true, kind: true },
+        select: { idDocument: true, title: true, number: true },
       },
       comments: {
         orderBy: { createdAt: "asc" },

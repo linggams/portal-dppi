@@ -21,7 +21,7 @@ UI label: **IT Management**. Technical routes/API remain under `/itms`. UI copy 
 
 Legacy `/itms/*/knowledge` URLs redirect to SOP.
 
-API filter: `GET /api/itms/knowledge?kind=sop`.
+API: `GET /api/itms/knowledge` (SOP documents only).
 
 Initial SOP content can be (re)imported from `D:\dev\sop-it`:
 

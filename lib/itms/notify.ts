@@ -24,7 +24,6 @@ export async function notifyTicketCreated(ticket: {
   idTicket: number
   number: string
   title: string
-  idRequester: number
 }) {
   const staff = await prisma.user.findMany({
     where: { manageItms: true },

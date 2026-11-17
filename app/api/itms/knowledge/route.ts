@@ -13,7 +13,6 @@ import {
 } from "@/lib/shared/pagination"
 
 const createSchema = z.object({
-  kind: z.literal("sop").default("sop"),
   title: z.string().min(3).max(200),
   body: z.string().min(1),
   changeNote: z.string().max(255).optional(),
