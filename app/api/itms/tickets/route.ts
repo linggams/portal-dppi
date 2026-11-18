@@ -10,7 +10,8 @@ import { prisma } from "@/lib/db/prisma"
 import { computePriority } from "@/lib/itms/constants"
 import { generateTicketNumber } from "@/lib/itms/number"
 import { notifyTicketCreated } from "@/lib/itms/notify"
-import { computeSlaDeadlines, getSlaPolicyForPriority } from "@/lib/itms/sla"
+import { computeSlaDeadlines } from "@/lib/itms/sla"
+import { getSlaPolicyForPriority } from "@/lib/itms/sla-policy"
 import {
   parsePaginationParams,
   toPaginatedResult,

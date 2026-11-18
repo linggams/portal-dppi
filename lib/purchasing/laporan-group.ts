@@ -12,11 +12,10 @@ export type LaporanLeafGroup = {
   stok: number
   keluar: number
   sisa: number
-  /** User/unit unik yang muncul di baris grup */
   users: string[]
 }
 
-/** Section = bulan (transaksi) atau kategori (stok). */
+/** Section = tanggal (UI transaksi), kategori (PDF/stok). */
 export type LaporanSection = {
   key: string
   title: string
@@ -114,16 +113,38 @@ export function kategoriLabel(
   return stok?.jenisBarang?.jenisBrg?.trim() || "Tanpa kategori"
 }
 
-export function unitLabel(item: Record<string, unknown>): string {
-  if (typeof item.unit === "string" && item.unit.trim()) return item.unit.trim()
-  if (typeof item.unitKey === "string" && item.unitKey.trim()) {
-    return item.unitKey.trim()
-  }
+/** Username tunggal (bukan string hasil merge). */
+export function singleUnitLabel(item: Record<string, unknown>): string {
   const pemohon = item.pemohon as { username?: string } | undefined
   if (typeof pemohon?.username === "string" && pemohon.username.trim()) {
     return pemohon.username.trim()
   }
+  if (
+    typeof item.unit === "string" &&
+    item.unit.trim() &&
+    !item.mergedUsers &&
+    !item.userQty
+  ) {
+    return item.unit.trim()
+  }
+  if (
+    typeof item.unitKey === "string" &&
+    item.unitKey.trim() &&
+    !item.mergedUsers &&
+    !item.userQty
+  ) {
+    return item.unitKey.trim()
+  }
   return "Tanpa unit"
+}
+
+/** Label kolom User — setelah merge: "via (5), vera (3)". */
+export function unitLabel(item: Record<string, unknown>): string {
+  if (typeof item.unitKey === "string" && item.unitKey.trim()) {
+    return item.unitKey.trim()
+  }
+  if (typeof item.unit === "string" && item.unit.trim()) return item.unit.trim()
+  return singleUnitLabel(item)
 }
 
 export function namaBarangLabel(item: Record<string, unknown>): string {
@@ -143,7 +164,10 @@ function satuanLabel(item: Record<string, unknown>, tab: string): string {
   ).trim()
 }
 
-function rowTanggalKey(item: Record<string, unknown>, tab: string): string {
+export function rowTanggalKey(
+  item: Record<string, unknown>,
+  tab: string
+): string {
   if (typeof item.tanggalKey === "string" && item.tanggalKey) {
     return item.tanggalKey
   }
@@ -171,17 +195,57 @@ function uniqueUsers(rows: Record<string, unknown>[]): string[] {
       }
       continue
     }
-    const u = unitLabel(row)
+    const qty = row.userQty
+    if (qty && typeof qty === "object" && !Array.isArray(qty)) {
+      for (const u of Object.keys(qty as Record<string, number>)) {
+        if (u.trim()) set.add(u.trim())
+      }
+      continue
+    }
+    const u = singleUnitLabel(row)
     if (u) set.add(u)
   }
   return Array.from(set).sort((a, b) => a.localeCompare(b, "id"))
 }
 
+/** Format: "via (5), vera (3)" */
+export function formatUserQtyLabel(
+  userQty: Record<string, number> | Map<string, number>
+): string {
+  const entries =
+    userQty instanceof Map
+      ? Array.from(userQty.entries())
+      : Object.entries(userQty)
+  return entries
+    .sort((a, b) => a[0].localeCompare(b[0], "id"))
+    .map(([user, qty]) => `${user} (${qty})`)
+    .join(", ")
+}
+
+function collectUserQty(
+  rows: Record<string, unknown>[]
+): Record<string, number> {
+  const map = new Map<string, number>()
+  for (const row of rows) {
+    const existing = row.userQty
+    if (existing && typeof existing === "object" && !Array.isArray(existing)) {
+      for (const [u, q] of Object.entries(
+        existing as Record<string, number>
+      )) {
+        if (!u.trim()) continue
+        map.set(u.trim(), (map.get(u.trim()) ?? 0) + Number(q || 0))
+      }
+      continue
+    }
+    const u = singleUnitLabel(row)
+    map.set(u, (map.get(u) ?? 0) + num(row, "jumlah"))
+  }
+  return Object.fromEntries(map)
+}
+
 /**
- * Kunci merge dalam leaf (bulan+kategori):
- * - permintaan/pengajuan: nama + satuan + status
- * - pengeluaran: nama + satuan + user (user tidak digabung)
- * - pemasukan: nama + satuan
+ * Kunci merge dalam satu section (tanggal / kategori):
+ * nama + satuan (+ status untuk permintaan/pengajuan).
  */
 function mergeRowKey(item: Record<string, unknown>, tab: string): string {
   const nama = namaBarangLabel(item).toLowerCase()
@@ -189,21 +253,15 @@ function mergeRowKey(item: Record<string, unknown>, tab: string): string {
   if (tab === "permintaan" || tab === "pengajuan") {
     return `${nama}|${satuan}|${Number(item.status ?? 0)}`
   }
-  if (tab === "pengeluaran") {
-    return `${nama}|${satuan}|${unitLabel(item).toLowerCase()}`
-  }
   return `${nama}|${satuan}`
 }
 
-/**
- * Gabung baris nama barang sama dalam satu leaf (bulan+kategori).
- * Pengeluaran: per user. Permintaan/pengajuan: status berbeda tidak digabung.
- */
+/** Gabung nama barang sama; User → "via (5), vera (3)". */
 export function mergeSameNamaRows(
   rows: Record<string, unknown>[],
   tab: string
 ): Record<string, unknown>[] {
-  if (!isTransaksiTab(tab) || rows.length <= 1) return rows
+  if (!isTransaksiTab(tab) || rows.length === 0) return rows
 
   const order: string[] = []
   const buckets = new Map<string, Record<string, unknown>[]>()
@@ -219,14 +277,14 @@ export function mergeSameNamaRows(
 
   return order.map((key) => {
     const group = buckets.get(key) ?? []
-    if (group.length === 1) return group[0]!
-
-    const users = uniqueUsers(group)
+    const userQty = collectUserQty(group)
+    const users = Object.keys(userQty).sort((a, b) => a.localeCompare(b, "id"))
     const first = { ...group[0]! }
     first.jumlah = group.reduce((sum, row) => sum + num(row, "jumlah"), 0)
     first.total = group.reduce((sum, row) => sum + num(row, "total"), 0)
+    first.userQty = userQty
     first.mergedUsers = users
-    first.unitKey = users.join(", ")
+    first.unitKey = formatUserQtyLabel(userQty)
     first.unit = first.unitKey
     return first
   })
@@ -251,7 +309,7 @@ export function attachLaporanKeys<T extends Record<string, unknown>>(
       bulanKey: isTransaksiTab(tab)
         ? toMonthKey(tanggalKey) || "Tanpa bulan"
         : "",
-      unitKey: isTransaksiTab(tab) ? unitLabel(row) : "",
+      unitKey: isTransaksiTab(tab) ? singleUnitLabel(row) : "",
     }
   })
 }
@@ -283,9 +341,28 @@ function makeLeaf(
   }
 }
 
+function sectionFromLeaf(
+  key: string,
+  title: string,
+  leaf: LaporanLeafGroup
+): LaporanSection {
+  return {
+    key,
+    title,
+    groups: [leaf],
+    jumlah: leaf.jumlah,
+    total: leaf.total,
+    stok: leaf.stok,
+    keluar: leaf.keluar,
+    sisa: leaf.sisa,
+    itemCount: leaf.rows.length,
+    users: leaf.users,
+  }
+}
+
 /**
- * Sort transaksi: bulan desc → kategori asc → nama barang → user.
- * Stok: kategori asc → nama barang.
+ * Sort transaksi: tanggal desc → nama → user.
+ * Stok: kategori asc → nama.
  */
 export function sortLaporanRows<T>(
   rows: T[],
@@ -296,22 +373,20 @@ export function sortLaporanRows<T>(
     const ra = a as Record<string, unknown>
     const rb = b as Record<string, unknown>
     if (isTransaksiTab(tab)) {
-      const byMonth = rowMonthKey(rb, tab).localeCompare(
-        rowMonthKey(ra, tab),
+      const byDate = rowTanggalKey(rb, tab).localeCompare(
+        rowTanggalKey(ra, tab),
         "id"
       )
-      if (byMonth !== 0) return byMonth
-      const byKat = kategoriLabel(ra, tab).localeCompare(
-        kategoriLabel(rb, tab),
-        "id"
-      )
-      if (byKat !== 0) return byKat
+      if (byDate !== 0) return byDate
       const byNama = namaBarangLabel(ra).localeCompare(
         namaBarangLabel(rb),
         "id"
       )
       if (byNama !== 0) return byNama
-      const byUser = unitLabel(ra).localeCompare(unitLabel(rb), "id")
+      const byUser = singleUnitLabel(ra).localeCompare(
+        singleUnitLabel(rb),
+        "id"
+      )
       if (byUser !== 0) return byUser
       return compareWithin(a, b)
     }
@@ -325,9 +400,21 @@ export function sortLaporanRows<T>(
   return rows
 }
 
+/** Daftar kategori unik (urut) dari baris. */
+export function listKategoriOptions(
+  rows: Record<string, unknown>[],
+  tab: string
+): string[] {
+  const set = new Set<string>()
+  for (const row of rows) {
+    set.add(kategoriLabel(row, tab))
+  }
+  return Array.from(set).sort((a, b) => a.localeCompare(b, "id"))
+}
+
 /**
- * Transaksi: section = bulan, leaf = kategori (nama barang digabung).
- * Stok: section = kategori, satu leaf.
+ * UI transaksi: section = tanggal, satu leaf (nama digabung).
+ * Stok: section = kategori.
  */
 export function buildLaporanSections(
   rows: Record<string, unknown>[],
@@ -349,60 +436,62 @@ export function buildLaporanSections(
     }
     return order.map((key) => {
       const groupRows = buckets.get(key) ?? []
-      const leaf = makeLeaf(key, key, groupRows)
-      return {
-        key,
-        title: key,
-        groups: [leaf],
-        jumlah: leaf.jumlah,
-        total: leaf.total,
-        stok: leaf.stok,
-        keluar: leaf.keluar,
-        sisa: leaf.sisa,
-        itemCount: groupRows.length,
-        users: leaf.users,
-      }
+      return sectionFromLeaf(key, key, makeLeaf(key, key, groupRows))
     })
   }
 
-  const monthOrder: string[] = []
-  const byMonth = new Map<string, Record<string, unknown>[]>()
+  const dateOrder: string[] = []
+  const byDate = new Map<string, Record<string, unknown>[]>()
   for (const row of rows) {
-    const m = rowMonthKey(row, tab)
-    const bucket = byMonth.get(m)
+    const d = rowTanggalKey(row, tab)
+    const bucket = byDate.get(d)
     if (bucket) bucket.push(row)
     else {
-      monthOrder.push(m)
-      byMonth.set(m, [row])
+      dateOrder.push(d)
+      byDate.set(d, [row])
     }
   }
 
-  return monthOrder.map((monthKey) => {
-    const monthRows = byMonth.get(monthKey) ?? []
-    const katOrder: string[] = []
-    const byKat = new Map<string, Record<string, unknown>[]>()
-    for (const row of monthRows) {
-      const k = kategoriLabel(row, tab)
-      const bucket = byKat.get(k)
-      if (bucket) bucket.push(row)
-      else {
-        katOrder.push(k)
-        byKat.set(k, [row])
-      }
+  return dateOrder.map((dateKey) => {
+    const raw = byDate.get(dateKey) ?? []
+    const merged = mergeSameNamaRows(raw, tab)
+    return sectionFromLeaf(dateKey, dateKey, makeLeaf(dateKey, dateKey, merged))
+  })
+}
+
+/**
+ * Export PDF: section = kategori (full-width, bertumpuk).
+ * Opsional filter daftar kategori terpilih.
+ */
+export function buildLaporanSectionsByKategori(
+  rows: Record<string, unknown>[],
+  tab: string,
+  selectedKategori?: string[] | null
+): LaporanSection[] {
+  if (rows.length === 0) return []
+
+  const allow =
+    selectedKategori && selectedKategori.length > 0
+      ? new Set(selectedKategori)
+      : null
+
+  const order: string[] = []
+  const buckets = new Map<string, Record<string, unknown>[]>()
+  for (const row of rows) {
+    const key = kategoriLabel(row, tab)
+    if (allow && !allow.has(key)) continue
+    const bucket = buckets.get(key)
+    if (bucket) bucket.push(row)
+    else {
+      order.push(key)
+      buckets.set(key, [row])
     }
-    const groups = katOrder.map((k) => {
-      const raw = byKat.get(k) ?? []
-      return makeLeaf(k, k, mergeSameNamaRows(raw, tab))
-    })
-    const totals = leafTotals(groups.flatMap((g) => g.rows))
-    return {
-      key: monthKey,
-      title: monthKey,
-      groups,
-      ...totals,
-      itemCount: groups.reduce((sum, g) => sum + g.rows.length, 0),
-      users: uniqueUsers(monthRows),
-    }
+  }
+
+  return order.map((key) => {
+    const raw = buckets.get(key) ?? []
+    const merged = isTransaksiTab(tab) ? mergeSameNamaRows(raw, tab) : raw
+    return sectionFromLeaf(key, key, makeLeaf(key, key, merged))
   })
 }
 
@@ -418,7 +507,7 @@ export function usersFooter(users: string[]): string {
   return `Dipakai oleh: ${users.join(", ")} (${users.length})`
 }
 
-/** Pagination tanpa memotong leaf (kategori); total = baris setelah merge. */
+/** Pagination tanpa memotong section tanggal/kategori. */
 export function paginateByCompleteGroups(
   rows: Record<string, unknown>[],
   tab: string,

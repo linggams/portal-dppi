@@ -11,7 +11,6 @@ import {
 import {
   isTransaksiTab,
   leafMeta,
-  usersFooter,
   type LaporanLeafGroup,
   type LaporanSection,
 } from "@/lib/purchasing/laporan-group"
@@ -24,7 +23,8 @@ interface Props {
   tab: string
   sections: LaporanSection[]
   columns: string[]
-  /** Label leaf header: "Kategori" (transaksi) — stok tidak pakai */
+  /** Tampilkan header leaf (default: false untuk transaksi tanggal) */
+  showLeafHeader?: boolean
   leafHeaderPrefix?: string
   formatSectionTitle?: (title: string) => string
   renderRow: (item: Record<string, unknown>) => React.ReactNode
@@ -62,6 +62,7 @@ export function LaporanGroupedTables({
   tab,
   sections,
   columns,
+  showLeafHeader,
   leafHeaderPrefix = "Kategori",
   formatSectionTitle,
   renderRow,
@@ -71,6 +72,7 @@ export function LaporanGroupedTables({
 }: Props) {
   if (sections.length === 0) return null
   const transaksi = isTransaksiTab(tab)
+  const leafHeader = showLeafHeader ?? !transaksi
 
   return (
     <div className="space-y-5">
@@ -82,18 +84,13 @@ export function LaporanGroupedTables({
                 ? formatSectionTitle(section.title)
                 : section.title}
             </h3>
-            {!transaksi ? (
-              <span className="text-xs text-muted-foreground sm:text-sm">
-                {section.itemCount} item
-              </span>
-            ) : (
-              <span className="text-xs text-muted-foreground sm:text-sm">
-                {section.itemCount} item
-                {section.users.length > 0
-                  ? ` · ${section.users.length} user`
-                  : ""}
-              </span>
-            )}
+            <span className="text-xs text-muted-foreground sm:text-sm">
+              {section.itemCount} item
+              {transaksi && section.users.length > 0
+                ? ` · ${section.users.length} user`
+                : ""}
+              {transaksi ? ` · jml ${section.jumlah}` : ""}
+            </span>
           </div>
 
           <div className="space-y-3">
@@ -102,7 +99,7 @@ export function LaporanGroupedTables({
                 key={`${section.key}-${group.key}`}
                 className="overflow-hidden rounded-md border border-border"
               >
-                {transaksi ? (
+                {leafHeader ? (
                   <div className="flex flex-wrap items-center justify-between gap-2 bg-muted px-3 py-2">
                     <span className="text-sm font-medium">
                       {leafHeaderPrefix}: {group.label}
@@ -120,29 +117,19 @@ export function LaporanGroupedTables({
                           item.idPengajuan ??
                           item.idKodeBrg ??
                           item.id ??
-                          index
+                          `${group.key}-${index}`
                       )}
                     >
                       {renderRow(item)}
                     </Fragment>
                   ))}
                   {renderLeafSubtotal(group)}
-                  {transaksi && group.users.length > 0 ? (
-                    <TableRow className="hover:bg-transparent">
-                      <TableCell
-                        colSpan={columns.length}
-                        className="bg-muted/30 text-xs text-muted-foreground"
-                      >
-                        {usersFooter(group.users)}
-                      </TableCell>
-                    </TableRow>
-                  ) : null}
                 </BorderedTable>
               </div>
             ))}
           </div>
 
-          {transaksi && renderSectionSubtotal ? (
+          {transaksi && renderSectionSubtotal && section.groups.length > 1 ? (
             <div className="overflow-hidden rounded-md border border-border">
               <Table className={cn(borderedTableClass, "w-full text-sm")}>
                 <TableBody>{renderSectionSubtotal(section)}</TableBody>

@@ -12,17 +12,16 @@ import {
 } from "@/lib/shared/pagination"
 import { formatDate, formatRupiah } from "../utils"
 import {
-  buildLaporanSections,
-  formatMonthLabel,
+  buildLaporanSectionsByKategori,
   isTransaksiTab,
-  leafMeta,
+  listKategoriOptions,
   unitLabel,
-  usersFooter,
 } from "@/lib/purchasing/laporan-group"
 import type { LaporanFilters, LaporanSummary } from "../types"
 
 export function useLaporan() {
   const [loading, setLoading] = useState(false)
+  const [exporting, setExporting] = useState(false)
   const [activeTab, setActiveTabState] = useState("permintaan")
   const [filters, setFiltersState] = useState<LaporanFilters>(() => ({
     ...getMonthToDateRangeWIB(),
@@ -35,6 +34,11 @@ export function useLaporan() {
   const [total, setTotal] = useState(0)
   const [totalPages, setTotalPages] = useState(1)
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE)
+
+  const [exportOpen, setExportOpen] = useState(false)
+  const [exportCategories, setExportCategories] = useState<string[]>([])
+  const [exportSelected, setExportSelected] = useState<string[]>([])
+  const [exportRows, setExportRows] = useState<Record<string, unknown>[]>([])
 
   const setActiveTab = useCallback((tab: string) => {
     setPage(1)
@@ -181,8 +185,9 @@ export function useLaporan() {
     }
   }
 
-  const handleExport = useCallback(async () => {
+  const openExportDialog = useCallback(async () => {
     try {
+      setExporting(true)
       const allRows: Record<string, unknown>[] = []
       let exportPage = 1
       let exportTotalPages = 1
@@ -205,8 +210,37 @@ export function useLaporan() {
         return
       }
 
+      const categories = listKategoriOptions(allRows, activeTab)
+      setExportRows(allRows)
+      setExportCategories(categories)
+      setExportSelected([...categories])
+      setExportOpen(true)
+    } catch {
+      toast.error("Gagal menyiapkan export")
+    } finally {
+      setExporting(false)
+    }
+  }, [activeTab, buildParams])
+
+  const runExportPdf = useCallback(async () => {
+    if (exportSelected.length === 0) {
+      toast.error("Pilih minimal satu kategori")
+      return
+    }
+    try {
+      setExporting(true)
       const headers = getHeaders(activeTab)
-      const sections = buildLaporanSections(allRows, activeTab)
+      const sections = buildLaporanSectionsByKategori(
+        exportRows,
+        activeTab,
+        exportSelected
+      )
+
+      if (sections.length === 0) {
+        toast.error("Tidak ada data untuk kategori terpilih")
+        return
+      }
+
       const transaksi = isTransaksiTab(activeTab)
       const landscape = activeTab === "pengajuan"
       const pageMargins: [number, number, number, number] = [28, 36, 28, 28]
@@ -214,7 +248,6 @@ export function useLaporan() {
         ? 841.89 - pageMargins[0] - pageMargins[2]
         : 595.28 - pageMargins[0] - pageMargins[2]
 
-      // Indeks kolom numerik (kanan) — selaras UI
       const rightAlignCols: Record<string, number[]> = {
         permintaan: [1],
         pengajuan: [1, 3, 4],
@@ -226,10 +259,10 @@ export function useLaporan() {
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const widthsByTab: Record<string, any[]> = {
-        permintaan: ["*", 44, 44, 72, 58],
-        pengajuan: ["*", 40, 40, 64, 70, 72, 54],
-        pemasukan: ["*", 48, 48, 80],
-        pengeluaran: ["*", 48, 48, 80],
+        permintaan: ["*", 44, 44, "*", 58],
+        pengajuan: ["*", 40, 40, 64, 70, "*", 54],
+        pemasukan: ["*", 48, 48, "*"],
+        pengeluaran: ["*", 48, 48, "*"],
         stok: [58, "*", 42, 42, 42, 48],
       }
       const widths =
@@ -254,7 +287,6 @@ export function useLaporan() {
 
       const empty = (style: string) => ({ text: "", style })
 
-      /** Subtotal/grand: label di kolom nama, angka di kolom jumlah/nilai — mirror UI */
       const summaryRow = (
         label: string,
         style: string,
@@ -296,7 +328,6 @@ export function useLaporan() {
             empty(style),
           ]
         }
-        // pemasukan / pengeluaran
         return [
           cell(label, style, 0),
           cell(String(values.jumlah ?? 0), style, 1),
@@ -327,18 +358,6 @@ export function useLaporan() {
         paddingBottom: () => 4,
       }
 
-      const barLayout = {
-        hLineWidth: () => 0.7,
-        vLineWidth: () => 0.7,
-        hLineColor: () => "#9ca3af",
-        vLineColor: () => "#9ca3af",
-        paddingLeft: () => 8,
-        paddingRight: () => 8,
-        paddingTop: () => 6,
-        paddingBottom: () => 6,
-        fillColor: () => "#e5e7eb",
-      }
-
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const content: any[] = [
         ...companyPdfHeader({ lineWidth: contentWidth, afterLine: 8 }),
@@ -361,73 +380,43 @@ export function useLaporan() {
         content.push({ text: " ", margin: [0, 0, 0, 8] })
       }
 
-      for (const section of sections) {
-        const sectionTitle = transaksi
-          ? `${formatMonthLabel(section.title)}   ·   ${section.itemCount} item${
-              section.users.length > 0
-                ? ` · ${section.users.length} user`
-                : ""
-            }`
-          : `${section.title}   ·   ${section.itemCount} item`
+      sections.forEach((section, sectionIndex) => {
+        const sectionTitle = `${
+          transaksi ? "Kategori: " : ""
+        }${section.title}   ·   ${section.itemCount} item · jml ${
+          activeTab === "stok" ? section.sisa : section.jumlah
+        }`
 
-        content.push({
-          columns: [
-            {
-              canvas: [
-                {
-                  type: "rect",
-                  x: 0,
-                  y: 0,
-                  w: 3,
-                  h: 12,
-                  color: "#2563eb",
-                },
-              ],
-              width: 8,
-            },
-            {
-              text: sectionTitle,
-              style: "sectionTitle",
-              width: "*",
-              margin: [0, 0, 0, 0],
-            },
-          ],
-          columnGap: 4,
-          margin: [0, 10, 0, 6],
-        })
+        // Satu kategori = satu blok full-width; kategori berikutnya page break
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const categoryStack: any[] = [
+          {
+            columns: [
+              {
+                canvas: [
+                  {
+                    type: "rect",
+                    x: 0,
+                    y: 0,
+                    w: 3,
+                    h: 12,
+                    color: "#2563eb",
+                  },
+                ],
+                width: 8,
+              },
+              {
+                text: sectionTitle,
+                style: "sectionTitle",
+                width: "*",
+              },
+            ],
+            columnGap: 4,
+            margin: [0, 0, 0, 6],
+          },
+        ]
 
         for (const group of section.groups) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const block: any[] = []
-
-          if (transaksi) {
-            block.push({
-              table: {
-                widths: ["*", "auto"],
-                body: [
-                  [
-                    {
-                      text: `Kategori: ${group.label}`,
-                      style: "unitTitle",
-                      border: [true, true, false, true],
-                    },
-                    {
-                      text: leafMeta(group, activeTab),
-                      style: "unitMeta",
-                      alignment: "right",
-                      border: [false, true, true, true],
-                    },
-                  ],
-                ],
-              },
-              layout: {
-                ...barLayout,
-                vLineWidth: (i: number) => (i === 1 ? 0 : 0.7),
-              },
-              margin: [0, 0, 0, 0],
-            })
-          }
-
           const headerRow = headers.map((h, i) => cell(h, "tableHeader", i))
           const dataRows = group.rows.map((item) =>
             getRowData(item, activeTab).map((text, i) =>
@@ -435,29 +424,15 @@ export function useLaporan() {
             )
           )
 
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const tableBody: any[] = [
-            headerRow,
-            ...dataRows,
-            summaryRow(`Subtotal ${group.label}`, "subtotal", group),
-          ]
-
-          if (transaksi && group.users.length > 0) {
-            tableBody.push([
-              {
-                text: usersFooter(group.users),
-                style: "usersFooter",
-                colSpan: headers.length,
-              },
-              ...new Array(headers.length - 1).fill({}),
-            ])
-          }
-
-          block.push({
+          categoryStack.push({
             table: {
               widths,
               headerRows: 1,
-              body: tableBody,
+              body: [
+                headerRow,
+                ...dataRows,
+                summaryRow(`Subtotal ${section.title}`, "subtotal", group),
+              ],
             },
             layout: {
               ...gridLayout,
@@ -466,35 +441,15 @@ export function useLaporan() {
                 return null
               },
             },
-            margin: [0, 0, 0, 8],
-          })
-
-          content.push({
-            stack: block,
-            unbreakable: group.rows.length <= 12,
+            margin: [0, 0, 0, 4],
           })
         }
 
-        if (transaksi) {
-          content.push({
-            table: {
-              widths,
-              body: [
-                summaryRow(
-                  `Subtotal ${formatMonthLabel(section.title)}`,
-                  "sectionTotal",
-                  section
-                ),
-              ],
-            },
-            layout: {
-              ...gridLayout,
-              fillColor: () => "#f3f4f6",
-            },
-            margin: [0, 0, 0, 8],
-          })
-        }
-      }
+        content.push({
+          stack: categoryStack,
+          pageBreak: sectionIndex > 0 ? "before" : undefined,
+        })
+      })
 
       content.push({
         table: {
@@ -505,7 +460,7 @@ export function useLaporan() {
           ...gridLayout,
           fillColor: () => "#e5e7eb",
         },
-        margin: [0, 4, 0, 0],
+        margin: [0, 12, 0, 0],
       })
 
       const filename = `laporan-${activeTab}-${new Date().toISOString().split("T")[0]}.pdf`
@@ -521,12 +476,8 @@ export function useLaporan() {
           subheader: { fontSize: 8, color: "#4b5563" },
           title: { fontSize: 12, bold: true },
           sectionTitle: { fontSize: 10, bold: true },
-          unitTitle: { fontSize: 9, bold: true },
-          unitMeta: { fontSize: 8, color: "#6b7280" },
-          usersFooter: { fontSize: 7, color: "#6b7280", italics: true },
           tableHeader: { bold: true, fontSize: 8 },
           subtotal: { bold: true, fontSize: 8 },
-          sectionTotal: { bold: true, fontSize: 8 },
           grandTotal: { bold: true, fontSize: 9 },
           tableCell: { fontSize: 8 },
         },
@@ -534,14 +485,24 @@ export function useLaporan() {
       }
 
       downloadPdf(docDefinition, filename)
+      setExportOpen(false)
       toast.success("PDF berhasil diunduh")
     } catch {
       toast.error("Gagal mengunduh PDF")
+    } finally {
+      setExporting(false)
     }
-  }, [activeTab, buildParams, filters.endDate, filters.startDate])
+  }, [
+    activeTab,
+    exportRows,
+    exportSelected,
+    filters.endDate,
+    filters.startDate,
+  ])
 
   return {
     loading,
+    exporting,
     activeTab,
     setActiveTab,
     filters,
@@ -554,6 +515,12 @@ export function useLaporan() {
     totalPages,
     pageSize,
     fetchData: handleFetch,
-    handleExport,
+    openExportDialog,
+    exportOpen,
+    setExportOpen,
+    exportCategories,
+    exportSelected,
+    setExportSelected,
+    runExportPdf,
   }
 }

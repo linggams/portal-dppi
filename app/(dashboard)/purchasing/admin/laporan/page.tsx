@@ -10,24 +10,25 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { TablePagination } from "@/components/ui/table-pagination"
 import {
   buildLaporanSections,
-  formatMonthLabel,
   unitLabel,
   type LaporanLeafGroup,
   type LaporanSection,
 } from "@/lib/purchasing/laporan-group"
 import { useLaporan } from "./hooks/useLaporan"
 import {
+  LaporanExportDialog,
   LaporanFiltersComponent,
   LaporanGroupedTables,
   LaporanSummaryCards,
   LaporanTabCard,
   SubtotalRow,
 } from "./components"
-import { formatRupiah, getStatusBadge } from "./utils"
+import { formatDate, formatRupiah, getStatusBadge } from "./utils"
 
 export default function LaporanPage() {
   const {
     loading,
+    exporting,
     activeTab,
     setActiveTab,
     filters,
@@ -40,7 +41,13 @@ export default function LaporanPage() {
     totalPages,
     pageSize,
     fetchData,
-    handleExport,
+    openExportDialog,
+    exportOpen,
+    setExportOpen,
+    exportCategories,
+    exportSelected,
+    setExportSelected,
+    runExportPdf,
   } = useLaporan()
 
   const sections = buildLaporanSections(data, activeTab)
@@ -70,12 +77,22 @@ export default function LaporanPage() {
         />
         <Button
           variant="outline"
-          onClick={handleExport}
-          disabled={loading || data.length === 0}
+          onClick={openExportDialog}
+          disabled={loading || exporting || data.length === 0}
         >
-          Export
+          {exporting ? "Menyiapkan…" : "Export"}
         </Button>
       </PageActions>
+
+      <LaporanExportDialog
+        open={exportOpen}
+        onOpenChange={setExportOpen}
+        categories={exportCategories}
+        selected={exportSelected}
+        onSelectedChange={setExportSelected}
+        onConfirm={runExportPdf}
+        loading={exporting}
+      />
 
       <div className="space-y-4">
         {Object.keys(summary).length > 0 ? (
@@ -99,7 +116,7 @@ export default function LaporanPage() {
               tab="permintaan"
               sections={sections}
               columns={["Nama Barang", "Jumlah", "Satuan", "User", "Status"]}
-              formatSectionTitle={formatMonthLabel}
+              formatSectionTitle={formatDate}
               renderRow={(item) => (
                 <>
                   <TableCell>
@@ -116,20 +133,8 @@ export default function LaporanPage() {
                 </>
               )}
               renderLeafSubtotal={(group) => (
-                <SubtotalRow label={`Subtotal ${group.label}`} colSpanLabel={1}>
+                <SubtotalRow label="Subtotal" colSpanLabel={1}>
                   <TableCell className="font-medium">{group.jumlah}</TableCell>
-                  <TableCell />
-                  <TableCell />
-                  <TableCell />
-                </SubtotalRow>
-              )}
-              renderSectionSubtotal={(section) => (
-                <SubtotalRow
-                  label={`Subtotal ${formatMonthLabel(section.title)}`}
-                  colSpanLabel={1}
-                  tone="section"
-                >
-                  <TableCell className="font-medium">{section.jumlah}</TableCell>
                   <TableCell />
                   <TableCell />
                   <TableCell />
@@ -171,7 +176,7 @@ export default function LaporanPage() {
                 "User",
                 "Status",
               ]}
-              formatSectionTitle={formatMonthLabel}
+              formatSectionTitle={formatDate}
               renderRow={(item) => (
                 <>
                   <TableCell>
@@ -192,28 +197,12 @@ export default function LaporanPage() {
                 </>
               )}
               renderLeafSubtotal={(group) => (
-                <SubtotalRow label={`Subtotal ${group.label}`} colSpanLabel={1}>
+                <SubtotalRow label="Subtotal" colSpanLabel={1}>
                   <TableCell className="font-medium">{group.jumlah}</TableCell>
                   <TableCell />
                   <TableCell />
                   <TableCell className="font-medium">
                     {formatRupiah(group.total)}
-                  </TableCell>
-                  <TableCell />
-                  <TableCell />
-                </SubtotalRow>
-              )}
-              renderSectionSubtotal={(section) => (
-                <SubtotalRow
-                  label={`Subtotal ${formatMonthLabel(section.title)}`}
-                  colSpanLabel={1}
-                  tone="section"
-                >
-                  <TableCell className="font-medium">{section.jumlah}</TableCell>
-                  <TableCell />
-                  <TableCell />
-                  <TableCell className="font-medium">
-                    {formatRupiah(section.total)}
                   </TableCell>
                   <TableCell />
                   <TableCell />
@@ -251,7 +240,7 @@ export default function LaporanPage() {
               tab="pemasukan"
               sections={sections}
               columns={["Nama Barang", "Jumlah", "Satuan", "User"]}
-              formatSectionTitle={formatMonthLabel}
+              formatSectionTitle={formatDate}
               renderRow={(item) => (
                 <>
                   <TableCell>
@@ -265,19 +254,8 @@ export default function LaporanPage() {
                 </>
               )}
               renderLeafSubtotal={(group) => (
-                <SubtotalRow label={`Subtotal ${group.label}`} colSpanLabel={1}>
+                <SubtotalRow label="Subtotal" colSpanLabel={1}>
                   <TableCell className="font-medium">{group.jumlah}</TableCell>
-                  <TableCell />
-                  <TableCell />
-                </SubtotalRow>
-              )}
-              renderSectionSubtotal={(section) => (
-                <SubtotalRow
-                  label={`Subtotal ${formatMonthLabel(section.title)}`}
-                  colSpanLabel={1}
-                  tone="section"
-                >
-                  <TableCell className="font-medium">{section.jumlah}</TableCell>
                   <TableCell />
                   <TableCell />
                 </SubtotalRow>
@@ -309,7 +287,7 @@ export default function LaporanPage() {
               tab="pengeluaran"
               sections={sections}
               columns={["Nama Barang", "Jumlah", "Satuan", "User"]}
-              formatSectionTitle={formatMonthLabel}
+              formatSectionTitle={formatDate}
               renderRow={(item) => (
                 <>
                   <TableCell>
@@ -323,19 +301,8 @@ export default function LaporanPage() {
                 </>
               )}
               renderLeafSubtotal={(group) => (
-                <SubtotalRow label={`Subtotal ${group.label}`} colSpanLabel={1}>
+                <SubtotalRow label="Subtotal" colSpanLabel={1}>
                   <TableCell className="font-medium">{group.jumlah}</TableCell>
-                  <TableCell />
-                  <TableCell />
-                </SubtotalRow>
-              )}
-              renderSectionSubtotal={(section) => (
-                <SubtotalRow
-                  label={`Subtotal ${formatMonthLabel(section.title)}`}
-                  colSpanLabel={1}
-                  tone="section"
-                >
-                  <TableCell className="font-medium">{section.jumlah}</TableCell>
                   <TableCell />
                   <TableCell />
                 </SubtotalRow>
@@ -440,7 +407,6 @@ function TransaksiTab({
   formatSectionTitle,
   renderRow,
   renderLeafSubtotal,
-  renderSectionSubtotal,
   renderGrandTotal,
   page,
   totalPages,
@@ -457,7 +423,6 @@ function TransaksiTab({
   formatSectionTitle?: (title: string) => string
   renderRow: (item: Record<string, unknown>) => React.ReactNode
   renderLeafSubtotal: (group: LaporanLeafGroup) => React.ReactNode
-  renderSectionSubtotal?: (section: LaporanSection) => React.ReactNode
   renderGrandTotal?: () => React.ReactNode
   page: number
   totalPages: number
@@ -472,11 +437,9 @@ function TransaksiTab({
           tab={tab}
           sections={sections}
           columns={columns}
-          leafHeaderPrefix="Kategori"
           formatSectionTitle={formatSectionTitle}
           renderRow={(item) => <TableRow>{renderRow(item)}</TableRow>}
           renderLeafSubtotal={renderLeafSubtotal}
-          renderSectionSubtotal={renderSectionSubtotal}
           renderGrandTotal={hasData ? renderGrandTotal : undefined}
         />
       </LaporanTabCard>

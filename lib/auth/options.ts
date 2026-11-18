@@ -79,6 +79,33 @@ export const authOptions: NextAuthConfig = {
         token.roleName = user.roleName
         token.homePath = user.homePath
         token.capabilities = user.capabilities
+        token.capabilitiesRefreshedAt = Date.now()
+        return token
+      }
+
+      // Refresh module flags from DB so sidebar picks up manageItms/accessItms
+      // without forcing a full logout (no data deleted).
+      const refreshedAt = Number(token.capabilitiesRefreshedAt ?? 0)
+      const stale = Date.now() - refreshedAt > 30_000
+      if (token.sub && stale) {
+        try {
+          const dbUser = await prisma.user.findUnique({
+            where: { idUser: Number(token.sub) },
+            include: { role: true },
+          })
+          if (dbUser) {
+            const authUser = buildSessionAuthUser(dbUser)
+            token.username = authUser.username
+            token.level = authUser.level
+            token.jabatan = authUser.jabatan
+            token.roleName = authUser.roleName
+            token.homePath = authUser.homePath
+            token.capabilities = authUser.capabilities
+          }
+        } catch (error) {
+          console.error("Failed to refresh session capabilities:", error)
+        }
+        token.capabilitiesRefreshedAt = Date.now()
       }
       return token
     },
