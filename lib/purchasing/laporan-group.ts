@@ -113,28 +113,24 @@ export function kategoriLabel(
   return stok?.jenisBarang?.jenisBrg?.trim() || "Tanpa kategori"
 }
 
-/** Username tunggal (bukan string hasil merge). */
+/** Username tunggal (bukan string hasil merge multi-user). */
 export function singleUnitLabel(item: Record<string, unknown>): string {
+  const merged = item.mergedUsers
+  if (Array.isArray(merged) && merged.length === 1) {
+    const only = merged[0]
+    if (typeof only === "string" && only.trim()) return only.trim()
+  }
   const pemohon = item.pemohon as { username?: string } | undefined
   if (typeof pemohon?.username === "string" && pemohon.username.trim()) {
     return pemohon.username.trim()
   }
-  if (
-    typeof item.unit === "string" &&
-    item.unit.trim() &&
-    !item.mergedUsers &&
-    !item.userQty
-  ) {
-    return item.unit.trim()
-  }
-  if (
-    typeof item.unitKey === "string" &&
-    item.unitKey.trim() &&
-    !item.mergedUsers &&
-    !item.userQty
-  ) {
-    return item.unitKey.trim()
-  }
+  const rawUnit =
+    typeof item.unit === "string" && item.unit.trim()
+      ? item.unit.trim()
+      : typeof item.unitKey === "string" && item.unitKey.trim()
+        ? item.unitKey.trim()
+        : ""
+  if (rawUnit && !rawUnit.includes(", ")) return rawUnit
   return "Tanpa unit"
 }
 
@@ -245,7 +241,9 @@ function collectUserQty(
 
 /**
  * Kunci merge dalam satu section (tanggal / kategori):
- * nama + satuan (+ status untuk permintaan/pengajuan).
+ * - permintaan/pengajuan: nama + satuan + status
+ * - pengeluaran: nama + satuan + user (span table)
+ * - lainnya: nama + satuan
  */
 function mergeRowKey(item: Record<string, unknown>, tab: string): string {
   const nama = namaBarangLabel(item).toLowerCase()
@@ -253,10 +251,13 @@ function mergeRowKey(item: Record<string, unknown>, tab: string): string {
   if (tab === "permintaan" || tab === "pengajuan") {
     return `${nama}|${satuan}|${Number(item.status ?? 0)}`
   }
+  if (tab === "pengeluaran") {
+    return `${nama}|${satuan}|${singleUnitLabel(item).toLowerCase()}`
+  }
   return `${nama}|${satuan}`
 }
 
-/** Gabung nama barang sama; User → "via (5), vera (3)". */
+/** Gabung nama barang sama; User → "via (5), vera (3)" (kecuali pengeluaran). */
 export function mergeSameNamaRows(
   rows: Record<string, unknown>[],
   tab: string
@@ -277,11 +278,21 @@ export function mergeSameNamaRows(
 
   return order.map((key) => {
     const group = buckets.get(key) ?? []
-    const userQty = collectUserQty(group)
-    const users = Object.keys(userQty).sort((a, b) => a.localeCompare(b, "id"))
     const first = { ...group[0]! }
     first.jumlah = group.reduce((sum, row) => sum + num(row, "jumlah"), 0)
     first.total = group.reduce((sum, row) => sum + num(row, "total"), 0)
+
+    if (tab === "pengeluaran") {
+      const user = singleUnitLabel(group[0]!)
+      first.mergedUsers = [user]
+      first.userQty = { [user]: first.jumlah as number }
+      first.unitKey = user
+      first.unit = user
+      return first
+    }
+
+    const userQty = collectUserQty(group)
+    const users = Object.keys(userQty).sort((a, b) => a.localeCompare(b, "id"))
     first.userQty = userQty
     first.mergedUsers = users
     first.unitKey = formatUserQtyLabel(userQty)
@@ -543,4 +554,253 @@ export function paginateByCompleteGroups(
   const pageRows = pages[safePage - 1] ?? []
 
   return toPaginatedResult(pageRows, allMerged.length, safePage, pageSize)
+}
+
+/** Baris flat untuk tabel Pengeluaran: Tanggal/User rowspan. */
+export type PengeluaranTableRow =
+  | {
+      type: "item"
+      key: string
+      tanggalKey: string
+      tanggalLabel: string
+      showTanggal: boolean
+      tanggalRowSpan: number
+      user: string
+      showUser: boolean
+      userRowSpan: number
+      namaBarang: string
+      qty: number
+      total: number
+    }
+  | {
+      type: "user-subtotal" | "date-subtotal" | "grand"
+      key: string
+      label: string
+      qty: number
+      total: number
+    }
+
+type PengeluaranItem = {
+  tanggalKey: string
+  user: string
+  namaBarang: string
+  qty: number
+}
+
+function preparePengeluaranItems(
+  rows: Record<string, unknown>[]
+): PengeluaranItem[] {
+  const merged = mergeSameNamaRows(rows, "pengeluaran")
+  const items: PengeluaranItem[] = merged.map((row) => ({
+    tanggalKey: rowTanggalKey(row, "pengeluaran"),
+    user: singleUnitLabel(row),
+    namaBarang: namaBarangLabel(row) || "Tanpa nama",
+    qty: num(row, "jumlah"),
+  }))
+
+  items.sort((a, b) => {
+    const byDate = b.tanggalKey.localeCompare(a.tanggalKey, "id")
+    if (byDate !== 0) return byDate
+    const byUser = a.user.localeCompare(b.user, "id")
+    if (byUser !== 0) return byUser
+    return a.namaBarang.localeCompare(b.namaBarang, "id")
+  })
+  return items
+}
+
+/**
+ * Model tabel Pengeluaran: Tanggal (span) → User (span) → Nama, Qty, Total.
+ * Total = qty (agregat jumlah).
+ */
+export function buildPengeluaranTableRows(
+  rows: Record<string, unknown>[],
+  formatTanggal: (tanggalKey: string) => string
+): { rows: PengeluaranTableRow[]; grandQty: number } {
+  const items = preparePengeluaranItems(rows)
+  if (items.length === 0) return { rows: [], grandQty: 0 }
+
+  const dateOrder: string[] = []
+  const byDate = new Map<string, PengeluaranItem[]>()
+  for (const item of items) {
+    const bucket = byDate.get(item.tanggalKey)
+    if (bucket) bucket.push(item)
+    else {
+      dateOrder.push(item.tanggalKey)
+      byDate.set(item.tanggalKey, [item])
+    }
+  }
+
+  const out: PengeluaranTableRow[] = []
+  let grandQty = 0
+
+  for (const tanggalKey of dateOrder) {
+    const dateItems = byDate.get(tanggalKey) ?? []
+    const userOrder: string[] = []
+    const byUser = new Map<string, PengeluaranItem[]>()
+    for (const item of dateItems) {
+      const bucket = byUser.get(item.user)
+      if (bucket) bucket.push(item)
+      else {
+        userOrder.push(item.user)
+        byUser.set(item.user, [item])
+      }
+    }
+
+    // Tanggal span: semua baris item + subtotal user (tanpa subtotal tanggal)
+    let tanggalRowSpan = 0
+    for (const user of userOrder) {
+      const userItems = byUser.get(user) ?? []
+      tanggalRowSpan += userItems.length + 1
+    }
+
+    let dateQty = 0
+    let tanggalShown = false
+
+    for (const user of userOrder) {
+      const userItems = byUser.get(user) ?? []
+      const userRowSpan = userItems.length
+      let userQty = 0
+      let userShown = false
+
+      for (const [index, item] of userItems.entries()) {
+        userQty += item.qty
+        out.push({
+          type: "item",
+          key: `${tanggalKey}|${user}|${item.namaBarang}|${index}`,
+          tanggalKey,
+          tanggalLabel: formatTanggal(tanggalKey),
+          showTanggal: !tanggalShown,
+          tanggalRowSpan,
+          user,
+          showUser: !userShown,
+          userRowSpan,
+          namaBarang: item.namaBarang,
+          qty: item.qty,
+          total: item.qty,
+        })
+        tanggalShown = true
+        userShown = true
+      }
+
+      out.push({
+        type: "user-subtotal",
+        key: `${tanggalKey}|${user}|sub`,
+        label: `Subtotal ${user}`,
+        qty: userQty,
+        total: userQty,
+      })
+      dateQty += userQty
+    }
+
+    out.push({
+      type: "date-subtotal",
+      key: `${tanggalKey}|date-sub`,
+      label: `Subtotal ${formatTanggal(tanggalKey)}`,
+      qty: dateQty,
+      total: dateQty,
+    })
+    grandQty += dateQty
+  }
+
+  out.push({
+    type: "grand",
+    key: "grand",
+    label: "Total keseluruhan",
+    qty: grandQty,
+    total: grandQty,
+  })
+
+  return { rows: out, grandQty }
+}
+
+/** Body pdfmake untuk tabel Pengeluaran (rowSpan Tanggal/User). */
+export function buildPengeluaranPdfTableBody(
+  rows: Record<string, unknown>[],
+  formatTanggal: (tanggalKey: string) => string
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+): { body: any[][]; grandQty: number } {
+  const { rows: tableRows, grandQty } = buildPengeluaranTableRows(
+    rows,
+    formatTanggal
+  )
+
+  const header = [
+    { text: "Tanggal", style: "tableHeader", alignment: "center" },
+    { text: "User", style: "tableHeader", alignment: "center" },
+    { text: "Nama Barang", style: "tableHeader", alignment: "center" },
+    { text: "Qty", style: "tableHeader", alignment: "center" },
+    { text: "Total", style: "tableHeader", alignment: "center" },
+  ]
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const body: any[][] = [header]
+
+  for (const row of tableRows) {
+    if (row.type === "item") {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const line: any[] = []
+      if (row.showTanggal) {
+        line.push({
+          text: row.tanggalLabel,
+          style: "tableCell",
+          rowSpan: row.tanggalRowSpan,
+          valign: "middle",
+        })
+      } else {
+        line.push({})
+      }
+      if (row.showUser) {
+        line.push({
+          text: row.user,
+          style: "tableCell",
+          rowSpan: row.userRowSpan,
+          valign: "middle",
+        })
+      } else {
+        line.push({})
+      }
+      line.push({ text: row.namaBarang, style: "tableCell" })
+      line.push({ text: String(row.qty), style: "tableCell", alignment: "right" })
+      line.push({
+        text: String(row.total),
+        style: "tableCell",
+        alignment: "right",
+      })
+      body.push(line)
+      continue
+    }
+
+    if (row.type === "user-subtotal") {
+      // Masih di dalam rowspan Tanggal; User sudah selesai → label di kolom User+Nama
+      body.push([
+        {},
+        {
+          text: row.label,
+          style: "subtotal",
+          colSpan: 2,
+          alignment: "left",
+        },
+        {},
+        { text: String(row.qty), style: "subtotal", alignment: "right" },
+        { text: String(row.total), style: "subtotal", alignment: "right" },
+      ])
+      continue
+    }
+
+    const style = row.type === "grand" ? "grandTotal" : "sectionTotal"
+    body.push([
+      {
+        text: row.label,
+        style,
+        colSpan: 3,
+        alignment: "left",
+      },
+      {},
+      {},
+      { text: String(row.qty), style, alignment: "right" },
+      { text: String(row.total), style, alignment: "right" },
+    ])
+  }
+
+  return { body, grandQty }
 }

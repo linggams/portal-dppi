@@ -13,7 +13,9 @@ import {
 import { formatDate, formatRupiah } from "../utils"
 import {
   buildLaporanSectionsByKategori,
+  buildPengeluaranPdfTableBody,
   isTransaksiTab,
+  kategoriLabel,
   listKategoriOptions,
   unitLabel,
 } from "@/lib/purchasing/laporan-group"
@@ -229,123 +231,12 @@ export function useLaporan() {
     }
     try {
       setExporting(true)
-      const headers = getHeaders(activeTab)
-      const sections = buildLaporanSectionsByKategori(
-        exportRows,
-        activeTab,
-        exportSelected
-      )
 
-      if (sections.length === 0) {
-        toast.error("Tidak ada data untuk kategori terpilih")
-        return
-      }
-
-      const transaksi = isTransaksiTab(activeTab)
-      const landscape = activeTab === "pengajuan"
       const pageMargins: [number, number, number, number] = [28, 36, 28, 28]
+      const landscape = activeTab === "pengajuan"
       const contentWidth = landscape
         ? 841.89 - pageMargins[0] - pageMargins[2]
         : 595.28 - pageMargins[0] - pageMargins[2]
-
-      const rightAlignCols: Record<string, number[]> = {
-        permintaan: [1],
-        pengajuan: [1, 3, 4],
-        pemasukan: [1],
-        pengeluaran: [1],
-        stok: [2, 3, 4],
-      }
-      const numericCols = new Set(rightAlignCols[activeTab] ?? [])
-
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const widthsByTab: Record<string, any[]> = {
-        permintaan: ["*", 44, 44, "*", 58],
-        pengajuan: ["*", 40, 40, 64, 70, "*", 54],
-        pemasukan: ["*", 48, 48, "*"],
-        pengeluaran: ["*", 48, 48, "*"],
-        stok: [58, "*", 42, 42, 42, 48],
-      }
-      const widths =
-        widthsByTab[activeTab] || new Array(headers.length).fill("*")
-
-      const cell = (
-        text: string,
-        style: string,
-        colIndex?: number,
-        extra?: Record<string, unknown>
-      ) => ({
-        text,
-        style,
-        alignment:
-          colIndex !== undefined && numericCols.has(colIndex)
-            ? "right"
-            : style === "tableHeader"
-              ? "center"
-              : "left",
-        ...extra,
-      })
-
-      const empty = (style: string) => ({ text: "", style })
-
-      const summaryRow = (
-        label: string,
-        style: string,
-        values: {
-          jumlah?: number
-          total?: number
-          stok?: number
-          keluar?: number
-          sisa?: number
-        }
-      ) => {
-        if (activeTab === "pengajuan") {
-          return [
-            cell(label, style, 0),
-            cell(String(values.jumlah ?? 0), style, 1),
-            empty(style),
-            empty(style),
-            cell(formatRupiah(values.total ?? 0), style, 4),
-            empty(style),
-            empty(style),
-          ]
-        }
-        if (activeTab === "stok") {
-          return [
-            { text: label, style, colSpan: 2 },
-            {},
-            cell(String(values.stok ?? 0), style, 2),
-            cell(String(values.keluar ?? 0), style, 3),
-            cell(String(values.sisa ?? 0), style, 4),
-            empty(style),
-          ]
-        }
-        if (activeTab === "permintaan") {
-          return [
-            cell(label, style, 0),
-            cell(String(values.jumlah ?? 0), style, 1),
-            empty(style),
-            empty(style),
-            empty(style),
-          ]
-        }
-        return [
-          cell(label, style, 0),
-          cell(String(values.jumlah ?? 0), style, 1),
-          empty(style),
-          empty(style),
-        ]
-      }
-
-      const grand = sections.reduce(
-        (sum, s) => ({
-          jumlah: sum.jumlah + s.jumlah,
-          total: sum.total + s.total,
-          stok: sum.stok + s.stok,
-          keluar: sum.keluar + s.keluar,
-          sisa: sum.sisa + s.sisa,
-        }),
-        { jumlah: 0, total: 0, stok: 0, keluar: 0, sisa: 0 }
-      )
 
       const gridLayout = {
         hLineWidth: () => 0.7,
@@ -380,88 +271,248 @@ export function useLaporan() {
         content.push({ text: " ", margin: [0, 0, 0, 8] })
       }
 
-      sections.forEach((section, sectionIndex) => {
-        const sectionTitle = `${
-          transaksi ? "Kategori: " : ""
-        }${section.title}   ·   ${section.itemCount} item · jml ${
-          activeTab === "stok" ? section.sisa : section.jumlah
-        }`
-
-        // Satu kategori = satu blok full-width; kategori berikutnya page break
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const categoryStack: any[] = [
-          {
-            columns: [
-              {
-                canvas: [
-                  {
-                    type: "rect",
-                    x: 0,
-                    y: 0,
-                    w: 3,
-                    h: 12,
-                    color: "#2563eb",
-                  },
-                ],
-                width: 8,
-              },
-              {
-                text: sectionTitle,
-                style: "sectionTitle",
-                width: "*",
-              },
-            ],
-            columnGap: 4,
-            margin: [0, 0, 0, 6],
-          },
-        ]
-
-        for (const group of section.groups) {
-          const headerRow = headers.map((h, i) => cell(h, "tableHeader", i))
-          const dataRows = group.rows.map((item) =>
-            getRowData(item, activeTab).map((text, i) =>
-              cell(text, "tableCell", i)
-            )
-          )
-
-          categoryStack.push({
-            table: {
-              widths,
-              headerRows: 1,
-              body: [
-                headerRow,
-                ...dataRows,
-                summaryRow(`Subtotal ${section.title}`, "subtotal", group),
-              ],
-            },
-            layout: {
-              ...gridLayout,
-              fillColor: (rowIndex: number) => {
-                if (rowIndex === 0) return "#f3f4f6"
-                return null
-              },
-            },
-            margin: [0, 0, 0, 4],
-          })
+      // Pengeluaran: Tanggal/User rowspan, 1 kategori per halaman
+      if (activeTab === "pengeluaran") {
+        const allow = new Set(exportSelected)
+        const byKat = new Map<string, Record<string, unknown>[]>()
+        for (const row of exportRows) {
+          const kat = kategoriLabel(row, "pengeluaran")
+          if (!allow.has(kat)) continue
+          const bucket = byKat.get(kat)
+          if (bucket) bucket.push(row)
+          else byKat.set(kat, [row])
         }
 
-        content.push({
-          stack: categoryStack,
-          pageBreak: sectionIndex > 0 ? "before" : undefined,
-        })
-      })
+        const katOrder = Array.from(byKat.keys()).sort((a, b) =>
+          a.localeCompare(b, "id")
+        )
+        if (katOrder.length === 0) {
+          toast.error("Tidak ada data untuk kategori terpilih")
+          return
+        }
 
-      content.push({
-        table: {
-          widths,
-          body: [summaryRow("Total keseluruhan", "grandTotal", grand)],
-        },
-        layout: {
-          ...gridLayout,
-          fillColor: () => "#e5e7eb",
-        },
-        margin: [0, 12, 0, 0],
-      })
+        const widths = [78, 70, "*", 40, 40]
+        katOrder.forEach((kat, index) => {
+          const rows = byKat.get(kat) ?? []
+          const { body } = buildPengeluaranPdfTableBody(rows, formatDate)
+          content.push({
+            stack: [
+              {
+                text: `Kategori: ${kat}`,
+                style: "sectionTitle",
+                margin: [0, 0, 0, 6],
+              },
+              {
+                table: {
+                  widths,
+                  headerRows: 1,
+                  body,
+                },
+                layout: {
+                  ...gridLayout,
+                  fillColor: (rowIndex: number) => {
+                    if (rowIndex === 0) return "#f3f4f6"
+                    return null
+                  },
+                },
+              },
+            ],
+            pageBreak: index > 0 ? "before" : undefined,
+          })
+        })
+      } else {
+        const headers = getHeaders(activeTab)
+        const sections = buildLaporanSectionsByKategori(
+          exportRows,
+          activeTab,
+          exportSelected
+        )
+
+        if (sections.length === 0) {
+          toast.error("Tidak ada data untuk kategori terpilih")
+          return
+        }
+
+        const transaksi = isTransaksiTab(activeTab)
+        const rightAlignCols: Record<string, number[]> = {
+          permintaan: [1],
+          pengajuan: [1, 3, 4],
+          pemasukan: [1],
+          stok: [2, 3, 4],
+        }
+        const numericCols = new Set(rightAlignCols[activeTab] ?? [])
+
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const widthsByTab: Record<string, any[]> = {
+          permintaan: ["*", 44, 44, "*", 58],
+          pengajuan: ["*", 40, 40, 64, 70, "*", 54],
+          pemasukan: ["*", 48, 48, "*"],
+          stok: [58, "*", 42, 42, 42, 48],
+        }
+        const widths =
+          widthsByTab[activeTab] || new Array(headers.length).fill("*")
+
+        const cell = (
+          text: string,
+          style: string,
+          colIndex?: number,
+          extra?: Record<string, unknown>
+        ) => ({
+          text,
+          style,
+          alignment:
+            colIndex !== undefined && numericCols.has(colIndex)
+              ? "right"
+              : style === "tableHeader"
+                ? "center"
+                : "left",
+          ...extra,
+        })
+
+        const empty = (style: string) => ({ text: "", style })
+
+        const summaryRow = (
+          label: string,
+          style: string,
+          values: {
+            jumlah?: number
+            total?: number
+            stok?: number
+            keluar?: number
+            sisa?: number
+          }
+        ) => {
+          if (activeTab === "pengajuan") {
+            return [
+              cell(label, style, 0),
+              cell(String(values.jumlah ?? 0), style, 1),
+              empty(style),
+              empty(style),
+              cell(formatRupiah(values.total ?? 0), style, 4),
+              empty(style),
+              empty(style),
+            ]
+          }
+          if (activeTab === "stok") {
+            return [
+              { text: label, style, colSpan: 2 },
+              {},
+              cell(String(values.stok ?? 0), style, 2),
+              cell(String(values.keluar ?? 0), style, 3),
+              cell(String(values.sisa ?? 0), style, 4),
+              empty(style),
+            ]
+          }
+          if (activeTab === "permintaan") {
+            return [
+              cell(label, style, 0),
+              cell(String(values.jumlah ?? 0), style, 1),
+              empty(style),
+              empty(style),
+              empty(style),
+            ]
+          }
+          return [
+            cell(label, style, 0),
+            cell(String(values.jumlah ?? 0), style, 1),
+            empty(style),
+            empty(style),
+          ]
+        }
+
+        const grand = sections.reduce(
+          (sum, s) => ({
+            jumlah: sum.jumlah + s.jumlah,
+            total: sum.total + s.total,
+            stok: sum.stok + s.stok,
+            keluar: sum.keluar + s.keluar,
+            sisa: sum.sisa + s.sisa,
+          }),
+          { jumlah: 0, total: 0, stok: 0, keluar: 0, sisa: 0 }
+        )
+
+        sections.forEach((section, sectionIndex) => {
+          const sectionTitle = `${
+            transaksi ? "Kategori: " : ""
+          }${section.title}   ·   ${section.itemCount} item · jml ${
+            activeTab === "stok" ? section.sisa : section.jumlah
+          }`
+
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const categoryStack: any[] = [
+            {
+              columns: [
+                {
+                  canvas: [
+                    {
+                      type: "rect",
+                      x: 0,
+                      y: 0,
+                      w: 3,
+                      h: 12,
+                      color: "#2563eb",
+                    },
+                  ],
+                  width: 8,
+                },
+                {
+                  text: sectionTitle,
+                  style: "sectionTitle",
+                  width: "*",
+                },
+              ],
+              columnGap: 4,
+              margin: [0, 0, 0, 6],
+            },
+          ]
+
+          for (const group of section.groups) {
+            const headerRow = headers.map((h, i) => cell(h, "tableHeader", i))
+            const dataRows = group.rows.map((item) =>
+              getRowData(item, activeTab).map((text, i) =>
+                cell(text, "tableCell", i)
+              )
+            )
+
+            categoryStack.push({
+              table: {
+                widths,
+                headerRows: 1,
+                body: [
+                  headerRow,
+                  ...dataRows,
+                  summaryRow(`Subtotal ${section.title}`, "subtotal", group),
+                ],
+              },
+              layout: {
+                ...gridLayout,
+                fillColor: (rowIndex: number) => {
+                  if (rowIndex === 0) return "#f3f4f6"
+                  return null
+                },
+              },
+              margin: [0, 0, 0, 4],
+            })
+          }
+
+          content.push({
+            stack: categoryStack,
+            pageBreak: sectionIndex > 0 ? "before" : undefined,
+          })
+        })
+
+        content.push({
+          table: {
+            widths,
+            body: [summaryRow("Total keseluruhan", "grandTotal", grand)],
+          },
+          layout: {
+            ...gridLayout,
+            fillColor: () => "#e5e7eb",
+          },
+          margin: [0, 12, 0, 0],
+        })
+      }
 
       const filename = `laporan-${activeTab}-${new Date().toISOString().split("T")[0]}.pdf`
 
@@ -478,6 +529,7 @@ export function useLaporan() {
           sectionTitle: { fontSize: 10, bold: true },
           tableHeader: { bold: true, fontSize: 8 },
           subtotal: { bold: true, fontSize: 8 },
+          sectionTotal: { bold: true, fontSize: 8 },
           grandTotal: { bold: true, fontSize: 9 },
           tableCell: { fontSize: 8 },
         },

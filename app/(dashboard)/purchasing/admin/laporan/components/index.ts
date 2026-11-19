@@ -1,5 +1,6 @@
 export { LaporanFiltersComponent } from "./LaporanFilters"
 export { LaporanExportDialog } from "./LaporanExportDialog"
 export { LaporanGroupedTables, SubtotalRow } from "./LaporanGroupedTables"
+export { LaporanPengeluaranTable } from "./LaporanPengeluaranTable"
 export { LaporanSummaryCards } from "./LaporanSummaryCards"
 export { LaporanTabCard } from "./LaporanTabCard"

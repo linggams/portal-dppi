@@ -19,6 +19,7 @@ import {
   LaporanExportDialog,
   LaporanFiltersComponent,
   LaporanGroupedTables,
+  LaporanPengeluaranTable,
   LaporanSummaryCards,
   LaporanTabCard,
   SubtotalRow,
@@ -280,50 +281,22 @@ export default function LaporanPage() {
           </TabsContent>
 
           <TabsContent value="pengeluaran">
-            <TransaksiTab
-              title="Laporan Pengeluaran Barang"
-              loading={loading}
-              hasData={data.length > 0}
-              tab="pengeluaran"
-              sections={sections}
-              columns={["Nama Barang", "Jumlah", "Satuan", "User"]}
-              formatSectionTitle={formatDate}
-              renderRow={(item) => (
-                <>
-                  <TableCell>
-                    {(item.stokbarang as { namaBrg?: string })?.namaBrg ?? ""}
-                  </TableCell>
-                  <TableCell>{String(item.jumlah)}</TableCell>
-                  <TableCell>
-                    {(item.stokbarang as { satuan?: string })?.satuan ?? ""}
-                  </TableCell>
-                  <TableCell>{unitLabel(item)}</TableCell>
-                </>
-              )}
-              renderLeafSubtotal={(group) => (
-                <SubtotalRow label="Subtotal" colSpanLabel={1}>
-                  <TableCell className="font-medium">{group.jumlah}</TableCell>
-                  <TableCell />
-                  <TableCell />
-                </SubtotalRow>
-              )}
-              renderGrandTotal={() => (
-                <SubtotalRow
-                  label="Total keseluruhan"
-                  colSpanLabel={1}
-                  tone="grand"
-                >
-                  <TableCell className="font-medium">{grand.jumlah}</TableCell>
-                  <TableCell />
-                  <TableCell />
-                </SubtotalRow>
-              )}
-              page={page}
-              totalPages={totalPages}
-              total={total}
-              pageSize={pageSize}
-              onPageChange={setPage}
-            />
+            <div className="space-y-4">
+              <LaporanTabCard
+                title="Laporan Pengeluaran Barang"
+                loading={loading}
+                hasData={data.length > 0}
+              >
+                <LaporanPengeluaranTable data={data} />
+              </LaporanTabCard>
+              <TablePagination
+                page={page}
+                totalPages={totalPages}
+                total={total}
+                pageSize={pageSize}
+                onPageChange={setPage}
+              />
+            </div>
           </TabsContent>
 
           <TabsContent value="stok">
