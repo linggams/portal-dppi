@@ -111,7 +111,6 @@ export default function LaporanPage() {
 
           <TabsContent value="permintaan">
             <TransaksiTab
-              title="Laporan Permintaan Barang"
               loading={loading}
               hasData={data.length > 0}
               tab="permintaan"
@@ -163,7 +162,6 @@ export default function LaporanPage() {
 
           <TabsContent value="pengajuan">
             <TransaksiTab
-              title="Laporan Pengajuan Barang"
               loading={loading}
               hasData={data.length > 0}
               tab="pengajuan"
@@ -235,7 +233,6 @@ export default function LaporanPage() {
 
           <TabsContent value="pemasukan">
             <TransaksiTab
-              title="Laporan Pemasukan Barang"
               loading={loading}
               hasData={data.length > 0}
               tab="pemasukan"
@@ -283,7 +280,6 @@ export default function LaporanPage() {
           <TabsContent value="pengeluaran">
             <div className="space-y-4">
               <LaporanTabCard
-                title="Laporan Pengeluaran Barang"
                 loading={loading}
                 hasData={data.length > 0}
               >
@@ -301,7 +297,6 @@ export default function LaporanPage() {
 
           <TabsContent value="stok">
             <TransaksiTab
-              title="Laporan Stok Barang"
               loading={loading}
               hasData={data.length > 0}
               tab="stok"
@@ -371,7 +366,6 @@ export default function LaporanPage() {
 }
 
 function TransaksiTab({
-  title,
   loading,
   hasData,
   tab,
@@ -387,7 +381,6 @@ function TransaksiTab({
   pageSize,
   onPageChange,
 }: {
-  title: string
   loading: boolean
   hasData: boolean
   tab: string
@@ -405,13 +398,17 @@ function TransaksiTab({
 }) {
   return (
     <div className="space-y-4">
-      <LaporanTabCard title={title} loading={loading} hasData={hasData}>
+      <LaporanTabCard loading={loading} hasData={hasData}>
         <LaporanGroupedTables
           tab={tab}
           sections={sections}
           columns={columns}
           formatSectionTitle={formatSectionTitle}
-          renderRow={(item) => <TableRow>{renderRow(item)}</TableRow>}
+          renderRow={(item) => (
+            <TableRow className="border-0 hover:bg-transparent">
+              {renderRow(item)}
+            </TableRow>
+          )}
           renderLeafSubtotal={renderLeafSubtotal}
           renderGrandTotal={hasData ? renderGrandTotal : undefined}
         />

@@ -17,7 +17,7 @@ import { cn } from "@/lib/utils"
 import { formatDate } from "../utils"
 
 const borderedTableClass =
-  "border-collapse [&_th]:border [&_td]:border [&_th]:border-border [&_td]:border-border"
+  "border-collapse border border-border [&_tr]:border-0 [&_th]:border [&_td]:border [&_th]:border-border [&_td]:border-border"
 
 interface Props {
   data: Record<string, unknown>[]
@@ -35,10 +35,9 @@ export function LaporanPengeluaranTable({ data }: Props) {
   if (rows.length === 0) return null
 
   return (
-    <div className="overflow-hidden rounded-md border border-border">
-      <TableContainer className="rounded-none border-0">
-        <Table className={borderedTableClass}>
-          <TableHeader>
+    <TableContainer className="border-0">
+      <Table className={borderedTableClass}>
+          <TableHeader className="[&_tr]:border-0">
             <TableRow className="bg-muted/50 hover:bg-muted/50">
               <TableHead className="font-semibold">Tanggal</TableHead>
               <TableHead className="font-semibold">User</TableHead>
@@ -51,7 +50,10 @@ export function LaporanPengeluaranTable({ data }: Props) {
             {rows.map((row) => {
               if (row.type === "item") {
                 return (
-                  <TableRow key={row.key} className="hover:bg-transparent">
+                  <TableRow
+                    key={row.key}
+                    className="border-0 hover:bg-transparent"
+                  >
                     {row.showTanggal ? (
                       <TableCell
                         rowSpan={row.tanggalRowSpan}
@@ -79,7 +81,10 @@ export function LaporanPengeluaranTable({ data }: Props) {
                 return (
                   <TableRow
                     key={row.key}
-                    className={cn("hover:bg-transparent", toneClass(row))}
+                    className={cn(
+                      "border-0 hover:bg-transparent",
+                      toneClass(row)
+                    )}
                   >
                     {/* Tanggal masih di-span; User selesai */}
                     <TableCell colSpan={2} className="font-medium">
@@ -99,7 +104,10 @@ export function LaporanPengeluaranTable({ data }: Props) {
               return (
                 <TableRow
                   key={row.key}
-                  className={cn("hover:bg-transparent", toneClass(row))}
+                  className={cn(
+                    "border-0 hover:bg-transparent",
+                    toneClass(row)
+                  )}
                 >
                   <TableCell colSpan={3} className="font-medium">
                     {row.label}
@@ -114,8 +122,7 @@ export function LaporanPengeluaranTable({ data }: Props) {
               )
             })}
           </TableBody>
-        </Table>
-      </TableContainer>
-    </div>
+      </Table>
+    </TableContainer>
   )
 }

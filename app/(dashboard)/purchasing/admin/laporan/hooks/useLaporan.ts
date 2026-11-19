@@ -27,7 +27,6 @@ export function useLaporan() {
   const [activeTab, setActiveTabState] = useState("permintaan")
   const [filters, setFiltersState] = useState<LaporanFilters>(() => ({
     ...getMonthToDateRangeWIB(),
-    unit: "",
     status: "all",
   }))
   const [data, setData] = useState<Record<string, unknown>[]>([])
@@ -58,7 +57,6 @@ export function useLaporan() {
       if (activeTab !== "stok") {
         if (filters.startDate) params.append("start_date", filters.startDate)
         if (filters.endDate) params.append("end_date", filters.endDate)
-        if (filters.unit) params.append("unit", filters.unit)
         if (
           (activeTab === "permintaan" || activeTab === "pengajuan") &&
           filters.status !== "all"
@@ -271,54 +269,32 @@ export function useLaporan() {
         content.push({ text: " ", margin: [0, 0, 0, 8] })
       }
 
-      // Pengeluaran: Tanggal/User rowspan, 1 kategori per halaman
+      // Pengeluaran: mirror UI — satu tabel Tanggal/User rowspan
       if (activeTab === "pengeluaran") {
         const allow = new Set(exportSelected)
-        const byKat = new Map<string, Record<string, unknown>[]>()
-        for (const row of exportRows) {
-          const kat = kategoriLabel(row, "pengeluaran")
-          if (!allow.has(kat)) continue
-          const bucket = byKat.get(kat)
-          if (bucket) bucket.push(row)
-          else byKat.set(kat, [row])
-        }
-
-        const katOrder = Array.from(byKat.keys()).sort((a, b) =>
-          a.localeCompare(b, "id")
+        const filtered = exportRows.filter((row) =>
+          allow.has(kategoriLabel(row, "pengeluaran"))
         )
-        if (katOrder.length === 0) {
+        if (filtered.length === 0) {
           toast.error("Tidak ada data untuk kategori terpilih")
           return
         }
 
-        const widths = [78, 70, "*", 40, 40]
-        katOrder.forEach((kat, index) => {
-          const rows = byKat.get(kat) ?? []
-          const { body } = buildPengeluaranPdfTableBody(rows, formatDate)
-          content.push({
-            stack: [
-              {
-                text: `Kategori: ${kat}`,
-                style: "sectionTitle",
-                margin: [0, 0, 0, 6],
-              },
-              {
-                table: {
-                  widths,
-                  headerRows: 1,
-                  body,
-                },
-                layout: {
-                  ...gridLayout,
-                  fillColor: (rowIndex: number) => {
-                    if (rowIndex === 0) return "#f3f4f6"
-                    return null
-                  },
-                },
-              },
-            ],
-            pageBreak: index > 0 ? "before" : undefined,
-          })
+        const widths = [78, 70, "*", 42, 42]
+        const { body } = buildPengeluaranPdfTableBody(filtered, formatDate)
+        content.push({
+          table: {
+            widths,
+            headerRows: 1,
+            body,
+          },
+          layout: {
+            ...gridLayout,
+            fillColor: (rowIndex: number) => {
+              if (rowIndex === 0) return "#f3f4f6"
+              return null
+            },
+          },
         })
       } else {
         const headers = getHeaders(activeTab)

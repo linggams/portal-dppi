@@ -4,20 +4,18 @@ import { PageSection } from "@/components/layout"
 import { Skeleton } from "@/components/ui/skeleton"
 
 interface LaporanTabCardProps {
-  title: string
   loading: boolean
   hasData: boolean
   children: React.ReactNode
 }
 
 export function LaporanTabCard({
-  title,
   loading,
   hasData,
   children,
 }: LaporanTabCardProps) {
   return (
-    <PageSection title={title}>
+    <PageSection>
       {loading ? (
         <div className="space-y-3 py-4">
           <Skeleton className="h-10 w-full" />

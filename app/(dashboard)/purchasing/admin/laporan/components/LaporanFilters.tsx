@@ -2,7 +2,6 @@
 
 import { Button } from "@/components/ui/button"
 import { DatePicker } from "@/components/ui/date-picker"
-import { Input } from "@/components/ui/input"
 import {
   Select,
   SelectContent,
@@ -16,7 +15,7 @@ interface Props {
   filters: LaporanFiltersType
   onFiltersChange: (f: LaporanFiltersType) => void
   onFetch: () => void
-  /** Tab stok: sembunyikan filter tanggal/unit/status */
+  /** Tab stok: sembunyikan filter tanggal/status */
   mode?: "transaksi" | "stok"
   showStatus?: boolean
 }
@@ -51,12 +50,6 @@ export function LaporanFiltersComponent({
         value={filters.endDate}
         onChange={(endDate) => onFiltersChange({ ...filters, endDate })}
         placeholder="Tanggal akhir"
-      />
-      <Input
-        className="w-[140px]"
-        placeholder="Unit"
-        value={filters.unit}
-        onChange={(e) => onFiltersChange({ ...filters, unit: e.target.value })}
       />
       {showStatus ? (
         <Select

@@ -17,7 +17,7 @@ import {
 import { cn } from "@/lib/utils"
 
 const borderedTableClass =
-  "border-collapse [&_th]:border [&_td]:border [&_th]:border-border [&_td]:border-border"
+  "border-collapse border border-border [&_tr]:border-0 [&_th]:border [&_td]:border [&_th]:border-border [&_td]:border-border"
 
 interface Props {
   tab: string
@@ -41,10 +41,10 @@ function BorderedTable({
   children: React.ReactNode
 }) {
   return (
-    <TableContainer className="rounded-none border-0">
+    <TableContainer className="border-0">
       <Table className={borderedTableClass}>
-        <TableHeader>
-          <TableRow className="bg-muted/50 hover:bg-muted/50">
+        <TableHeader className="[&_tr]:border-0">
+          <TableRow className="border-0 bg-muted/50 hover:bg-muted/50">
             {columns.map((column) => (
               <TableHead key={column} className="font-semibold">
                 {column}
@@ -97,10 +97,10 @@ export function LaporanGroupedTables({
             {section.groups.map((group) => (
               <div
                 key={`${section.key}-${group.key}`}
-                className="overflow-hidden rounded-md border border-border"
+                className="overflow-hidden rounded-md"
               >
                 {leafHeader ? (
-                  <div className="flex flex-wrap items-center justify-between gap-2 bg-muted px-3 py-2">
+                  <div className="flex flex-wrap items-center justify-between gap-2 border border-b-0 border-border bg-muted px-3 py-2">
                     <span className="text-sm font-medium">
                       {leafHeaderPrefix}: {group.label}
                     </span>
@@ -130,21 +130,21 @@ export function LaporanGroupedTables({
           </div>
 
           {transaksi && renderSectionSubtotal && section.groups.length > 1 ? (
-            <div className="overflow-hidden rounded-md border border-border">
+            <TableContainer className="border-0">
               <Table className={cn(borderedTableClass, "w-full text-sm")}>
                 <TableBody>{renderSectionSubtotal(section)}</TableBody>
               </Table>
-            </div>
+            </TableContainer>
           ) : null}
         </div>
       ))}
 
       {renderGrandTotal ? (
-        <div className="overflow-hidden rounded-md border border-border">
+        <TableContainer className="border-0">
           <Table className={cn(borderedTableClass, "w-full text-sm")}>
             <TableBody>{renderGrandTotal()}</TableBody>
           </Table>
-        </div>
+        </TableContainer>
       ) : null}
     </div>
   )
@@ -164,7 +164,7 @@ export function SubtotalRow({
   return (
     <TableRow
       className={cn(
-        "hover:bg-transparent",
+        "border-0 hover:bg-transparent",
         tone === "section" && "bg-muted/40",
         tone === "grand" && "bg-muted font-semibold"
       )}

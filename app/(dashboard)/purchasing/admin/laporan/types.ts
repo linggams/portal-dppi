@@ -1,7 +1,6 @@
 export interface LaporanFilters {
   startDate: string
   endDate: string
-  unit: string
   status: string
 }
 

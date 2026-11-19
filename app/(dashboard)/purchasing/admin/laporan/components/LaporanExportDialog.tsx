@@ -56,7 +56,8 @@ export function LaporanExportDialog({
         <DialogHeader>
           <DialogTitle>Export PDF</DialogTitle>
           <DialogDescription>
-            Pilih kategori yang akan diekspor. Default: semua kategori.
+            Data mengikuti filter tanggal/status di halaman. Pilih kategori yang
+            diekspor (default: semua kategori dari hasil filter).
           </DialogDescription>
         </DialogHeader>
 
