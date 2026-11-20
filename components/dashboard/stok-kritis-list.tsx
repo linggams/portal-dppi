@@ -21,8 +21,8 @@ export function DashboardStokKritisList({ items, total }: Props) {
   if (items.length === 0) {
     return (
       <ContentEmpty
-        title="Stok aman"
-        description="Tidak ada barang dengan stok kritis."
+        title="Stock is healthy"
+        description="No items with critical stock."
         className="py-8"
       />
     )
@@ -34,10 +34,10 @@ export function DashboardStokKritisList({ items, total }: Props) {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Kode Barang</TableHead>
-              <TableHead>Nama Barang</TableHead>
-              <TableHead className="text-right">Sisa</TableHead>
-              <TableHead>Satuan</TableHead>
+              <TableHead>Item code</TableHead>
+              <TableHead>Item name</TableHead>
+              <TableHead className="text-right">Remaining</TableHead>
+              <TableHead>Unit</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -56,12 +56,12 @@ export function DashboardStokKritisList({ items, total }: Props) {
       </TableContainer>
       {total != null && total > items.length ? (
         <p className="text-sm text-muted-foreground">
-          +{total - items.length} barang lain dengan stok kritis
+          +{total - items.length} more items with critical stock
         </p>
       ) : null}
       <div className="flex justify-end">
         <Button asChild variant="link" size="sm" className="h-auto p-0">
-          <Link href="/purchasing/admin/kategori">Kelola stok</Link>
+          <Link href="/purchasing/admin/kategori">Manage stock</Link>
         </Button>
       </div>
     </div>

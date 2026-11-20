@@ -39,9 +39,9 @@ export function LaporanPengeluaranTable({ data }: Props) {
       <Table className={borderedTableClass}>
           <TableHeader className="[&_tr]:border-0">
             <TableRow className="bg-muted/50 hover:bg-muted/50">
-              <TableHead className="font-semibold">Tanggal</TableHead>
+              <TableHead className="font-semibold">Date</TableHead>
               <TableHead className="font-semibold">User</TableHead>
-              <TableHead className="font-semibold">Nama Barang</TableHead>
+              <TableHead className="font-semibold">Item name</TableHead>
               <TableHead className="font-semibold text-right">Qty</TableHead>
               <TableHead className="font-semibold text-right">Total</TableHead>
             </TableRow>

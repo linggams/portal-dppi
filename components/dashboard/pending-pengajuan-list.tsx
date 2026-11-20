@@ -1,7 +1,5 @@
 import Link from "next/link"
 import { Eye } from "lucide-react"
-import { format } from "date-fns"
-import { id } from "date-fns/locale"
 import { ContentEmpty } from "@/components/layout/content-empty"
 import { Button } from "@/components/ui/button"
 import { TableActionLink, TableActions } from "@/components/ui/table-actions"
@@ -16,6 +14,7 @@ import {
 import { TableContainer } from "@/components/ui/table-container"
 import { getGroupStatusBadge } from "@/lib/purchasing/permintaan-status"
 import { formatRupiah } from "@/lib/shared/currency"
+import { formatDateId } from "@/lib/shared/date"
 import type { DashboardPengajuanItem } from "@/lib/platform/dashboard-types"
 
 interface Props {
@@ -23,19 +22,15 @@ interface Props {
 }
 
 function formatDate(dateString: string) {
-  try {
-    return format(new Date(dateString), "dd MMM yyyy", { locale: id })
-  } catch {
-    return dateString
-  }
+  return formatDateId(dateString, dateString)
 }
 
 export function DashboardPendingPengajuanList({ items }: Props) {
   if (items.length === 0) {
     return (
       <ContentEmpty
-        title="Tidak ada pengajuan pending"
-        description="Semua pengajuan sudah diproses."
+        title="No pending submissions"
+        description="All submissions have been processed."
         className="py-8"
       />
     )
@@ -48,10 +43,10 @@ export function DashboardPendingPengajuanList({ items }: Props) {
           <TableHeader>
             <TableRow>
               <TableHead>Unit</TableHead>
-              <TableHead>Tanggal</TableHead>
-              <TableHead className="text-right">Nominal</TableHead>
+              <TableHead>Date</TableHead>
+              <TableHead className="text-right">Amount</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead className="text-right">Aksi</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -86,7 +81,7 @@ export function DashboardPendingPengajuanList({ items }: Props) {
       <div className="flex justify-end">
         <Button asChild variant="link" size="sm" className="h-auto p-0">
           <Link href="/purchasing/admin/pengajuan/data?status=0">
-            Lihat semua pengajuan
+            View all submissions
           </Link>
         </Button>
       </div>

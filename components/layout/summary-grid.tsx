@@ -48,7 +48,7 @@ interface CompactSummaryGridProps {
 export function CompactSummaryGrid({
   children,
   className,
-  title = "Ringkasan",
+  title = "Summary",
 }: CompactSummaryGridProps) {
   const metrics = collectSummaryMetrics(children)
   if (metrics.length === 0) return null

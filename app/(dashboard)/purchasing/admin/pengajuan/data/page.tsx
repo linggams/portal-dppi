@@ -30,7 +30,7 @@ export default function DataPengajuanPage() {
   const hasData = groups.length > 0
 
   return (
-    <DashboardLayout title="Data Pengajuan Barang">
+    <DashboardLayout title="Item submission data">
       <PageActions>
         <PengajuanGroupFilters
           filters={filters}
@@ -49,9 +49,9 @@ export default function DataPengajuanPage() {
           <PengajuanGroupSkeleton />
         ) : !hasData ? (
           <div className="rounded-md border py-12 text-center">
-            <p className="text-muted-foreground">Tidak ada data pengajuan</p>
+            <p className="text-muted-foreground">No submission data</p>
             <p className="mt-1 text-sm text-muted-foreground">
-              Ubah filter atau periode tanggal
+              Change filters or date range
             </p>
             <Button
               variant="outline"

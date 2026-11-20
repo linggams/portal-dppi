@@ -53,30 +53,6 @@ export function toMonthKey(value: unknown): string {
   return ""
 }
 
-const MONTH_NAMES_ID = [
-  "Januari",
-  "Februari",
-  "Maret",
-  "April",
-  "Mei",
-  "Juni",
-  "Juli",
-  "Agustus",
-  "September",
-  "Oktober",
-  "November",
-  "Desember",
-]
-
-/** "2026-11" → "November 2026" */
-export function formatMonthLabel(monthKey: string): string {
-  if (!/^\d{4}-\d{2}$/.test(monthKey)) return monthKey || "Tanpa bulan"
-  const [y, m] = monthKey.split("-")
-  const idx = Number(m) - 1
-  const name = MONTH_NAMES_ID[idx] ?? m
-  return `${name} ${y}`
-}
-
 export function tanggalField(tab: string): string | null {
   switch (tab) {
     case "permintaan":
@@ -170,15 +146,6 @@ export function rowTanggalKey(
   const field = tanggalField(tab)
   if (!field) return ""
   return toDateKey(item[field]) || "Tanpa tanggal"
-}
-
-export function rowMonthKey(item: Record<string, unknown>, tab: string): string {
-  if (typeof item.bulanKey === "string" && item.bulanKey) {
-    return item.bulanKey
-  }
-  const field = tanggalField(tab)
-  if (!field) return ""
-  return toMonthKey(item[field] ?? item.tanggalKey) || "Tanpa bulan"
 }
 
 function uniqueUsers(rows: Record<string, unknown>[]): string[] {
@@ -513,11 +480,6 @@ export function leafMeta(group: LaporanLeafGroup, tab: string) {
   return `${group.rows.length} item · jml ${group.jumlah}${userPart}`
 }
 
-export function usersFooter(users: string[]): string {
-  if (users.length === 0) return ""
-  return `Dipakai oleh: ${users.join(", ")} (${users.length})`
-}
-
 /** Pagination tanpa memotong section tanggal/kategori. */
 export function paginateByCompleteGroups(
   rows: Record<string, unknown>[],
@@ -725,9 +687,9 @@ export function buildPengeluaranPdfTableBody(
   )
 
   const header = [
-    { text: "Tanggal", style: "tableHeader", alignment: "center" },
+    { text: "Date", style: "tableHeader", alignment: "center" },
     { text: "User", style: "tableHeader", alignment: "center" },
-    { text: "Nama Barang", style: "tableHeader", alignment: "center" },
+    { text: "Item name", style: "tableHeader", alignment: "center" },
     { text: "Qty", style: "tableHeader", alignment: "center" },
     { text: "Total", style: "tableHeader", alignment: "center" },
   ]

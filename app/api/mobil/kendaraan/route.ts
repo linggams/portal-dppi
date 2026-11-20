@@ -84,7 +84,7 @@ export async function POST(request: NextRequest) {
       where: { nopol: data.nopol },
     })
     if (existing) {
-      return NextResponse.json({ error: "Nopol sudah terdaftar" }, { status: 400 })
+      return NextResponse.json({ error: "License plate already registered" }, { status: 400 })
     }
 
     const row = await prisma.mobilKendaraan.create({

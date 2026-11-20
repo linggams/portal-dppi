@@ -17,8 +17,7 @@ import { TableContainer } from "@/components/ui/table-container"
 import { Skeleton } from "@/components/ui/skeleton"
 import { getPermintaanItemStatusBadge } from "@/lib/purchasing/permintaan-status"
 import { toast } from "sonner"
-import { format } from "date-fns"
-import { id } from "date-fns/locale"
+import { formatDateId } from "@/lib/shared/date"
 import Link from "next/link"
 import { Check, X } from "lucide-react"
 import {
@@ -82,7 +81,7 @@ export default function DetailPengajuanPage() {
         setPengajuan(data)
       }
     } catch {
-      toast.error("Gagal memuat data pengajuan")
+      toast.error("Failed to load submissions")
     } finally {
       setLoading(false)
     }
@@ -101,14 +100,14 @@ export default function DetailPengajuanPage() {
       })
 
       if (response.ok) {
-        toast.success("Pengajuan berhasil disetujui")
+        toast.success("Submission approved successfully")
         fetchPengajuan()
       } else {
         const error = await response.json()
-        toast.error(error.error || "Terjadi kesalahan")
+        toast.error(error.error || "An error occurred")
       }
     } catch {
-      toast.error("Terjadi kesalahan saat menyetujui")
+      toast.error("An error occurred while approving")
     } finally {
       setProcessing(null)
     }
@@ -127,14 +126,14 @@ export default function DetailPengajuanPage() {
       })
 
       if (response.ok) {
-        toast.success("Pengajuan berhasil ditolak")
+        toast.success("Submission rejected successfully")
         fetchPengajuan()
       } else {
         const error = await response.json()
-        toast.error(error.error || "Terjadi kesalahan")
+        toast.error(error.error || "An error occurred")
       }
     } catch {
-      toast.error("Terjadi kesalahan saat menolak")
+      toast.error("An error occurred while rejecting")
     } finally {
       setProcessing(null)
     }
@@ -169,13 +168,7 @@ export default function DetailPengajuanPage() {
     }
   }
 
-  const formatDate = (dateString: string) => {
-    try {
-      return format(new Date(dateString), "dd MMMM yyyy", { locale: id })
-    } catch {
-      return dateString
-    }
-  }
+  const formatDate = (dateString: string) => formatDateId(dateString, dateString)
 
   const formatRupiah = (value: number) => {
     return new Intl.NumberFormat("id-ID", {
@@ -189,11 +182,11 @@ export default function DetailPengajuanPage() {
 
   if (!unit || !tgl) {
     return (
-      <DashboardLayout title="Detail Pengajuan Barang">
+      <DashboardLayout title="Submission detail">
         <div className="text-center py-12">
-          <p className="text-muted-foreground">Parameter tidak valid</p>
+          <p className="text-muted-foreground">Invalid parameters</p>
           <Button asChild className="mt-4">
-            <Link href="/purchasing/admin/pengajuan/data">Kembali</Link>
+            <Link href="/purchasing/admin/pengajuan/data">Back</Link>
           </Button>
         </div>
       </DashboardLayout>
@@ -201,17 +194,17 @@ export default function DetailPengajuanPage() {
   }
 
   return (
-    <DashboardLayout title="Detail Pengajuan Barang">
+    <DashboardLayout title="Submission detail">
       <PageActions>
         <Button variant="outline" asChild>
-          <Link href="/purchasing/admin/pengajuan/data">Kembali</Link>
+          <Link href="/purchasing/admin/pengajuan/data">Back</Link>
         </Button>
         {pendingItems.length > 0 ? (
           <Button
             onClick={handleApproveAllClick}
             disabled={processing !== null}
           >
-            {processing !== null ? "Memproses..." : "Setujui Semua"}
+            {processing !== null ? "Processing..." : "Approve all"}
           </Button>
         ) : null}
       </PageActions>
@@ -226,9 +219,9 @@ export default function DetailPengajuanPage() {
           </div>
         ) : pengajuan.length === 0 ? (
           <div className="text-center py-12">
-            <p className="text-muted-foreground">Tidak ada data pengajuan</p>
+            <p className="text-muted-foreground">No submission data</p>
             <Button asChild className="mt-4">
-              <Link href="/purchasing/admin/pengajuan/data">Kembali</Link>
+              <Link href="/purchasing/admin/pengajuan/data">Back</Link>
             </Button>
           </div>
         ) : (
@@ -238,13 +231,13 @@ export default function DetailPengajuanPage() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>No</TableHead>
-                      <TableHead>Nama Barang</TableHead>
-                      <TableHead>Jumlah</TableHead>
-                      <TableHead>Satuan</TableHead>
-                      <TableHead>Harga</TableHead>
+                      <TableHead>Item name</TableHead>
+                      <TableHead>Qty</TableHead>
+                      <TableHead>Unit</TableHead>
+                      <TableHead>Price</TableHead>
                       <TableHead>Total</TableHead>
                       <TableHead>Status</TableHead>
-                      <TableHead>Aksi</TableHead>
+                      <TableHead>Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -262,8 +255,8 @@ export default function DetailPengajuanPage() {
                         <TableCell className="text-right">
                           {item.status === 0 ? (
                             <TableActions>
-                              <TableActionButton label="Setujui" icon={Check} onClick={() => handleApproveClick(item)} disabled={processing !== null} loading={processing === item.idPengajuan} />
-                              <TableActionButton label="Tolak" icon={X} variant="ghost" className="text-destructive hover:text-destructive" onClick={() => handleRejectClick(item)} disabled={processing !== null} loading={processing === item.idPengajuan} />
+                              <TableActionButton label="Approve" icon={Check} onClick={() => handleApproveClick(item)} disabled={processing !== null} loading={processing === item.idPengajuan} />
+                              <TableActionButton label="Reject" icon={X} variant="ghost" className="text-destructive hover:text-destructive" onClick={() => handleRejectClick(item)} disabled={processing !== null} loading={processing === item.idPengajuan} />
                             </TableActions>
                           ) : (
                             <span className="text-xs text-muted-foreground">—</span>
@@ -275,7 +268,7 @@ export default function DetailPengajuanPage() {
                 </Table></TableContainer>
             <div className="rounded-md border bg-muted/40 p-4">
               <div className="flex justify-between text-lg font-semibold text-foreground">
-                <span>Total Pengajuan:</span>
+                <span>Submission total:</span>
                 <span>{formatRupiah(totalAll)}</span>
               </div>
             </div>
@@ -285,14 +278,14 @@ export default function DetailPengajuanPage() {
         <AlertDialog open={approveDialogOpen} onOpenChange={setApproveDialogOpen}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Setujui Pengajuan?</AlertDialogTitle>
+              <AlertDialogTitle>Approve submission?</AlertDialogTitle>
               <AlertDialogDescription>
-                Apakah Anda yakin ingin menyetujui pengajuan {pengajuanToProcess?.stokbarang.namaBrg}?
+                Are you sure you want to approve the submission for {pengajuanToProcess?.stokbarang.namaBrg}?
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel>Batal</AlertDialogCancel>
-              <AlertDialogAction onClick={handleApproveConfirm}>Ya, Setujui</AlertDialogAction>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={handleApproveConfirm}>Yes, approve</AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
@@ -300,15 +293,15 @@ export default function DetailPengajuanPage() {
         <AlertDialog open={rejectDialogOpen} onOpenChange={setRejectDialogOpen}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Tolak Pengajuan?</AlertDialogTitle>
+              <AlertDialogTitle>Reject submission?</AlertDialogTitle>
               <AlertDialogDescription>
-                Apakah Anda yakin ingin menolak pengajuan {pengajuanToProcess?.stokbarang.namaBrg}?
+                Are you sure you want to reject the submission for {pengajuanToProcess?.stokbarang.namaBrg}?
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel>Batal</AlertDialogCancel>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
               <AlertDialogAction onClick={handleRejectConfirm} variant="destructive">
-                Ya, Tolak
+                Yes, reject
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
@@ -317,14 +310,14 @@ export default function DetailPengajuanPage() {
         <AlertDialog open={approveAllDialogOpen} onOpenChange={setApproveAllDialogOpen}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Setujui Semua Pengajuan?</AlertDialogTitle>
+              <AlertDialogTitle>Approve all submissions?</AlertDialogTitle>
               <AlertDialogDescription>
-                Apakah Anda yakin ingin menyetujui semua pengajuan ini?
+                Are you sure you want to approve all of these submissions?
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel>Batal</AlertDialogCancel>
-              <AlertDialogAction onClick={handleApproveAll}>Ya, Setujui Semua</AlertDialogAction>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={handleApproveAll}>Yes, approve all</AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>

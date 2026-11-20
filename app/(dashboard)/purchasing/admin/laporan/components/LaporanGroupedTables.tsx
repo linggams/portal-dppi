@@ -63,7 +63,7 @@ export function LaporanGroupedTables({
   sections,
   columns,
   showLeafHeader,
-  leafHeaderPrefix = "Kategori",
+  leafHeaderPrefix = "Category",
   formatSectionTitle,
   renderRow,
   renderLeafSubtotal,
@@ -89,7 +89,7 @@ export function LaporanGroupedTables({
               {transaksi && section.users.length > 0
                 ? ` · ${section.users.length} user`
                 : ""}
-              {transaksi ? ` · jml ${section.jumlah}` : ""}
+              {transaksi ? ` · qty ${section.jumlah}` : ""}
             </span>
           </div>
 

@@ -35,16 +35,16 @@ export function DeleteStokDialog({
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Hapus Stok Barang?</AlertDialogTitle>
+          <AlertDialogTitle>Delete item stock?</AlertDialogTitle>
           <AlertDialogDescription>
-            Apakah Anda yakin ingin menghapus stok barang &quot;{stok?.namaBrg}&quot;?
-            Tindakan ini tidak dapat dibatalkan.
+            Are you sure you want to delete item stock &quot;{stok?.namaBrg}&quot;?
+            This action cannot be undone.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Batal</AlertDialogCancel>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
           <AlertDialogAction onClick={handleDelete} variant="destructive">
-            Hapus
+            Delete
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

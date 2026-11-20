@@ -1,5 +1,5 @@
 import type { LucideIcon } from "lucide-react"
-import { Headset, Package, Users } from "lucide-react"
+import { Car, Headset, Package, Users } from "lucide-react"
 
 export const APP_NAME = "DPPI"
 export const COMPANY_NAME = "PT DASAN"
@@ -8,9 +8,9 @@ export const COMPANY_ADDRESS =
   "Parakansalak, Bojonglongok, Kec. Parakansalak, Kabupaten Sukabumi, Jawa Barat 43355"
 export const COMPANY_MARK = "DASAN"
 export const APP_TITLE = `${APP_NAME} - ${COMPANY_NAME}`
-export const APP_TAGLINE = "Portal Manajemen Operasional Terpadu"
+export const APP_TAGLINE = "Integrated Operations Management Portal"
 export const APP_DESCRIPTION =
-  "Sistem terintegrasi untuk pengelolaan pengajuan barang, IT Management, dan administrasi pengguna."
+  "Integrated system for goods requests, IT Management, and user administration."
 
 export type AppModule = {
   icon: LucideIcon
@@ -21,8 +21,8 @@ export type AppModule = {
 export const APP_MODULES: AppModule[] = [
   {
     icon: Package,
-    title: "Pengajuan & Stok Barang",
-    description: "Permintaan, pengajuan, stok, dan laporan penggunaan barang",
+    title: "Purchasing",
+    description: "Requests, submissions, stock, and usage reports",
   },
   {
     icon: Headset,
@@ -30,9 +30,14 @@ export const APP_MODULES: AppModule[] = [
     description: "Tickets, SLA, SOP, NIST mapping, and assets",
   },
   {
+    icon: Car,
+    title: "Vehicle Usage",
+    description: "Mileage reports, vehicles, and trip costs",
+  },
+  {
     icon: Users,
-    title: "Administrasi Platform",
-    description: "Manajemen pengguna dan pengaturan sistem",
+    title: "Platform",
+    description: "User management and system settings",
   },
 ]
 

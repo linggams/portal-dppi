@@ -25,14 +25,14 @@ export function KategoriTable({ data, onDelete }: KategoriTableProps) {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>ID Kategori</TableHead>
-            <TableHead>Nama Kategori</TableHead>
-            <TableHead className="text-right">Aksi</TableHead>
+            <TableHead>Category ID</TableHead>
+            <TableHead>Category name</TableHead>
+            <TableHead className="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {data.length === 0 ? (
-            <TableEmptyState colSpan={3} title="Tidak ada data kategori" />
+            <TableEmptyState colSpan={3} title="No category data" />
           ) : (
             data.map((item) => (
               <TableRow key={item.idJenis}>
@@ -40,7 +40,7 @@ export function KategoriTable({ data, onDelete }: KategoriTableProps) {
                 <TableCell>{item.jenisBrg}</TableCell>
                 <TableCell className="text-right">
                   <TableActions>
-                    <TableActionButton label="Hapus" icon={Trash2} variant="ghost" className="text-destructive hover:text-destructive" onClick={() => onDelete(item)} />
+                    <TableActionButton label="Delete" icon={Trash2} variant="ghost" className="text-destructive hover:text-destructive" onClick={() => onDelete(item)} />
                   </TableActions>
                 </TableCell>
               </TableRow>

@@ -17,8 +17,7 @@ import { TableContainer } from "@/components/ui/table-container"
 import { Skeleton } from "@/components/ui/skeleton"
 import { getPermintaanItemStatusBadge } from "@/lib/purchasing/permintaan-status"
 import { toast } from "sonner"
-import { format } from "date-fns"
-import { id } from "date-fns/locale"
+import { formatDateId } from "@/lib/shared/date"
 import Link from "next/link"
 import { Check, X } from "lucide-react"
 import {
@@ -82,7 +81,7 @@ export default function DetailPermintaanPage() {
         setPermintaan(data)
       }
     } catch {
-      toast.error("Gagal memuat data permintaan")
+      toast.error("Failed to load requests")
     } finally {
       setLoading(false)
     }
@@ -101,14 +100,14 @@ export default function DetailPermintaanPage() {
       })
 
       if (response.ok) {
-        toast.success("Permintaan berhasil disetujui")
+        toast.success("Request approved successfully")
         fetchPermintaan()
       } else {
         const error = await response.json()
-        toast.error(error.error || "Terjadi kesalahan")
+        toast.error(error.error || "An error occurred")
       }
     } catch {
-      toast.error("Terjadi kesalahan saat menyetujui")
+      toast.error("An error occurred while approving")
     } finally {
       setProcessing(null)
     }
@@ -127,14 +126,14 @@ export default function DetailPermintaanPage() {
       })
 
       if (response.ok) {
-        toast.success("Permintaan berhasil ditolak")
+        toast.success("Request rejected successfully")
         fetchPermintaan()
       } else {
         const error = await response.json()
-        toast.error(error.error || "Terjadi kesalahan")
+        toast.error(error.error || "An error occurred")
       }
     } catch {
-      toast.error("Terjadi kesalahan saat menolak")
+      toast.error("An error occurred while rejecting")
     } finally {
       setProcessing(null)
     }
@@ -150,7 +149,7 @@ export default function DetailPermintaanPage() {
     for (const item of pendingItems) {
       if (item.stokbarang.sisa < item.jumlah) {
         toast.error(
-          `Stok ${item.stokbarang.namaBrg} tidak mencukupi. Stok tersedia: ${item.stokbarang.sisa}`
+          `Stock for ${item.stokbarang.namaBrg} is insufficient. Available stock: ${item.stokbarang.sisa}`
         )
         return
       }
@@ -178,21 +177,15 @@ export default function DetailPermintaanPage() {
     }
   }
 
-  const formatDate = (dateString: string) => {
-    try {
-      return format(new Date(dateString), "dd MMMM yyyy", { locale: id })
-    } catch {
-      return dateString
-    }
-  }
+  const formatDate = (dateString: string) => formatDateId(dateString, dateString)
 
   if (!unit || !tgl) {
     return (
-      <DashboardLayout title="Detail Permintaan Barang">
+      <DashboardLayout title="Item request detail">
         <div className="text-center py-12">
-          <p className="text-muted-foreground">Parameter tidak valid</p>
+          <p className="text-muted-foreground">Invalid parameters</p>
           <Button asChild className="mt-4">
-            <Link href="/purchasing/admin/permintaan/data">Kembali</Link>
+            <Link href="/purchasing/admin/permintaan/data">Back</Link>
           </Button>
         </div>
       </DashboardLayout>
@@ -200,17 +193,17 @@ export default function DetailPermintaanPage() {
   }
 
   return (
-    <DashboardLayout title="Detail Permintaan Barang">
+    <DashboardLayout title="Item request detail">
       <PageActions>
         <Button variant="outline" asChild>
-          <Link href="/purchasing/admin/permintaan/data">Kembali</Link>
+          <Link href="/purchasing/admin/permintaan/data">Back</Link>
         </Button>
         {pendingItems.length > 0 ? (
           <Button
             onClick={handleApproveAllClick}
             disabled={processing !== null}
           >
-            {processing !== null ? "Memproses..." : "Setujui Semua"}
+            {processing !== null ? "Processing..." : "Approve all"}
           </Button>
         ) : null}
       </PageActions>
@@ -225,9 +218,9 @@ export default function DetailPermintaanPage() {
           </div>
         ) : permintaan.length === 0 ? (
           <div className="text-center py-12">
-            <p className="text-muted-foreground">Tidak ada data permintaan</p>
+            <p className="text-muted-foreground">No request data</p>
             <Button asChild className="mt-4">
-              <Link href="/purchasing/admin/permintaan/data">Kembali</Link>
+              <Link href="/purchasing/admin/permintaan/data">Back</Link>
             </Button>
           </div>
         ) : (
@@ -236,12 +229,12 @@ export default function DetailPermintaanPage() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>No</TableHead>
-                    <TableHead>Nama Barang</TableHead>
-                    <TableHead>Jumlah</TableHead>
-                    <TableHead>Satuan</TableHead>
-                    <TableHead>Stok Tersedia</TableHead>
+                    <TableHead>Item name</TableHead>
+                    <TableHead>Qty</TableHead>
+                    <TableHead>Unit</TableHead>
+                    <TableHead>Available stock</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead>Aksi</TableHead>
+                    <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -266,9 +259,9 @@ export default function DetailPermintaanPage() {
                       <TableCell className="text-right">
                         {item.status === 0 ? (
                           <TableActions>
-                            <TableActionButton label="Setujui" icon={Check} onClick={() => handleApproveClick(item)} disabled={processing !== null ||
+                            <TableActionButton label="Approve" icon={Check} onClick={() => handleApproveClick(item)} disabled={processing !== null ||
                                 item.stokbarang.sisa < item.jumlah} loading={processing === item.idPermintaan} />
-                            <TableActionButton label="Tolak" icon={X} variant="ghost" className="text-destructive hover:text-destructive" onClick={() => handleRejectClick(item)} disabled={processing !== null} loading={processing === item.idPermintaan} />
+                            <TableActionButton label="Reject" icon={X} variant="ghost" className="text-destructive hover:text-destructive" onClick={() => handleRejectClick(item)} disabled={processing !== null} loading={processing === item.idPermintaan} />
                           </TableActions>
                         ) : (
                           <span className="text-xs text-muted-foreground">—</span>
@@ -283,14 +276,14 @@ export default function DetailPermintaanPage() {
         <AlertDialog open={approveDialogOpen} onOpenChange={setApproveDialogOpen}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Setujui Permintaan?</AlertDialogTitle>
+              <AlertDialogTitle>Approve request?</AlertDialogTitle>
               <AlertDialogDescription>
-                Apakah Anda yakin ingin menyetujui permintaan {permintaanToProcess?.stokbarang.namaBrg}?
+                Are you sure you want to approve the request for {permintaanToProcess?.stokbarang.namaBrg}?
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel>Batal</AlertDialogCancel>
-              <AlertDialogAction onClick={handleApproveConfirm}>Ya, Setujui</AlertDialogAction>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={handleApproveConfirm}>Yes, approve</AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
@@ -298,15 +291,15 @@ export default function DetailPermintaanPage() {
         <AlertDialog open={rejectDialogOpen} onOpenChange={setRejectDialogOpen}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Tolak Permintaan?</AlertDialogTitle>
+              <AlertDialogTitle>Reject request?</AlertDialogTitle>
               <AlertDialogDescription>
-                Apakah Anda yakin ingin menolak permintaan {permintaanToProcess?.stokbarang.namaBrg}?
+                Are you sure you want to reject the request for {permintaanToProcess?.stokbarang.namaBrg}?
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel>Batal</AlertDialogCancel>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
               <AlertDialogAction onClick={handleRejectConfirm} variant="destructive">
-                Ya, Tolak
+                Yes, reject
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
@@ -315,14 +308,14 @@ export default function DetailPermintaanPage() {
         <AlertDialog open={approveAllDialogOpen} onOpenChange={setApproveAllDialogOpen}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Setujui Semua Permintaan?</AlertDialogTitle>
+              <AlertDialogTitle>Approve all requests?</AlertDialogTitle>
               <AlertDialogDescription>
-                Apakah Anda yakin ingin menyetujui semua permintaan ini?
+                Are you sure you want to approve all of these requests?
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel>Batal</AlertDialogCancel>
-              <AlertDialogAction onClick={handleApproveAll}>Ya, Setujui Semua</AlertDialogAction>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={handleApproveAll}>Yes, approve all</AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>

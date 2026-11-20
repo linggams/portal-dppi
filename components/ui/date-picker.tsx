@@ -1,8 +1,6 @@
 "use client"
 
 import * as React from "react"
-import { format } from "date-fns"
-import { id as localeId } from "date-fns/locale"
 import { CalendarIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
@@ -11,6 +9,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
+import { formatDateId } from "@/lib/shared/date"
 import { cn } from "@/lib/utils"
 
 function parseDateOnly(value: string): Date | undefined {
@@ -40,7 +39,7 @@ export function DatePicker({
   id,
   value,
   onChange,
-  placeholder = "Pilih tanggal",
+  placeholder = "Select date",
   className,
   disabled = false,
 }: DatePickerProps) {
@@ -63,7 +62,7 @@ export function DatePicker({
         >
           <CalendarIcon className="size-4 shrink-0 opacity-60" />
           {selected ? (
-            format(selected, "dd MMM yyyy", { locale: localeId })
+            formatDateId(selected)
           ) : (
             <span>{placeholder}</span>
           )}

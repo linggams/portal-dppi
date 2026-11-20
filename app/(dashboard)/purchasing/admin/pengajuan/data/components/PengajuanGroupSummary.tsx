@@ -12,8 +12,8 @@ export function PengajuanGroupSummary({ summary }: Props) {
     <CompactSummaryGrid>
       <SummaryMetric label="Total batch" value={summary.total} />
       <SummaryMetric label="Pending" value={summary.pending} />
-      <SummaryMetric label="Disetujui" value={summary.approved} />
-      <SummaryMetric label="Ditolak" value={summary.rejected} />
+      <SummaryMetric label="Approved" value={summary.approved} />
+      <SummaryMetric label="Rejected" value={summary.rejected} />
     </CompactSummaryGrid>
   )
 }

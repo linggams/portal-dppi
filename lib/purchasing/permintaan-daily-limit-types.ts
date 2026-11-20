@@ -2,7 +2,7 @@
 const PURCHASING_TIMEZONE = "Asia/Jakarta"
 
 export const PERMINTAAN_DAILY_LIMIT_MESSAGE =
-  "Anda sudah mengajukan permintaan hari ini. Permintaan berikutnya dapat diajukan besok."
+  "You have already submitted a request today. The next request can be submitted tomorrow."
 
 /** Tanggal hari ini dalam WIB, format YYYY-MM-DD. Aman dipakai di client & server. */
 export function getTodayDateWIB(): string {

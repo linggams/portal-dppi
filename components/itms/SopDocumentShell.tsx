@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { extractDocumentToc } from "@/lib/itms/kb"
 import { downloadSopPdf } from "@/lib/itms/sop-pdf"
-import { formatTicketDate } from "@/lib/itms/format"
+import { formatTicketDate, formatTicketDateOnly } from "@/lib/itms/format"
 import { cn } from "@/lib/utils"
 
 export type SopShellDoc = {
@@ -180,12 +180,14 @@ export function SopDocumentShell({
           <MetaCell
             label="Effective"
             value={
-              doc.effectiveDate ? formatTicketDate(doc.effectiveDate) : "—"
+              doc.effectiveDate ? formatTicketDateOnly(doc.effectiveDate) : "—"
             }
           />
           <MetaCell
             label="Next review"
-            value={doc.nextReviewAt ? formatTicketDate(doc.nextReviewAt) : "—"}
+            value={
+              doc.nextReviewAt ? formatTicketDateOnly(doc.nextReviewAt) : "—"
+            }
           />
           <MetaCell
             label="Classification"

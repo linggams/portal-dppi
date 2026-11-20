@@ -1,13 +1,8 @@
-import { format } from "date-fns"
-import { id } from "date-fns/locale"
 import { Badge } from "@/components/ui/badge"
+import { formatDateId } from "@/lib/shared/date"
 
 export function formatDate(dateString: string): string {
-  try {
-    return format(new Date(dateString), "dd MMMM yyyy", { locale: id })
-  } catch {
-    return dateString
-  }
+  return formatDateId(dateString, dateString)
 }
 
 export function formatRupiah(value: number): string {
@@ -23,9 +18,9 @@ export function getStatusBadge(status: number) {
     case 0:
       return <Badge variant="outline">Pending</Badge>
     case 1:
-      return <Badge variant="default">Disetujui</Badge>
+      return <Badge variant="default">Approved</Badge>
     case 2:
-      return <Badge variant="destructive">Ditolak</Badge>
+      return <Badge variant="destructive">Rejected</Badge>
     default:
       return <Badge variant="secondary">{status}</Badge>
   }

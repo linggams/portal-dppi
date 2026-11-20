@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
 
     if (sementaraList.length === 0) {
       return NextResponse.json(
-        { error: "Tidak ada permintaan untuk disubmit" },
+        { error: "No requests to submit" },
         { status: 400 }
       )
     }
@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
     for (const item of sementaraList) {
       if (item.stokbarang.sisa < item.jumlah) {
         return NextResponse.json(
-          { error: `Stok ${item.stokbarang.namaBrg} tidak mencukupi. Stok tersedia: ${item.stokbarang.sisa}` },
+          { error: `Insufficient stock for ${item.stokbarang.namaBrg}. Available: ${item.stokbarang.sisa}` },
           { status: 400 }
         )
       }
@@ -98,7 +98,7 @@ export async function POST(request: NextRequest) {
     })
 
     return NextResponse.json({
-      message: "Permintaan berhasil disubmit",
+      message: "Request submitted successfully",
       count: permintaanList.length,
       data: permintaanList,
     })

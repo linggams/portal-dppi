@@ -35,7 +35,7 @@ export default function KategoriPage() {
 
   if (loading) {
     return (
-      <DashboardLayout title="Data Kategori">
+      <DashboardLayout title="Category data">
         <div className="space-y-3 rounded-md border p-4">
           <Skeleton className="h-10 w-full" />
           {[...Array(5)].map((_, i) => (
@@ -47,7 +47,7 @@ export default function KategoriPage() {
   }
 
   return (
-    <DashboardLayout title="Data Kategori">
+    <DashboardLayout title="Category data">
       <PageActions>
         <AddKategoriDialog onSubmit={addKategori} />
       </PageActions>
@@ -61,7 +61,7 @@ export default function KategoriPage() {
             total={total}
             pageSize={pageSize}
             onPageChange={setPage}
-            itemLabel="kategori"
+            itemLabel="categories"
           />
         </div>
 

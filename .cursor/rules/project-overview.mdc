@@ -27,7 +27,7 @@ Ikuti `.cursor/rules/dashboard-pages.mdc` untuk shell, `PageActions`, filter hor
 
 ## Konvensi umum
 
-- UI teks Bahasa Indonesia; kode/identifier English.
+- UI text in English; code/identifiers in English.
 - Minimalkan scope diff; ikuti pola file terdekat.
 - **Jangan** impor `lib/db/prisma` atau `@prisma/client` dari Client Component / hook client.
 - Pisahkan logic server (`lib/.../fetch*.ts` + API route) vs shared types (`*-types.ts`).

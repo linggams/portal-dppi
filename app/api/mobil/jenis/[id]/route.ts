@@ -50,7 +50,7 @@ export async function DELETE(
     const used = await prisma.mobilKendaraan.count({ where: { idJenis } })
     if (used > 0) {
       return NextResponse.json(
-        { error: "Jenis masih dipakai kendaraan" },
+        { error: "Type is still used by vehicles" },
         { status: 400 }
       )
     }

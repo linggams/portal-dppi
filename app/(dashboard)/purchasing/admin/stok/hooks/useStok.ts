@@ -47,10 +47,10 @@ export function useStok() {
         const data = await response.json()
         setJenisBarang(Array.isArray(data) ? data : [])
       } else {
-        toast.error("Gagal memuat data jenis barang")
+        toast.error("Failed to load item types")
       }
     } catch {
-      toast.error("Gagal memuat data jenis barang")
+      toast.error("Failed to load item types")
     }
   }, [])
 
@@ -72,10 +72,10 @@ export function useStok() {
         setTotalPages(result.totalPages)
         setPageSize(result.pageSize)
       } else {
-        toast.error("Gagal memuat data stok barang")
+        toast.error("Failed to load item stock")
       }
     } catch {
-      toast.error("Gagal memuat data stok barang")
+      toast.error("Failed to load item stock")
     } finally {
       setLoading(false)
     }
@@ -94,7 +94,7 @@ export function useStok() {
         return nextKode
       }
     } catch {
-      toast.error("Gagal generate kode barang")
+      toast.error("Failed to generate item code")
     }
     return ""
   }
@@ -117,15 +117,15 @@ export function useStok() {
     if (response.ok) {
       toast.success(
         editingStok
-          ? "Stok barang berhasil diupdate"
-          : "Stok barang berhasil ditambahkan"
+          ? "Item stock updated successfully"
+          : "Item stock added successfully"
       )
       await fetchStokBarang()
       return true
     }
 
     const error = await response.json()
-    toast.error(error.error || "Terjadi kesalahan")
+    toast.error(error.error || "An error occurred")
     return false
   }
 
@@ -135,13 +135,13 @@ export function useStok() {
     })
 
     if (response.ok) {
-      toast.success("Stok barang berhasil dihapus")
+      toast.success("Item stock deleted successfully")
       await fetchStokBarang()
       return true
     }
 
     const error = await response.json()
-    toast.error(error.error || "Terjadi kesalahan")
+    toast.error(error.error || "An error occurred")
     return false
   }
 
@@ -162,32 +162,32 @@ export function useStok() {
       }
       const response = await fetch(`/api/purchasing/stok?${params.toString()}`)
       if (!response.ok) {
-        toast.error("Gagal memuat data untuk PDF")
+        toast.error("Failed to load data for PDF")
         return
       }
       const result = readPaginatedJson<StokBarang>(await response.json())
       const exportRows = result.data
 
       if (!exportRows.length) {
-        toast.error("Tidak ada data untuk diexport")
+        toast.error("No data to export")
         return
       }
 
       const jenisName = getJenisName(parseInt(jenisParam))
       const today = new Date().toISOString().split("T")[0]
-      const filename = `Laporan_Stok_${jenisName}_${today}.pdf`
+      const filename = `Stock_Report_${jenisName}_${today}.pdf`
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const body: any[] = [
         [
           { text: "No", style: "tableHeader" },
-          { text: "Kode Barang", style: "tableHeader" },
-          { text: "Nama Barang", style: "tableHeader" },
-          { text: "Harga", style: "tableHeader" },
-          { text: "Satuan", style: "tableHeader" },
-          { text: "Stok", style: "tableHeader" },
-          { text: "Keluar", style: "tableHeader" },
-          { text: "Sisa", style: "tableHeader" },
+          { text: "Item code", style: "tableHeader" },
+          { text: "Item name", style: "tableHeader" },
+          { text: "Price", style: "tableHeader" },
+          { text: "Unit", style: "tableHeader" },
+          { text: "Stock", style: "tableHeader" },
+          { text: "Out", style: "tableHeader" },
+          { text: "Remaining", style: "tableHeader" },
         ],
         ...exportRows.map((item, index) => [
           { text: String(index + 1), alignment: "center" },
@@ -214,7 +214,7 @@ export function useStok() {
         content: [
           ...companyPdfHeader({ lineWidth: 515 }),
           {
-            text: `LAPORAN DATA STOK BARANG ${jenisName.toUpperCase()}`,
+            text: `ITEM STOCK REPORT ${jenisName.toUpperCase()}`,
             style: "title",
             alignment: "center",
             margin: [0, 0, 0, 16],
@@ -253,10 +253,10 @@ export function useStok() {
       }
 
       downloadPdf(docDefinition, filename)
-      toast.success("PDF berhasil diunduh")
+      toast.success("PDF downloaded successfully")
     } catch (error) {
       console.error("Error generating PDF dengan pdfmake:", error)
-      toast.error("Gagal mengunduh PDF")
+      toast.error("Failed to download PDF")
     }
   }
 

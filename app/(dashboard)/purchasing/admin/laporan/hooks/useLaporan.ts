@@ -89,10 +89,10 @@ export function useLaporan() {
           setPageSize(result.pageSize)
           setSummary(json.summary || {})
         } else {
-          toast.error("Gagal memuat data laporan")
+          toast.error("Failed to load report data")
         }
       } catch {
-        toast.error("Terjadi kesalahan saat memuat data")
+        toast.error("An error occurred while loading data")
       } finally {
         setLoading(false)
       }
@@ -112,22 +112,22 @@ export function useLaporan() {
   const getHeaders = (tab: string) => {
     switch (tab) {
       case "permintaan":
-        return ["Nama Barang", "Jumlah", "Satuan", "User", "Status"]
+        return ["Item name", "Qty", "Unit", "User", "Status"]
       case "pengajuan":
         return [
-          "Nama Barang",
-          "Jumlah",
-          "Satuan",
-          "Harga",
+          "Item name",
+          "Qty",
+          "Unit",
+          "Price",
           "Total",
           "User",
           "Status",
         ]
       case "pemasukan":
       case "pengeluaran":
-        return ["Nama Barang", "Jumlah", "Satuan", "User"]
+        return ["Item name", "Qty", "Unit", "User"]
       case "stok":
-        return ["Kode Barang", "Nama Barang", "Stok", "Keluar", "Sisa", "Satuan"]
+        return ["Item code", "Item name", "Stock", "Out", "Remaining", "Unit"]
       default:
         return []
     }
@@ -136,8 +136,8 @@ export function useLaporan() {
   const statusLabel = (status: unknown) => {
     const n = Number(status)
     if (n === 0) return "Pending"
-    if (n === 1) return "Disetujui"
-    return "Ditolak"
+    if (n === 1) return "Approved"
+    return "Rejected"
   }
 
   const getRowData = (
@@ -196,7 +196,7 @@ export function useLaporan() {
         const response = await fetch(
           `/api/purchasing/laporan/${activeTab}?${params.toString()}`
         )
-        if (!response.ok) throw new Error("Gagal memuat data ekspor")
+        if (!response.ok) throw new Error("Failed to load export data")
         const result = readPaginatedJson<Record<string, unknown>>(
           await response.json()
         )
@@ -206,7 +206,7 @@ export function useLaporan() {
       } while (exportPage <= exportTotalPages)
 
       if (allRows.length === 0) {
-        toast.error("Tidak ada data untuk diekspor")
+        toast.error("No data to export")
         return
       }
 
@@ -216,7 +216,7 @@ export function useLaporan() {
       setExportSelected([...categories])
       setExportOpen(true)
     } catch {
-      toast.error("Gagal menyiapkan export")
+      toast.error("Failed to prepare export")
     } finally {
       setExporting(false)
     }
@@ -224,7 +224,7 @@ export function useLaporan() {
 
   const runExportPdf = useCallback(async () => {
     if (exportSelected.length === 0) {
-      toast.error("Pilih minimal satu kategori")
+      toast.error("Select at least one category")
       return
     }
     try {
@@ -251,7 +251,15 @@ export function useLaporan() {
       const content: any[] = [
         ...companyPdfHeader({ lineWidth: contentWidth, afterLine: 8 }),
         {
-          text: `LAPORAN ${String(activeTab).toUpperCase()}`,
+          text: `REPORT ${(
+            {
+              permintaan: "REQUESTS",
+              pengajuan: "SUBMISSIONS",
+              pemasukan: "INBOUND",
+              pengeluaran: "OUTBOUND",
+              stok: "STOCK",
+            } as Record<string, string>
+          )[activeTab] ?? String(activeTab).toUpperCase()}`,
           style: "title",
           alignment: "center",
           margin: [0, 2, 0, 2],
@@ -276,7 +284,7 @@ export function useLaporan() {
           allow.has(kategoriLabel(row, "pengeluaran"))
         )
         if (filtered.length === 0) {
-          toast.error("Tidak ada data untuk kategori terpilih")
+          toast.error("No data for selected categories")
           return
         }
 
@@ -305,7 +313,7 @@ export function useLaporan() {
         )
 
         if (sections.length === 0) {
-          toast.error("Tidak ada data untuk kategori terpilih")
+          toast.error("No data for selected categories")
           return
         }
 
@@ -409,8 +417,8 @@ export function useLaporan() {
 
         sections.forEach((section, sectionIndex) => {
           const sectionTitle = `${
-            transaksi ? "Kategori: " : ""
-          }${section.title}   ·   ${section.itemCount} item · jml ${
+            transaksi ? "Category: " : ""
+          }${section.title}   ·   ${section.itemCount} item · qty ${
             activeTab === "stok" ? section.sisa : section.jumlah
           }`
 
@@ -480,7 +488,7 @@ export function useLaporan() {
         content.push({
           table: {
             widths,
-            body: [summaryRow("Total keseluruhan", "grandTotal", grand)],
+            body: [summaryRow("Grand total", "grandTotal", grand)],
           },
           layout: {
             ...gridLayout,
@@ -514,9 +522,9 @@ export function useLaporan() {
 
       downloadPdf(docDefinition, filename)
       setExportOpen(false)
-      toast.success("PDF berhasil diunduh")
+      toast.success("PDF downloaded successfully")
     } catch {
-      toast.error("Gagal mengunduh PDF")
+      toast.error("Failed to download PDF")
     } finally {
       setExporting(false)
     }

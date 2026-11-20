@@ -1,4 +1,5 @@
 import ExcelJS from "exceljs"
+import { formatDateId } from "../shared/date"
 import type { MobilLaporanKm } from "./mobil-types"
 
 /** Nama sheet Excel: maks 31 karakter, tanpa \ / ? * [ ] */
@@ -126,7 +127,7 @@ function buildDataRows(laporanList: MobilLaporanKm[]): DataRow[] {
         jamKe: trip?.jamKe ?? "",
         km: trip?.km ?? "",
         tol: trip?.tol ?? "",
-        bukti: trip ? (trip.buktiPath ? "Ada" : "Tidak ada") : "",
+        bukti: trip ? (trip.buktiPath ? "Yes" : "No") : "",
       })
     }
   }
@@ -178,7 +179,7 @@ export async function downloadMobilLaporanListExcel(
   meta?: { startDate?: string; endDate?: string }
 ) {
   if (rows.length === 0) {
-    throw new Error("Tidak ada data untuk diekspor")
+    throw new Error("No data to export")
   }
 
   const byNopol = new Map<string, MobilLaporanKm[]>()
@@ -268,7 +269,7 @@ export async function downloadMobilLaporanListExcel(
       const excelRow = sheet.getRow(firstDataRow + idx)
       excelRow.height = 18
       const values: Array<string | number> = [
-        row.tanggal,
+        formatDateId(row.tanggal, row.tanggal),
         row.username,
         row.jabatan,
         row.kmAwal,

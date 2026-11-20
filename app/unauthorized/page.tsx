@@ -6,17 +6,17 @@ import { AlertCircle } from "lucide-react"
 
 export default function UnauthorizedPage() {
   return (
-    <AuthCard title="Akses Ditolak">
+    <AuthCard title="Access denied">
       <div className="space-y-4">
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Tidak diizinkan</AlertTitle>
+          <AlertTitle>Unauthorized</AlertTitle>
           <AlertDescription>
-            Anda tidak memiliki izin untuk mengakses halaman ini.
+            You do not have permission to access this page.
           </AlertDescription>
         </Alert>
         <Button asChild className="w-full">
-          <Link href="/">Kembali ke Dashboard</Link>
+          <Link href="/">Back to dashboard</Link>
         </Button>
       </div>
     </AuthCard>

@@ -15,7 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { ASSET_STATUS_LABEL } from "@/lib/itms/assets"
-import { formatTicketDate } from "@/lib/itms/format"
+import { formatTicketDate, formatTicketDateOnly } from "@/lib/itms/format"
 import type { ItmsAssetStatus } from "@prisma/client"
 
 type UserOption = { idUser: number; username: string; jabatan: string }
@@ -165,7 +165,7 @@ export default function ItmsConsoleAssetDetailPage({
               <span className="text-muted-foreground">Warranty until</span>
               <br />
               {asset.warrantyUntil
-                ? formatTicketDate(asset.warrantyUntil)
+                ? formatTicketDateOnly(asset.warrantyUntil)
                 : "—"}
             </p>
             <p className="sm:col-span-2">

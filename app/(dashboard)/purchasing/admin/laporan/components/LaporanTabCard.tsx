@@ -24,7 +24,7 @@ export function LaporanTabCard({
           ))}
         </div>
       ) : !hasData ? (
-        <p className="py-12 text-center text-muted-foreground">Tidak ada data</p>
+        <p className="py-12 text-center text-muted-foreground">No data</p>
       ) : (
         <div className="space-y-3">{children}</div>
       )}

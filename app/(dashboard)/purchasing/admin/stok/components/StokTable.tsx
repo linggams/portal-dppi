@@ -37,19 +37,19 @@ export function StokTable({
         <TableHeader>
           <TableRow>
             <TableHead>No</TableHead>
-            <TableHead>Kode Barang</TableHead>
-            <TableHead>Nama Barang</TableHead>
-            <TableHead>Harga</TableHead>
-            <TableHead>Satuan</TableHead>
-            <TableHead>Stok</TableHead>
-            <TableHead>Keluar</TableHead>
-            <TableHead>Sisa</TableHead>
-            <TableHead className="text-right">Aksi</TableHead>
+            <TableHead>Item code</TableHead>
+            <TableHead>Item name</TableHead>
+            <TableHead>Price</TableHead>
+            <TableHead>Unit</TableHead>
+            <TableHead>Stock</TableHead>
+            <TableHead>Out</TableHead>
+            <TableHead>Remaining</TableHead>
+            <TableHead className="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {data.length === 0 ? (
-            <TableEmptyState colSpan={9} title="Tidak ada data stok barang" />
+            <TableEmptyState colSpan={9} title="No item stock data" />
           ) : (
             data.map((stok, index) => (
               <TableRow key={stok.idKodeBrg}>
@@ -70,7 +70,7 @@ export function StokTable({
                 <TableCell className="text-right pdf-hidden">
                   <TableActions>
                     <TableActionButton label="Edit" icon={Pencil} onClick={() => onEdit(stok)} />
-                    <TableActionButton label="Hapus" icon={Trash2} className="text-destructive hover:text-destructive" onClick={() => onDelete(stok)} />
+                    <TableActionButton label="Delete" icon={Trash2} className="text-destructive hover:text-destructive" onClick={() => onDelete(stok)} />
                   </TableActions>
                 </TableCell>
               </TableRow>

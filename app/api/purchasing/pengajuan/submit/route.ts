@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
 
     if (sementaraList.length === 0) {
       return NextResponse.json(
-        { error: "Tidak ada pengajuan untuk disubmit" },
+        { error: "No purchase requests to submit" },
         { status: 400 }
       )
     }
@@ -76,7 +76,7 @@ export async function POST(request: NextRequest) {
     })
 
     return NextResponse.json({
-      message: "Pengajuan berhasil disubmit",
+      message: "Purchase request submitted successfully",
       count: pengajuanList.length,
       data: pengajuanList,
     })

@@ -26,6 +26,7 @@ import {
 import { TableContainer } from "@/components/ui/table-container"
 import { TableEmptyState } from "@/components/ui/table-empty-state"
 import { formatRupiah, parseRupiahInput } from "@/lib/shared/currency"
+import { formatDateId } from "@/lib/shared/date"
 import { MOBIL_BUKTI_MAX_BYTES, MOBIL_BUKTI_MAX_MB, MOBIL_BUKTI_PLACEHOLDER } from "@/lib/mobil/upload-limits"
 import type { MobilLaporanKm } from "@/lib/mobil/mobil-types"
 
@@ -37,15 +38,15 @@ function validateJpg(file: File): string | null {
     type === "image/jpg" ||
     name.endsWith(".jpg") ||
     name.endsWith(".jpeg")
-  if (!isJpg) return "File harus JPG"
-  if (file.size > MOBIL_BUKTI_MAX_BYTES) return `Ukuran foto maksimal ${MOBIL_BUKTI_MAX_MB} MB`
+  if (!isJpg) return "File must be JPG"
+  if (file.size > MOBIL_BUKTI_MAX_BYTES) return `Max photo size ${MOBIL_BUKTI_MAX_MB} MB`
   return null
 }
 
 export function MobilLaporanDetailPage({
   params,
   backHref,
-  title = "Detail Laporan",
+  title = "Report detail",
 }: {
   params: Promise<{ id: string }>
   backHref: string
@@ -71,7 +72,7 @@ export function MobilLaporanDetailPage({
     setLoading(true)
     fetch(`/api/mobil/laporan/${id}`)
       .then(async (res) => {
-        if (!res.ok) throw new Error("Laporan tidak ditemukan")
+        if (!res.ok) throw new Error("Report not found")
         return res.json()
       })
       .then((data) => {
@@ -80,7 +81,7 @@ export function MobilLaporanDetailPage({
       .catch(() => {
         if (!cancelled) {
           setItem(null)
-          toast.error("Laporan tidak ditemukan")
+          toast.error("Report not found")
         }
       })
       .finally(() => {
@@ -137,17 +138,17 @@ export function MobilLaporanDetailPage({
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
         throw new Error(
-          typeof data.error === "string" ? data.error : "Gagal menambah perjalanan"
+          typeof data.error === "string" ? data.error : "Failed to add trip"
         )
       }
       const updated = await res.json()
       setItem(updated)
       setOpenAdd(false)
       resetAddForm()
-      toast.success("Perjalanan ditambahkan")
+      toast.success("Trip added")
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Gagal menambah perjalanan"
+        error instanceof Error ? error.message : "Failed to add trip"
       )
     } finally {
       setSaving(false)
@@ -158,7 +159,7 @@ export function MobilLaporanDetailPage({
     <DashboardLayout title={title}>
       <PageActions>
         <Button variant="outline" asChild>
-          <Link href={backHref}>Kembali</Link>
+          <Link href={backHref}>Back</Link>
         </Button>
       </PageActions>
 
@@ -169,17 +170,19 @@ export function MobilLaporanDetailPage({
           <Skeleton className="h-40 w-full" />
         </div>
       ) : !item ? (
-        <p className="text-sm text-muted-foreground">Laporan tidak ditemukan.</p>
+        <p className="text-sm text-muted-foreground">Report not found.</p>
       ) : (
         <div className="space-y-4">
-          <SectionCard title={`${item.kendaraan?.nopol ?? "—"} · ${item.tanggal}`}>
+          <SectionCard
+            title={`${item.kendaraan?.nopol ?? "—"} · ${formatDateId(item.tanggal)}`}
+          >
             <div className="grid gap-2 text-sm sm:grid-cols-2">
               <p>
-                Pelapor: <span className="font-medium">{item.username}</span>
+                Reporter: <span className="font-medium">{item.username}</span>
                 {item.jabatan ? ` · ${item.jabatan}` : ""}
               </p>
               <p>
-                Perjalanan:{" "}
+                Trips:{" "}
                 <span className="font-medium">{item.jumlahPerjalanan}</span>
               </p>
               <p>
@@ -190,17 +193,17 @@ export function MobilLaporanDetailPage({
                 </span>
               </p>
               <p>
-                Pemakaian:{" "}
+                Usage:{" "}
                 <span className="font-medium">
                   {item.pemakaian.toLocaleString("id-ID")} KM
                 </span>
               </p>
               <p>
-                Total tol:{" "}
+                Total toll:{" "}
                 <span className="font-medium">{formatRupiah(item.totalTol)}</span>
               </p>
               <p>
-                Uang jalan:{" "}
+                Travel allowance:{" "}
                 <span className="font-medium">{formatRupiah(item.uangJalan)}</span>
               </p>
               <p>
@@ -213,10 +216,10 @@ export function MobilLaporanDetailPage({
           </SectionCard>
 
           <SectionCard
-            title="Perjalanan"
+            title="Trips"
             action={
               <Button type="button" size="sm" onClick={openAddDialog}>
-                Tambah perjalanan
+                Add trip
               </Button>
             }
           >
@@ -225,18 +228,18 @@ export function MobilLaporanDetailPage({
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-12">#</TableHead>
-                    <TableHead>Dari</TableHead>
-                    <TableHead>Jam</TableHead>
-                    <TableHead>Ke</TableHead>
-                    <TableHead>Jam</TableHead>
+                    <TableHead>From</TableHead>
+                    <TableHead>Time</TableHead>
+                    <TableHead>To</TableHead>
+                    <TableHead>Time</TableHead>
                     <TableHead className="text-right">KM</TableHead>
-                    <TableHead className="text-right">Tol</TableHead>
-                    <TableHead className="text-right">Bukti</TableHead>
+                    <TableHead className="text-right">Toll</TableHead>
+                    <TableHead className="text-right">Proof</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {item.perjalanan.length === 0 ? (
-                    <TableEmptyState colSpan={8} title="Tidak ada perjalanan" />
+                    <TableEmptyState colSpan={8} title="No trips yet" />
                   ) : (
                     item.perjalanan.map((trip) => (
                       <TableRow key={trip.idPerjalanan}>
@@ -259,7 +262,7 @@ export function MobilLaporanDetailPage({
                               size="sm"
                               onClick={() => setPreview(trip.buktiPath)}
                             >
-                              Lihat penuh
+                              View full
                             </Button>
                           ) : (
                             <span className="text-sm text-muted-foreground">—</span>
@@ -284,18 +287,18 @@ export function MobilLaporanDetailPage({
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Tambah perjalanan</DialogTitle>
+            <DialogTitle>Add trip</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleAddPerjalanan} className="space-y-4">
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="dari">Dari *</Label>
+                <Label htmlFor="dari">From *</Label>
                 <div className="flex gap-2">
                   <Input
                     id="dari"
                     value={dari}
                     onChange={(e) => setDari(e.target.value)}
-                    placeholder="Asal"
+                    placeholder="Origin"
                     className="min-w-0 flex-1"
                     required
                   />
@@ -305,19 +308,19 @@ export function MobilLaporanDetailPage({
                     value={jamDari}
                     onChange={(e) => setJamDari(e.target.value)}
                     className="w-[7.5rem] shrink-0"
-                    aria-label="Jam dari"
+                    aria-label="Departure time"
                     required
                   />
                 </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="ke">Ke *</Label>
+                <Label htmlFor="ke">To *</Label>
                 <div className="flex gap-2">
                   <Input
                     id="ke"
                     value={ke}
                     onChange={(e) => setKe(e.target.value)}
-                    placeholder="Tujuan"
+                    placeholder="Destination"
                     className="min-w-0 flex-1"
                     required
                   />
@@ -327,7 +330,7 @@ export function MobilLaporanDetailPage({
                     value={jamKe}
                     onChange={(e) => setJamKe(e.target.value)}
                     className="w-[7.5rem] shrink-0"
-                    aria-label="Jam ke"
+                    aria-label="Arrival time"
                     required
                   />
                 </div>
@@ -346,7 +349,7 @@ export function MobilLaporanDetailPage({
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="tol">Tol</Label>
+                  <Label htmlFor="tol">Toll</Label>
                   <Input
                     id="tol"
                     inputMode="numeric"
@@ -358,7 +361,7 @@ export function MobilLaporanDetailPage({
               </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="bukti">Bukti</Label>
+              <Label htmlFor="bukti">Proof</Label>
               <Input
                 id="bukti"
                 type="file"
@@ -391,10 +394,10 @@ export function MobilLaporanDetailPage({
                 variant="outline"
                 onClick={() => setOpenAdd(false)}
               >
-                Batal
+                Cancel
               </Button>
               <Button type="submit" disabled={saving || !canSubmitAdd}>
-                {saving ? "Menyimpan..." : "Simpan"}
+                {saving ? "Saving..." : "Save"}
               </Button>
             </DialogFooter>
           </form>
@@ -409,7 +412,7 @@ export function MobilLaporanDetailPage({
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={preview}
-            alt="Bukti perjalanan"
+            alt="Trip proof"
             className="max-h-[90vh] max-w-full rounded-md object-contain"
             onClick={(e) => e.stopPropagation()}
           />

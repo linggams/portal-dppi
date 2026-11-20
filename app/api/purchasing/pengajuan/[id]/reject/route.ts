@@ -26,14 +26,14 @@ export async function POST(
 
     if (!pengajuan) {
       return NextResponse.json(
-        { error: "Pengajuan tidak ditemukan" },
+        { error: "Purchase request not found" },
         { status: 404 }
       )
     }
 
     if (pengajuan.status !== 0) {
       return NextResponse.json(
-        { error: "Pengajuan sudah diproses" },
+        { error: "Purchase request already processed" },
         { status: 400 }
       )
     }
@@ -44,7 +44,7 @@ export async function POST(
       data: { status: 2 }, // Rejected
     })
 
-    return NextResponse.json({ message: "Pengajuan berhasil ditolak" })
+    return NextResponse.json({ message: "Purchase request rejected successfully" })
   } catch (error) {
     console.error("Error rejecting pengajuan:", error)
     return NextResponse.json(

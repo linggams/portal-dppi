@@ -1,5 +1,6 @@
 "use client"
 
+import { PageActionsFilters } from "@/components/layout"
 import { Button } from "@/components/ui/button"
 import { DatePicker } from "@/components/ui/date-picker"
 import {
@@ -29,27 +30,27 @@ export function LaporanFiltersComponent({
 }: Props) {
   if (mode === "stok") {
     return (
-      <div className="mr-auto flex min-w-0 flex-wrap items-center gap-2">
+      <PageActionsFilters label="Filter" title="Filter reports">
         <Button type="button" onClick={onFetch}>
-          Tampilkan
+          Show
         </Button>
-      </div>
+      </PageActionsFilters>
     )
   }
 
   return (
-    <div className="mr-auto flex min-w-0 flex-wrap items-center gap-2">
+    <PageActionsFilters label="Filter" title="Filter reports">
       <DatePicker
         className="w-[160px]"
         value={filters.startDate}
         onChange={(startDate) => onFiltersChange({ ...filters, startDate })}
-        placeholder="Tanggal mulai"
+        placeholder="Start date"
       />
       <DatePicker
         className="w-[160px]"
         value={filters.endDate}
         onChange={(endDate) => onFiltersChange({ ...filters, endDate })}
-        placeholder="Tanggal akhir"
+        placeholder="End date"
       />
       {showStatus ? (
         <Select
@@ -60,16 +61,16 @@ export function LaporanFiltersComponent({
             <SelectValue placeholder="Status" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Semua</SelectItem>
+            <SelectItem value="all">All</SelectItem>
             <SelectItem value="0">Pending</SelectItem>
-            <SelectItem value="1">Disetujui</SelectItem>
-            <SelectItem value="2">Ditolak</SelectItem>
+            <SelectItem value="1">Approved</SelectItem>
+            <SelectItem value="2">Rejected</SelectItem>
           </SelectContent>
         </Select>
       ) : null}
       <Button type="button" onClick={onFetch}>
-        Tampilkan
+        Show
       </Button>
-    </div>
+    </PageActionsFilters>
   )
 }

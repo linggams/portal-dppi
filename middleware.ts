@@ -24,7 +24,7 @@ function getLegacyRedirect(pathname: string): string | null {
   }
   if (pathname === "/it" || pathname.startsWith("/it/")) {
     return pathname.startsWith("/it/staff")
-      ? "/itms/console"
+      ? "/itms/console/tickets"
       : "/itms/portal"
   }
 
@@ -43,7 +43,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL(legacy, request.url))
   }
 
-  const publicRoutes = ["/login", "/api/auth"]
+  const publicRoutes = ["/login", "/api/auth", "/serwist", "/~offline"]
   if (publicRoutes.some((route) => pathname.startsWith(route))) {
     return NextResponse.next()
   }
@@ -81,9 +81,7 @@ export async function middleware(request: NextRequest) {
   }
 
   if (pathname === "/") {
-    return NextResponse.redirect(
-      new URL(getDefaultHomePath(principal), request.url)
-    )
+    return NextResponse.redirect(new URL("/home", request.url))
   }
 
   if (!canAccessUiPath(principal, pathname)) {
@@ -95,6 +93,6 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|login|api/|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|login|api/|serwist/|.*\\.(?:svg|png|jpg|jpeg|gif|webp|webmanifest)$).*)",
   ],
 }

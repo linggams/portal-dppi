@@ -52,8 +52,8 @@ export const EMPTY_CAPABILITIES: RoleCapabilities = {
 }
 
 export const SYSTEM_ROLE_HOME_PATH: Record<AppUserLevel, string> = {
-  administrator: "/platform/dashboard",
-  user: "/purchasing/user/dashboard",
+  administrator: "/home",
+  user: "/home",
 }
 
 const SYSTEM_ROLE_CAPABILITIES: Record<AppUserLevel, RoleCapabilities> = {
@@ -78,9 +78,9 @@ const SYSTEM_ROLE_CAPABILITIES: Record<AppUserLevel, RoleCapabilities> = {
 export const SYSTEM_ROLES = [
   {
     code: "administrator" as const,
-    name: "Pengelola",
+    name: "Administrator",
     description:
-      "Akses penuh: kelola user, stok, approve, IT Management, dan mobil",
+      "Full access: manage users, stock, approvals, IT Management, and vehicles",
     isSystem: true,
     homePath: SYSTEM_ROLE_HOME_PATH.administrator,
     canAccessPlatform: true,
@@ -90,9 +90,9 @@ export const SYSTEM_ROLES = [
   },
   {
     code: "user" as const,
-    name: "Pemohon",
+    name: "Requester",
     description:
-      "Ajukan permintaan ATK, tiket IT Management, dan laporan KM mobil",
+      "Submit supply requests, IT tickets, and vehicle KM logs",
     isSystem: true,
     homePath: SYSTEM_ROLE_HOME_PATH.user,
     canAccessPlatform: false,
@@ -153,10 +153,18 @@ export function applyUserModules(
 }
 
 export function homePathFromCapabilities(caps: RoleCapabilities): string {
-  if (caps.platform) return SYSTEM_ROLE_HOME_PATH.administrator
-  if (caps.purchasingUser) return "/purchasing/user/dashboard"
-  if (caps.itmsUser) return "/itms/portal"
-  if (caps.mobilUser) return "/mobil/user/laporan"
+  if (
+    caps.platform ||
+    caps.purchasingUser ||
+    caps.purchasingWorkflow ||
+    caps.purchasingMaster ||
+    caps.itmsUser ||
+    caps.itmsStaff ||
+    caps.mobilUser ||
+    caps.mobilWorkflow
+  ) {
+    return "/home"
+  }
   return "/unauthorized"
 }
 

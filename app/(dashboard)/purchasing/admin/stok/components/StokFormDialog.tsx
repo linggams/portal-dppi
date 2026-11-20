@@ -98,25 +98,25 @@ export function StokFormDialog({
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>
-            {editingStok ? "Edit Stok Barang" : "Tambah Stok Barang"}
+            {editingStok ? "Edit item stock" : "Add item stock"}
           </DialogTitle>
           <DialogDescription>
             {editingStok
-              ? "Ubah informasi stok barang"
-              : "Tambahkan stok barang baru ke sistem"}
+              ? "Update item stock information"
+              : "Add new item stock to the system"}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
-              <Label htmlFor="idJenis">Jenis Barang</Label>
+              <Label htmlFor="idJenis">Item type</Label>
               <Select
                 value={formData.idJenis.toString()}
                 onValueChange={handleJenisChange}
                 required
               >
                 <SelectTrigger id="idJenis">
-                  <SelectValue placeholder="Pilih Jenis Barang" />
+                  <SelectValue placeholder="Select item type" />
                 </SelectTrigger>
                 <SelectContent>
                   {jenisBarang.map((jenis) => (
@@ -128,23 +128,23 @@ export function StokFormDialog({
               </Select>
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="kodeBrg">Kode Barang</Label>
+              <Label htmlFor="kodeBrg">Item code</Label>
               <Input
                 id="kodeBrg"
                 value={formData.kodeBrg}
                 required
                 disabled
-                placeholder="Otomatis digenerate"
+                placeholder="Auto-generated"
                 className="bg-muted"
               />
               {!editingStok && (
                 <p className="text-xs text-muted-foreground">
-                  Kode digenerate otomatis berdasarkan kategori
+                  Code is auto-generated based on category
                 </p>
               )}
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="namaBrg">Nama Barang</Label>
+              <Label htmlFor="namaBrg">Item name</Label>
               <Input
                 id="namaBrg"
                 value={formData.namaBrg}
@@ -155,7 +155,7 @@ export function StokFormDialog({
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="hargabarang">Harga Barang</Label>
+              <Label htmlFor="hargabarang">Item price</Label>
               <Input
                 id="hargabarang"
                 type="text"
@@ -164,11 +164,11 @@ export function StokFormDialog({
                   setFormData({ ...formData, hargabarang: e.target.value })
                 }
                 required
-                placeholder="Contoh: 50000"
+                placeholder="e.g. 50000"
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="satuan">Satuan</Label>
+              <Label htmlFor="satuan">Unit</Label>
               <Input
                 id="satuan"
                 value={formData.satuan}
@@ -176,34 +176,34 @@ export function StokFormDialog({
                   setFormData({ ...formData, satuan: e.target.value })
                 }
                 required
-                placeholder="Contoh: PCE, RIM, PACK"
+                placeholder="e.g. PCE, RIM, PACK"
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="keterangan">Keterangan</Label>
+              <Label htmlFor="keterangan">Notes</Label>
               <Input
                 id="keterangan"
                 value={formData.keterangan}
                 onChange={(e) =>
                   setFormData({ ...formData, keterangan: e.target.value })
                 }
-                placeholder="Opsional"
+                placeholder="Optional"
               />
             </div>
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              Batal
+              Cancel
             </Button>
             <Button
               type="submit"
               disabled={submitting || (!editingStok && !formData.kodeBrg)}
             >
               {submitting
-                ? "Menyimpan..."
+                ? "Saving..."
                 : editingStok
                   ? "Update"
-                  : "Simpan"}
+                  : "Save"}
             </Button>
           </DialogFooter>
         </form>

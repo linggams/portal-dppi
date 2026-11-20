@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo, useCallback } from "react"
 import Link from "next/link"
 import { usePathname, useSearchParams } from "next/navigation"
-import { signOut, useSession } from "next-auth/react"
+import { useSession } from "next-auth/react"
 import {
   LayoutDashboard,
   Users,
@@ -12,7 +12,6 @@ import {
   ClipboardList,
   FileCheck,
   BarChart3,
-  LogOut,
   Tag,
   ChevronRight,
   Inbox,
@@ -25,7 +24,6 @@ import {
 import {
   Sidebar,
   SidebarContent,
-  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
@@ -42,8 +40,6 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { USER_LEVEL_LABEL, normalizeUserLevel } from "@/lib/auth/user-level"
 import {
   canAccessItmsStaff,
   canAccessItmsUser,
@@ -53,7 +49,6 @@ import {
   canHandleMobilWorkflow,
   canManagePurchasingMaster,
   canReadItmsLibrary,
-  getDefaultHomePath,
   shouldFetchPurchasingKategori,
 } from "@/lib/auth/permissions"
 import { EMPTY_CAPABILITIES, type AccessPrincipal } from "@/lib/auth/capabilities"
@@ -133,7 +128,7 @@ function isNavTreeActive(
 function getAdminPurchasingMenu(kategori: Kategori[]): NavLink[] {
   return [
     {
-      title: "Stok",
+      title: "Stock",
       href: "#",
       icon: Package,
       children: kategori.map((kat) => ({
@@ -143,12 +138,12 @@ function getAdminPurchasingMenu(kategori: Kategori[]): NavLink[] {
       })),
     },
     {
-      title: "Permintaan",
+      title: "Requests",
       href: "#",
       icon: ClipboardList,
       children: [
         {
-          title: "Antrian",
+          title: "Queue",
           href: "/purchasing/admin/permintaan",
           icon: ClipboardList,
         },
@@ -160,7 +155,7 @@ function getAdminPurchasingMenu(kategori: Kategori[]): NavLink[] {
       ],
     },
     {
-      title: "Pengajuan",
+      title: "Submissions",
       href: "#",
       icon: FileCheck,
       children: [
@@ -177,12 +172,12 @@ function getAdminPurchasingMenu(kategori: Kategori[]): NavLink[] {
       ],
     },
     {
-      title: "Kategori",
+      title: "Categories",
       href: "/purchasing/admin/kategori",
       icon: Tag,
     },
     {
-      title: "Laporan",
+      title: "Reports",
       href: "/purchasing/admin/laporan",
       icon: BarChart3,
     },
@@ -192,7 +187,7 @@ function getAdminPurchasingMenu(kategori: Kategori[]): NavLink[] {
 function getUserPurchasingMenu(kategori: Kategori[]): NavLink[] {
   return [
     {
-      title: "Stok",
+      title: "Stock",
       href: "#",
       icon: Package,
       children: kategori.map((kat) => ({
@@ -202,17 +197,17 @@ function getUserPurchasingMenu(kategori: Kategori[]): NavLink[] {
       })),
     },
     {
-      title: "Ajukan",
+      title: "Submit request",
       href: "/purchasing/user/permintaan",
       icon: ClipboardList,
     },
     {
-      title: "Data Saya",
+      title: "My data",
       href: "/purchasing/user/permintaan/data",
       icon: FileText,
     },
     {
-      title: "Cetak BPP",
+      title: "Print BPP",
       href: "/purchasing/user/cetak",
       icon: FileCheck,
     },
@@ -221,11 +216,6 @@ function getUserPurchasingMenu(kategori: Kategori[]): NavLink[] {
 
 function getItmsConsoleMenu(): NavLink[] {
   return [
-    {
-      title: "Dashboard",
-      href: "/itms/console",
-      icon: LayoutDashboard,
-    },
     {
       title: "Ticket Queue",
       href: "/itms/console/tickets",
@@ -308,17 +298,17 @@ function getItmsReadOnlyMenu(): NavLink[] {
 function getAdminMobilMenu(): NavLink[] {
   return [
     {
-      title: "Jenis",
+      title: "Types",
       href: "/mobil/admin/jenis",
       icon: Tag,
     },
     {
-      title: "Kendaraan",
+      title: "Vehicles",
       href: "/mobil/admin/kendaraan",
       icon: Package,
     },
     {
-      title: "Laporan KM",
+      title: "KM reports",
       href: "/mobil/admin/laporan",
       icon: BarChart3,
     },
@@ -328,7 +318,7 @@ function getAdminMobilMenu(): NavLink[] {
 function getUserMobilMenu(): NavLink[] {
   return [
     {
-      title: "Input Laporan",
+      title: "Log trip",
       href: "/mobil/user/laporan",
       icon: ClipboardList,
     },
@@ -493,7 +483,7 @@ export function AppSidebar() {
     setOpenModule(next ? "IT Management" : null)
   }, [])
   const openMobil = useCallback((next: boolean) => {
-    setOpenModule(next ? "Penggunaan Mobil" : null)
+    setOpenModule(next ? "Vehicle Usage" : null)
   }, [])
 
   useEffect(() => {
@@ -538,25 +528,10 @@ export function AppSidebar() {
     return []
   }, [principal])
 
-  const homeHref = getDefaultHomePath(principal)
-  const dashboardActive = isActive(pathname, search, homeHref)
+  const homeHref = "/home"
+  const dashboardActive =
+    pathname === "/home" || isActive(pathname, search, homeHref)
   const usersActive = isActive(pathname, search, "/platform/users")
-  const roleName =
-    session?.user?.roleName ||
-    USER_LEVEL_LABEL[normalizeUserLevel(session?.user?.level ?? "user")]
-  const username = session?.user?.username ?? ""
-  const initials = username.slice(0, 1).toUpperCase() || "U"
-
-  const handleLogout = async () => {
-    const currentOrigin =
-      typeof window !== "undefined" ? window.location.origin : ""
-
-    await signOut({ redirect: false })
-
-    if (typeof window !== "undefined") {
-      window.location.href = `${currentOrigin}/login`
-    }
-  }
 
   return (
     <Sidebar
@@ -565,19 +540,19 @@ export function AppSidebar() {
     >
       <SidebarContent className="group-data-[collapsible=icon]:items-center [scrollbar-gutter:stable]">
         <SidebarGroup className="group-data-[collapsible=icon]:p-2">
-          <SidebarGroupLabel>Utama</SidebarGroupLabel>
+          <SidebarGroupLabel>Main</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu className="group-data-[collapsible=icon]:items-center">
               <SidebarMenuItem>
                 <SidebarMenuButton
                   asChild
                   isActive={dashboardActive}
-                  tooltip="Dashboard"
+                  tooltip="Home"
                   className={ITEM_CLASS}
                 >
                   <Link href={homeHref}>
                     <LayoutDashboard />
-                    <span>Dashboard</span>
+                    <span>Home</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -587,12 +562,12 @@ export function AppSidebar() {
                   <SidebarMenuButton
                     asChild
                     isActive={usersActive}
-                    tooltip="Data User"
+                    tooltip="Users"
                     className={ITEM_CLASS}
                   >
                     <Link href="/platform/users">
                       <Users />
-                      <span>Data User</span>
+                      <span>Users</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -605,7 +580,7 @@ export function AppSidebar() {
         itmsItems.length > 0 ||
         mobilItems.length > 0 ? (
           <SidebarGroup className="group-data-[collapsible=icon]:p-2">
-            <SidebarGroupLabel>Modul</SidebarGroupLabel>
+            <SidebarGroupLabel>Modules</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu className="group-data-[collapsible=icon]:items-center">
                 {purchasingItems.length > 0 ? (
@@ -634,12 +609,12 @@ export function AppSidebar() {
 
                 {mobilItems.length > 0 ? (
                   <ModuleNav
-                    title="Penggunaan Mobil"
+                    title="Vehicle Usage"
                     icon={Car}
                     items={mobilItems}
                     pathname={pathname}
                     search={search}
-                    open={openModule === "Penggunaan Mobil"}
+                    open={openModule === "Vehicle Usage"}
                     onOpenChange={openMobil}
                   />
                 ) : null}
@@ -648,40 +623,6 @@ export function AppSidebar() {
           </SidebarGroup>
         ) : null}
       </SidebarContent>
-      <SidebarFooter className="border-t border-sidebar-border group-data-[collapsible=icon]:items-center">
-        <div className="flex items-center gap-2 px-0 py-1.5 group-data-[collapsible=icon]:hidden">
-          <Avatar className="size-8">
-            <AvatarFallback className="bg-sidebar-accent text-xs font-medium">
-              {initials}
-            </AvatarFallback>
-          </Avatar>
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-medium leading-tight">
-              {username || "User"}
-            </p>
-            <p className="truncate text-[11px] text-muted-foreground">
-              {roleName}
-            </p>
-          </div>
-          <button
-            type="button"
-            className="text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground shrink-0 rounded-md p-2"
-            onClick={handleLogout}
-            aria-label="Keluar"
-            title="Keluar"
-          >
-            <LogOut className="size-4" />
-          </button>
-        </div>
-        <SidebarMenu className="hidden group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:items-center">
-          <SidebarMenuItem>
-            <SidebarMenuButton tooltip="Keluar" onClick={handleLogout}>
-              <LogOut />
-              <span>Keluar</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarFooter>
       <SidebarRail />
     </Sidebar>
   )

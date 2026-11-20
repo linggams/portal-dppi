@@ -121,7 +121,7 @@ export async function POST(request: NextRequest) {
     })
 
     if (!role) {
-      return NextResponse.json({ error: "Role tidak ditemukan" }, { status: 400 })
+      return NextResponse.json({ error: "Role not found" }, { status: 400 })
     }
 
     const modulesResult = resolveUserModules(

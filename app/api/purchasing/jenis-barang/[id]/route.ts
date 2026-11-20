@@ -22,7 +22,7 @@ export async function DELETE(
     const idJenis = parseInt(decodeURIComponent(id), 10)
     if (isNaN(idJenis)) {
       return NextResponse.json(
-        { error: "ID kategori tidak valid" },
+        { error: "Invalid category ID" },
         { status: 400 }
       )
     }
@@ -34,7 +34,7 @@ export async function DELETE(
 
     if (!kategori) {
       return NextResponse.json(
-        { error: "Kategori tidak ditemukan" },
+        { error: "Category not found" },
         { status: 404 }
       )
     }
@@ -46,7 +46,7 @@ export async function DELETE(
 
     if (stokCount > 0) {
       return NextResponse.json(
-        { error: `Kategori tidak dapat dihapus karena masih digunakan oleh ${stokCount} barang` },
+        { error: `Category cannot be deleted because it is still used by ${stokCount} item(s)` },
         { status: 400 }
       )
     }
@@ -55,7 +55,7 @@ export async function DELETE(
       where: { idJenis },
     })
 
-    return NextResponse.json({ message: "Kategori berhasil dihapus" })
+    return NextResponse.json({ message: "Category deleted successfully" })
   } catch (error) {
     console.error("Error deleting kategori:", error)
     return NextResponse.json(

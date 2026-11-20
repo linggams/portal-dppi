@@ -56,8 +56,8 @@ export function LaporanExportDialog({
         <DialogHeader>
           <DialogTitle>Export PDF</DialogTitle>
           <DialogDescription>
-            Data mengikuti filter tanggal/status di halaman. Pilih kategori yang
-            diekspor (default: semua kategori dari hasil filter).
+            Data follows the date/status filters on this page. Choose categories
+            to export (default: all categories from the filtered result).
           </DialogDescription>
         </DialogHeader>
 
@@ -69,14 +69,14 @@ export function LaporanExportDialog({
               onCheckedChange={(v) => toggleAll(v === true)}
             />
             <Label htmlFor="export-kat-all" className="font-medium">
-              Semua kategori
+              All categories
             </Label>
           </div>
 
           <div className="max-h-64 space-y-2 overflow-y-auto pr-1">
             {categories.length === 0 ? (
               <p className="text-sm text-muted-foreground">
-                Tidak ada kategori pada data saat ini.
+                No categories in the current data.
               </p>
             ) : (
               categories.map((name) => {
@@ -100,13 +100,13 @@ export function LaporanExportDialog({
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Batal
+            Cancel
           </Button>
           <Button
             onClick={onConfirm}
             disabled={loading || selected.length === 0}
           >
-            {loading ? "Menyiapkan…" : "Export"}
+            {loading ? "Preparing…" : "Export"}
           </Button>
         </DialogFooter>
       </DialogContent>

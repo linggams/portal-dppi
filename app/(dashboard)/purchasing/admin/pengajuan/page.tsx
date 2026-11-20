@@ -119,7 +119,7 @@ export default function PengajuanPage() {
         setJenisBarang(data)
       }
     } catch {
-      toast.error("Gagal memuat data jenis barang")
+      toast.error("Failed to load item types")
     }
   }
 
@@ -133,7 +133,7 @@ export default function PengajuanPage() {
         setStokBarang(result.data)
       }
     } catch {
-      toast.error("Gagal memuat data stok barang")
+      toast.error("Failed to load item stock")
     }
   }
 
@@ -149,7 +149,7 @@ export default function PengajuanPage() {
         setSementaraList(data)
       }
     } catch {
-      toast.error("Gagal memuat data pengajuan")
+      toast.error("Failed to load submissions")
     } finally {
       setLoading(false)
     }
@@ -182,7 +182,7 @@ export default function PengajuanPage() {
       !formData.satuan ||
       !formData.hargabarang
     ) {
-      toast.error("Mohon lengkapi semua field")
+      toast.error("Please complete all fields")
       return
     }
 
@@ -207,7 +207,7 @@ export default function PengajuanPage() {
       })
 
       if (response.ok) {
-        toast.success("Barang ditambahkan ke pengajuan")
+        toast.success("Item added to submission")
         setFormData({
           idJenis: "",
           kodeBrg: "",
@@ -218,10 +218,10 @@ export default function PengajuanPage() {
         fetchSementara()
       } else {
         const error = await response.json()
-        toast.error(error.error || "Terjadi kesalahan")
+        toast.error(error.error || "An error occurred")
       }
     } catch {
-      toast.error("Terjadi kesalahan saat menambahkan")
+      toast.error("An error occurred while adding")
     }
   }
 
@@ -232,20 +232,20 @@ export default function PengajuanPage() {
       })
 
       if (response.ok) {
-        toast.success("Barang dihapus dari pengajuan")
+        toast.success("Item removed from submission")
         fetchSementara()
       } else {
         const error = await response.json()
-        toast.error(error.error || "Terjadi kesalahan")
+        toast.error(error.error || "An error occurred")
       }
     } catch {
-      toast.error("Terjadi kesalahan saat menghapus")
+      toast.error("An error occurred while deleting")
     }
   }
 
   const handleSubmitClick = () => {
     if (sementaraList.length === 0) {
-      toast.error("Tidak ada pengajuan untuk disubmit")
+      toast.error("No submissions to submit")
       return
     }
     setSubmitDialogOpen(true)
@@ -268,14 +268,14 @@ export default function PengajuanPage() {
       })
 
       if (response.ok) {
-        toast.success("Pengajuan berhasil dikirim")
+        toast.success("Submission sent successfully")
         fetchSementara()
       } else {
         const error = await response.json()
-        toast.error(error.error || "Terjadi kesalahan")
+        toast.error(error.error || "An error occurred")
       }
     } catch {
-      toast.error("Terjadi kesalahan saat mengirim pengajuan")
+      toast.error("An error occurred while sending submission")
     } finally {
       setSubmitting(false)
     }
@@ -285,14 +285,14 @@ export default function PengajuanPage() {
   const jumlahAll = sementaraList.reduce((sum, item) => sum + item.jumlah, 0)
 
   return (
-    <DashboardLayout title="Pengajuan Barang">
+    <DashboardLayout title="Item submissions">
       {sementaraList.length > 0 ? (
         <PageActions>
           <Button
             onClick={handleSubmitClick}
             disabled={submitting}
           >
-            {submitting ? "Mengirim..." : "Kirim Pengajuan"}
+            {submitting ? "Sending..." : "Send submission"}
           </Button>
         </PageActions>
       ) : null}
@@ -301,10 +301,10 @@ export default function PengajuanPage() {
                 <div className="grid gap-6 md:grid-cols-2">
           {/* Form */}
           <Card className="p-6">
-            <h2 className="text-xl font-semibold mb-4 text-foreground">Tambah Barang</h2>
+            <h2 className="text-xl font-semibold mb-4 text-foreground">Add item</h2>
             <form onSubmit={handleAdd} className="space-y-4">
               <div className="grid gap-2">
-                <Label htmlFor="idJenis">Jenis Barang</Label>
+                <Label htmlFor="idJenis">Item type</Label>
                 <SearchSelect
                   value={formData.idJenis}
                   onSelect={(item) =>
@@ -316,7 +316,7 @@ export default function PengajuanPage() {
                       hargabarang: "",
                     })
                   }
-                  placeholder="Pilih Jenis Barang"
+                  placeholder="Select item type"
                   items={jenisBarang.map((jenis) => ({
                     id: String(jenis.idJenis),
                     value: String(jenis.idJenis),
@@ -326,13 +326,13 @@ export default function PengajuanPage() {
               </div>
 
               <div className="grid gap-2">
-                <Label htmlFor="kodeBrg">Nama Barang</Label>
+                <Label htmlFor="kodeBrg">Item name</Label>
                 <SearchSelect
                   value={formData.kodeBrg}
                   onSelect={(item) =>
                     setFormData({ ...formData, kodeBrg: item.value })
                   }
-                  placeholder="Pilih Nama Barang"
+                  placeholder="Select item name"
                   disabled={!formData.idJenis}
                   items={stokBarang.map((stok) => ({
                     id: stok.kodeBrg,
@@ -344,7 +344,7 @@ export default function PengajuanPage() {
               </div>
 
               <div className="grid gap-2">
-                <Label htmlFor="satuan">Satuan</Label>
+                <Label htmlFor="satuan">Unit</Label>
                 <Input
                   id="satuan"
                   value={formData.satuan}
@@ -352,12 +352,12 @@ export default function PengajuanPage() {
                     setFormData({ ...formData, satuan: e.target.value })
                   }
                   required
-                  placeholder="Contoh: PCE, RIM, PACK"
+                  placeholder="e.g. PCE, RIM, PACK"
                 />
               </div>
 
               <div className="grid gap-2">
-                <Label htmlFor="hargabarang">Harga Barang</Label>
+                <Label htmlFor="hargabarang">Item price</Label>
                 <Input
                   id="hargabarang"
                   type="text"
@@ -366,12 +366,12 @@ export default function PengajuanPage() {
                   }
                   disabled
                   readOnly
-                  placeholder="Otomatis dari nama barang"
+                  placeholder="Auto-filled from item name"
                 />
               </div>
 
               <div className="grid gap-2">
-                <Label htmlFor="jumlah">Jumlah</Label>
+                <Label htmlFor="jumlah">Qty</Label>
                 <Input
                   id="jumlah"
                   type="number"
@@ -396,12 +396,12 @@ export default function PengajuanPage() {
               )}
 
               <Button type="submit" className="w-full">
-                Tambah ke Pengajuan
+                Add to submission
               </Button>
             </form>
           </Card>
 
-          <PageSection title="Pengajuan Hari Ini">
+          <PageSection title="Today's submissions">
             {loading ? (
               <div className="space-y-3 py-4">
                 <Skeleton className="h-10 w-full" />
@@ -411,7 +411,7 @@ export default function PengajuanPage() {
               </div>
             ) : sementaraList.length === 0 ? (
               <p className="text-center text-muted-foreground py-8">
-                Tidak ada pengajuan barang hari ini
+                No item submissions today
               </p>
             ) : (
               <div className="space-y-2">
@@ -419,12 +419,12 @@ export default function PengajuanPage() {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Nama Barang</TableHead>
-                        <TableHead>Jumlah</TableHead>
-                        <TableHead>Satuan</TableHead>
-                        <TableHead>Harga</TableHead>
+                        <TableHead>Item name</TableHead>
+                        <TableHead>Qty</TableHead>
+                        <TableHead>Unit</TableHead>
+                        <TableHead>Price</TableHead>
                         <TableHead>Total</TableHead>
-                        <TableHead className="text-right">Aksi</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -438,7 +438,7 @@ export default function PengajuanPage() {
                           <TableCell className="text-right">
                             <TableActions>
                               <TableActionButton
-                                label="Hapus"
+                                label="Delete"
                                 icon={Trash2}
                                 className="text-destructive hover:text-destructive"
                                 onClick={() =>
@@ -454,7 +454,7 @@ export default function PengajuanPage() {
                 </TableContainer>
                 <div className="mt-4 p-4 bg-muted rounded-md">
                   <div className="flex justify-between">
-                    <span className="font-semibold">Jumlah Barang:</span>
+                    <span className="font-semibold">Item count:</span>
                     <span>{jumlahAll}</span>
                   </div>
                   <div className="flex justify-between mt-2">
@@ -473,14 +473,14 @@ export default function PengajuanPage() {
       <AlertDialog open={submitDialogOpen} onOpenChange={setSubmitDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Kirim Pengajuan?</AlertDialogTitle>
+            <AlertDialogTitle>Send submission?</AlertDialogTitle>
             <AlertDialogDescription>
-              Apakah Anda yakin ingin mengirim pengajuan ini?
+              Are you sure you want to send this submission?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Batal</AlertDialogCancel>
-            <AlertDialogAction onClick={handleSubmit}>Kirim</AlertDialogAction>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleSubmit}>Send</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

@@ -4,7 +4,11 @@ import { useCallback, useEffect, useMemo, useState } from "react"
 import Link from "next/link"
 import { Eye } from "lucide-react"
 import { toast } from "sonner"
-import { DashboardLayout, PageActions } from "@/components/layout"
+import {
+  DashboardLayout,
+  PageActions,
+  PageActionsFilters,
+} from "@/components/layout"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
@@ -28,6 +32,7 @@ import { TableActionLink, TableActions } from "@/components/ui/table-actions"
 import { TablePagination } from "@/components/ui/table-pagination"
 import type { MobilKendaraan, MobilLaporanKm } from "@/lib/mobil/mobil-types"
 import { formatRupiah } from "@/lib/shared/currency"
+import { formatDateId } from "@/lib/shared/date"
 import { DEFAULT_PAGE_SIZE, readPaginatedJson } from "@/lib/shared/pagination"
 
 type LaporanSummary = {
@@ -76,7 +81,7 @@ export default function MobilUserLaporanPage() {
       }
       params.set("page", String(page))
       const res = await fetch(`/api/mobil/laporan?${params.toString()}`)
-      if (!res.ok) throw new Error("Gagal memuat laporan")
+      if (!res.ok) throw new Error("Failed to load reports")
       const json = await res.json()
       const result = readPaginatedJson<MobilLaporanKm>(json)
       setRows(result.data)
@@ -85,7 +90,7 @@ export default function MobilUserLaporanPage() {
       setPageSize(result.pageSize)
       setApiSummary(parseSummary(json))
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Gagal memuat")
+      toast.error(error instanceof Error ? error.message : "Failed to load")
       setRows([])
       setTotal(0)
       setTotalPages(1)
@@ -136,15 +141,15 @@ export default function MobilUserLaporanPage() {
       : "/mobil/user/laporan/baru"
 
   return (
-    <DashboardLayout title="Input Laporan">
+    <DashboardLayout title="Mileage reports">
       <PageActions>
-        <div className="mr-auto">
+        <PageActionsFilters label="Filter" title="Filter vehicles">
           <Select value={filterKendaraan} onValueChange={setFilterKendaraan}>
             <SelectTrigger className="w-[200px]">
-              <SelectValue placeholder="Kendaraan" />
+              <SelectValue placeholder="Vehicle" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Semua kendaraan</SelectItem>
+              <SelectItem value="all">All vehicles</SelectItem>
               {kendaraan.map((k) => (
                 <SelectItem key={k.idKendaraan} value={String(k.idKendaraan)}>
                   {k.nopol}
@@ -152,9 +157,9 @@ export default function MobilUserLaporanPage() {
               ))}
             </SelectContent>
           </Select>
-        </div>
+        </PageActionsFilters>
         <Button asChild>
-          <Link href={baruHref}>Input Laporan</Link>
+          <Link href={baruHref}>Log trip</Link>
         </Button>
       </PageActions>
 
@@ -162,22 +167,22 @@ export default function MobilUserLaporanPage() {
         <div className="rounded-md border px-4 py-3 text-sm">
           <span className="font-medium">{balanceSummary.nopol}</span>
           {" · "}
-          KM terakhir{" "}
+          Latest KM{" "}
           <span className="font-medium">
             {balanceSummary.kmTerakhir.toLocaleString("id-ID")} KM
           </span>
           {" · "}
-          Pemakaian daftar ini{" "}
+          Usage in this list{" "}
           <span className="font-medium">
             {balanceSummary.pemakaianDaftar.toLocaleString("id-ID")} KM
           </span>
           {" · "}
-          Uang jalan{" "}
+          Travel allowance{" "}
           <span className="font-medium">
             {formatRupiah(balanceSummary.totalUangJalan)}
           </span>
           {" · "}
-          Biaya perjalanan{" "}
+          Trip cost{" "}
           <span className="font-medium">
             {formatRupiah(balanceSummary.totalBiayaPerjalanan)}
           </span>
@@ -202,26 +207,26 @@ export default function MobilUserLaporanPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Tanggal</TableHead>
-                  <TableHead>Nopol</TableHead>
-                  <TableHead>Pelapor</TableHead>
-                  <TableHead className="text-right">KM awal</TableHead>
-                  <TableHead className="text-right">KM akhir</TableHead>
-                  <TableHead className="text-right">Pemakaian</TableHead>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Plate</TableHead>
+                  <TableHead>Reporter</TableHead>
+                  <TableHead className="text-right">Start KM</TableHead>
+                  <TableHead className="text-right">End KM</TableHead>
+                  <TableHead className="text-right">Usage</TableHead>
                   <TableHead className="text-right">Trip</TableHead>
-                  <TableHead className="text-right">Uang jalan</TableHead>
-                  <TableHead className="text-right">Biaya perjalanan</TableHead>
+                  <TableHead className="text-right">Travel allowance</TableHead>
+                  <TableHead className="text-right">Trip cost</TableHead>
                   <TableHead className="text-right">Balance</TableHead>
-                  <TableHead className="text-right">Aksi</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {rows.length === 0 ? (
-                  <TableEmptyState colSpan={11} title="Belum ada laporan KM" />
+                  <TableEmptyState colSpan={11} title="No mileage reports yet" />
                 ) : (
                   rows.map((row) => (
                     <TableRow key={row.idLaporan}>
-                      <TableCell>{row.tanggal}</TableCell>
+                      <TableCell>{formatDateId(row.tanggal)}</TableCell>
                       <TableCell className="font-medium">
                         {row.kendaraan?.nopol ?? "—"}
                       </TableCell>
@@ -268,7 +273,7 @@ export default function MobilUserLaporanPage() {
             total={total}
             pageSize={pageSize}
             onPageChange={setPage}
-            itemLabel="laporan"
+            itemLabel="reports"
           />
         </div>
       )}

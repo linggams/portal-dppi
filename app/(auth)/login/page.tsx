@@ -46,7 +46,7 @@ export default function LoginPage() {
       if (result?.error) {
         const errorMessage =
           result.error === "CredentialsSignin"
-            ? "Username atau password yang Anda masukkan salah."
+            ? "Incorrect username or password."
             : result.error
         setError(errorMessage)
       } else if (result?.ok) {
@@ -58,7 +58,7 @@ export default function LoginPage() {
       setError(
         error instanceof Error
           ? error.message
-          : "Terjadi kesalahan saat login. Silakan coba lagi."
+          : "Something went wrong while signing in. Please try again."
       )
     } finally {
       setLoading(false)
@@ -130,9 +130,9 @@ export default function LoginPage() {
 
           <Card className="w-full max-w-md shadow-lg">
             <CardHeader className="space-y-1">
-              <CardTitle className="text-xl">Masuk ke akun Anda</CardTitle>
+              <CardTitle className="text-xl">Sign in to your account</CardTitle>
               <CardDescription>
-                Masukkan username dan password yang valid.
+                Enter a valid username and password.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -149,7 +149,7 @@ export default function LoginPage() {
                   <Input
                     id="username"
                     type="text"
-                    placeholder="Masukkan username"
+                    placeholder="Enter username"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                     required
@@ -163,7 +163,7 @@ export default function LoginPage() {
                   <Input
                     id="password"
                     type="password"
-                    placeholder="Masukkan password"
+                    placeholder="Enter password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
@@ -180,10 +180,10 @@ export default function LoginPage() {
                   {loading ? (
                     <>
                       <Loader2 className="size-4 animate-spin" />
-                      Memproses...
+                      Signing in…
                     </>
                   ) : (
-                    "Masuk"
+                    "Sign in"
                   )}
                 </Button>
               </form>

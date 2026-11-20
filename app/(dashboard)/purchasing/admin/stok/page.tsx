@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { PageActions } from "@/components/layout"
+import { PageActions, PageActionsFilters } from "@/components/layout"
 import { DashboardLayout } from "@/components/layout/DashboardLayout"
 import { Button } from "@/components/ui/button"
 import {
@@ -75,7 +75,7 @@ export default function StokPage() {
 
   if (loading && stokBarang.length === 0 && !sort) {
     return (
-      <DashboardLayout title="Data Stok Barang">
+      <DashboardLayout title="Item stock data">
         <div className="space-y-3 rounded-md border p-4">
           <Skeleton className="h-10 w-full" />
           {[...Array(6)].map((_, i) => (
@@ -87,9 +87,9 @@ export default function StokPage() {
   }
 
   return (
-    <DashboardLayout title="Data Stok Barang">
+    <DashboardLayout title="Item stock data">
       <PageActions>
-        <div className="mr-auto flex items-center gap-2">
+        <PageActionsFilters label="Sort" title="Sort stock">
           <Select
             value={sort || "default"}
             onValueChange={(value) =>
@@ -97,14 +97,14 @@ export default function StokPage() {
             }
           >
             <SelectTrigger className="w-[160px]">
-              <SelectValue placeholder="Urutkan" />
+              <SelectValue placeholder="Sort" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="default">Urutkan</SelectItem>
-              <SelectItem value="stok">Stok</SelectItem>
-              <SelectItem value="keluar">Keluar</SelectItem>
-              <SelectItem value="sisa">Sisa</SelectItem>
-              <SelectItem value="hargabarang">Harga</SelectItem>
+              <SelectItem value="default">Sort</SelectItem>
+              <SelectItem value="stok">Stock</SelectItem>
+              <SelectItem value="keluar">Out</SelectItem>
+              <SelectItem value="sisa">Remaining</SelectItem>
+              <SelectItem value="hargabarang">Price</SelectItem>
             </SelectContent>
           </Select>
           <Button
@@ -113,7 +113,7 @@ export default function StokPage() {
             disabled={!sort}
             onClick={() => setSortDir("asc")}
           >
-            Naik
+            Asc
           </Button>
           <Button
             type="button"
@@ -121,33 +121,33 @@ export default function StokPage() {
             disabled={!sort}
             onClick={() => setSortDir("desc")}
           >
-            Turun
+            Desc
           </Button>
-        </div>
-            <Button
-              onClick={downloadPDF}
-              variant="default"
-              className="hidden print:hidden"
-              disabled={total === 0}
-            >
-              Cetak PDF
-            </Button>
-            <Button
-              onClick={() => window.print()}
-              variant="outline"
-              className="hidden print:hidden"
-              disabled={stokBarang.length === 0}
-            >
-              Cetak
-            </Button>
-            <Button
-              variant="outline"
-              onClick={downloadPDF}
-              disabled={total === 0}
-            >
-              Export
-            </Button>
-            <Button onClick={handleAddClick}>Tambah Stok Barang</Button>
+        </PageActionsFilters>
+        <Button
+          onClick={downloadPDF}
+          variant="default"
+          className="hidden print:hidden"
+          disabled={total === 0}
+        >
+          Print PDF
+        </Button>
+        <Button
+          onClick={() => window.print()}
+          variant="outline"
+          className="hidden print:hidden"
+          disabled={stokBarang.length === 0}
+        >
+          Print
+        </Button>
+        <Button
+          variant="outline"
+          onClick={downloadPDF}
+          disabled={total === 0}
+        >
+          Export
+        </Button>
+        <Button onClick={handleAddClick}>Add item stock</Button>
       </PageActions>
       <div className="space-y-6">
         <StokFormDialog
@@ -182,7 +182,7 @@ export default function StokPage() {
             total={total}
             pageSize={pageSize}
             onPageChange={setPage}
-            itemLabel="barang"
+            itemLabel="items"
           />
         </div>
 

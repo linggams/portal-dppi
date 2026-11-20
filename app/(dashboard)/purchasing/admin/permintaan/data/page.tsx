@@ -30,7 +30,7 @@ export default function DataPermintaanAdminPage() {
   const hasData = groups.length > 0
 
   return (
-    <DashboardLayout title="Data Permintaan Barang">
+    <DashboardLayout title="Item request data">
       <PageActions>
         <PermintaanGroupFilters
           filters={filters}
@@ -49,9 +49,9 @@ export default function DataPermintaanAdminPage() {
           <PermintaanGroupSkeleton />
         ) : !hasData ? (
           <div className="rounded-md border py-12 text-center">
-            <p className="text-muted-foreground">Tidak ada data permintaan</p>
+            <p className="text-muted-foreground">No request data</p>
             <p className="mt-1 text-sm text-muted-foreground">
-              Ubah filter atau periode tanggal
+              Change filters or date range
             </p>
             <Button
               variant="outline"

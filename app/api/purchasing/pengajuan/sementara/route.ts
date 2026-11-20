@@ -96,7 +96,7 @@ export async function POST(request: NextRequest) {
 
     if (!stokBarang) {
       return NextResponse.json(
-        { error: "Barang tidak ditemukan" },
+        { error: "Item not found" },
         { status: 404 }
       )
     }

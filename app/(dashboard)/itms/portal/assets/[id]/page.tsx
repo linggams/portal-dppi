@@ -4,7 +4,7 @@ import { use, useCallback, useEffect, useState } from "react"
 import { DashboardLayout, ContentEmpty } from "@/components/layout"
 import { Badge } from "@/components/ui/badge"
 import { ASSET_STATUS_LABEL } from "@/lib/itms/assets"
-import { formatTicketDate } from "@/lib/itms/format"
+import { formatTicketDateOnly } from "@/lib/itms/format"
 import type { ItmsAssetStatus } from "@prisma/client"
 
 type AssetDetail = {
@@ -96,7 +96,7 @@ export default function ItmsPortalAssetDetailPage({
             <span className="text-muted-foreground">Warranty until</span>
             <br />
             {asset.warrantyUntil
-              ? formatTicketDate(asset.warrantyUntil)
+              ? formatTicketDateOnly(asset.warrantyUntil)
               : "—"}
           </p>
           <p className="sm:col-span-2">

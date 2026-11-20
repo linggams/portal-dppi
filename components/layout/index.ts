@@ -1,6 +1,6 @@
 export { PageActions } from "./page-actions"
+export { PageActionsFilters } from "./page-actions-filters"
 export { PageSection } from "./page-section"
-export { usePageTitle } from "./page-title-context"
 export { StatCard } from "./stat-card"
 export { CompactSummaryGrid, SummaryMetric } from "./summary-grid"
 export { ContentEmpty } from "./content-empty"

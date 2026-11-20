@@ -29,18 +29,18 @@ export function StokTable({
         <TableHeader>
           <TableRow>
             <TableHead>No</TableHead>
-            <TableHead>Kode Barang</TableHead>
-            <TableHead>Nama Barang</TableHead>
-            <TableHead>Harga</TableHead>
-            <TableHead>Satuan</TableHead>
-            <TableHead>Stok</TableHead>
-            <TableHead>Keluar</TableHead>
-            <TableHead>Sisa</TableHead>
+            <TableHead>Item code</TableHead>
+            <TableHead>Item name</TableHead>
+            <TableHead>Price</TableHead>
+            <TableHead>Unit</TableHead>
+            <TableHead>Stock</TableHead>
+            <TableHead>Out</TableHead>
+            <TableHead>Remaining</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {stokBarang.length === 0 ? (
-            <TableEmptyState colSpan={8} title="Tidak ada data stok barang" />
+            <TableEmptyState colSpan={8} title="No stock data" />
           ) : (
             stokBarang.map((stok, index) => (
               <TableRow key={stok.idKodeBrg}>

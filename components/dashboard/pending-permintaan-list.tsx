@@ -1,7 +1,5 @@
 import Link from "next/link"
 import { Eye } from "lucide-react"
-import { format } from "date-fns"
-import { id } from "date-fns/locale"
 import { ContentEmpty } from "@/components/layout/content-empty"
 import { Button } from "@/components/ui/button"
 import { TableActionLink, TableActions } from "@/components/ui/table-actions"
@@ -15,6 +13,7 @@ import {
 } from "@/components/ui/table"
 import { TableContainer } from "@/components/ui/table-container"
 import { getGroupStatusBadge } from "@/lib/purchasing/permintaan-status"
+import { formatDateId } from "@/lib/shared/date"
 import type { DashboardPermintaanItem } from "@/lib/platform/dashboard-types"
 
 interface Props {
@@ -22,19 +21,15 @@ interface Props {
 }
 
 function formatDate(dateString: string) {
-  try {
-    return format(new Date(dateString), "dd MMM yyyy", { locale: id })
-  } catch {
-    return dateString
-  }
+  return formatDateId(dateString, dateString)
 }
 
 export function DashboardPendingPermintaanList({ items }: Props) {
   if (items.length === 0) {
     return (
       <ContentEmpty
-        title="Tidak ada permintaan pending"
-        description="Semua permintaan sudah diproses."
+        title="No pending requests"
+        description="All requests have been processed."
         className="py-8"
       />
     )
@@ -47,10 +42,10 @@ export function DashboardPendingPermintaanList({ items }: Props) {
           <TableHeader>
             <TableRow>
               <TableHead>Unit</TableHead>
-              <TableHead>Tanggal</TableHead>
+              <TableHead>Date</TableHead>
               <TableHead className="text-right">Item</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead className="text-right">Aksi</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -87,7 +82,7 @@ export function DashboardPendingPermintaanList({ items }: Props) {
       <div className="flex justify-end">
         <Button asChild variant="link" size="sm" className="h-auto p-0">
           <Link href="/purchasing/admin/permintaan/data?status=0">
-            Lihat semua permintaan
+            View all requests
           </Link>
         </Button>
       </div>

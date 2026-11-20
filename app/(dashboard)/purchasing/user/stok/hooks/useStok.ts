@@ -36,7 +36,7 @@ export function useStok() {
         setPageSize(result.pageSize)
       }
     } catch {
-      toast.error("Gagal memuat data stok barang")
+      toast.error("Failed to load stock data")
     } finally {
       setLoading(false)
     }

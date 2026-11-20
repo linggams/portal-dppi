@@ -16,7 +16,7 @@ export function LaporanSummaryCards({ summary }: LaporanSummaryCardsProps) {
     items.push({ label: "Total item", value: summary.totalItems })
   }
   if (summary.totalJumlah !== undefined) {
-    items.push({ label: "Total jumlah", value: summary.totalJumlah })
+    items.push({ label: "Total qty", value: summary.totalJumlah })
   }
   if (summary.totalHarga !== undefined) {
     items.push({ label: "Total Rp", value: formatRupiah(summary.totalHarga) })
@@ -25,19 +25,19 @@ export function LaporanSummaryCards({ summary }: LaporanSummaryCardsProps) {
     items.push({ label: "Pending", value: summary.pending })
   }
   if (summary.approved !== undefined) {
-    items.push({ label: "Disetujui", value: summary.approved })
+    items.push({ label: "Approved", value: summary.approved })
   }
   if (summary.totalStok !== undefined) {
-    items.push({ label: "Total stok", value: summary.totalStok })
+    items.push({ label: "Total stock", value: summary.totalStok })
   }
   if (summary.totalKeluar !== undefined) {
-    items.push({ label: "Total keluar", value: summary.totalKeluar })
+    items.push({ label: "Total out", value: summary.totalKeluar })
   }
   if (summary.totalSisa !== undefined) {
-    items.push({ label: "Total sisa", value: summary.totalSisa })
+    items.push({ label: "Total remaining", value: summary.totalSisa })
   }
   if (summary.lowStock !== undefined) {
-    items.push({ label: "Stok rendah", value: summary.lowStock })
+    items.push({ label: "Low stock", value: summary.lowStock })
   }
 
   return (

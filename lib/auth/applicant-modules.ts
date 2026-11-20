@@ -61,7 +61,7 @@ export function applicantModulesForRole(
   }
   const modules = resolveApplicantModules(true, input ?? ALL_APPLICANT_MODULES)
   if (!hasAnyApplicantModule(modules)) {
-    return { ok: false, error: "Pilih minimal satu modul" }
+    return { ok: false, error: "Select at least one module" }
   }
   return { ok: true, modules }
 }

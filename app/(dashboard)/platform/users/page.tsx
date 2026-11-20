@@ -48,7 +48,7 @@ export default function UsersPage() {
 
   if (loading) {
     return (
-      <DashboardLayout title="Data User">
+      <DashboardLayout title="Users">
         <div className="space-y-3 rounded-md border p-4">
           <Skeleton className="h-10 w-full" />
           {[...Array(5)].map((_, i) => (
@@ -60,9 +60,9 @@ export default function UsersPage() {
   }
 
   return (
-    <DashboardLayout title="Data User">
+    <DashboardLayout title="Users">
       <div className="space-y-6">
-        <PageActions><Button onClick={handleAddClick}>Tambah User</Button>
+        <PageActions><Button onClick={handleAddClick}>Add user</Button>
         </PageActions>
 
         <UserFormDialog

@@ -18,7 +18,7 @@ export default function UserStokPage() {
   } = useStok()
 
   return (
-    <DashboardLayout title="Data Stok Barang">
+    <DashboardLayout title="Stock Data">
       <div className="space-y-6">
         {loading ? (
           <StokLoadingSkeleton />
@@ -35,7 +35,7 @@ export default function UserStokPage() {
               total={total}
               pageSize={pageSize}
               onPageChange={setPage}
-              itemLabel="barang"
+              itemLabel="items"
             />
           </div>
         )}

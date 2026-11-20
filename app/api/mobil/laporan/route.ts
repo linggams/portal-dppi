@@ -186,20 +186,20 @@ export async function POST(request: NextRequest) {
     const uangJalan = parseUangJalan(form.get("uangJalan"))
 
     if (!idKendaraan || Number.isNaN(idKendaraan)) {
-      return NextResponse.json({ error: "Kendaraan wajib dipilih" }, { status: 400 })
+      return NextResponse.json({ error: "Vehicle is required" }, { status: 400 })
     }
     const tanggal = parseDateOnly(tanggalRaw)
     if (!tanggal) {
-      return NextResponse.json({ error: "Tanggal tidak valid" }, { status: 400 })
+      return NextResponse.json({ error: "Invalid date" }, { status: 400 })
     }
     if (!trips) {
       return NextResponse.json(
-        { error: "Minimal satu perjalanan (dari, jam, ke, km > 0)" },
+        { error: "At least one trip is required (from, time, to, km > 0)" },
         { status: 400 }
       )
     }
     if (uangJalan === null) {
-      return NextResponse.json({ error: "Uang jalan tidak valid" }, { status: 400 })
+      return NextResponse.json({ error: "Invalid travel allowance" }, { status: 400 })
     }
 
     const kendaraan = await prisma.mobilKendaraan.findUnique({
@@ -207,7 +207,7 @@ export async function POST(request: NextRequest) {
     })
     if (!kendaraan || !kendaraan.aktif) {
       return NextResponse.json(
-        { error: "Kendaraan tidak ditemukan / tidak aktif" },
+        { error: "Vehicle not found / inactive" },
         { status: 400 }
       )
     }
@@ -227,7 +227,7 @@ export async function POST(request: NextRequest) {
     })
     if (duplicate) {
       return NextResponse.json(
-        { error: "Laporan untuk tanggal ini sudah ada" },
+        { error: "A report for this date already exists" },
         { status: 400 }
       )
     }
@@ -247,7 +247,7 @@ export async function POST(request: NextRequest) {
       if (!uploaded.ok) {
         for (const p of uploadedPaths) await deleteMobilBukti(p)
         return NextResponse.json(
-          { error: `Perjalanan #${i + 1}: ${uploaded.error}` },
+          { error: `Trip #${i + 1}: ${uploaded.error}` },
           { status: 400 }
         )
       }

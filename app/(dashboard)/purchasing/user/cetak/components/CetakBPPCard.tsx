@@ -39,16 +39,16 @@ export function CetakBPPCard({
       <CardHeader className="print:pb-2">
         <div className="flex items-center justify-between gap-4">
           <CardTitle className="text-2xl">
-            BUKTI PERMINTAAN BARANG (BPP)
+            GOODS REQUEST RECEIPT (BPP)
           </CardTitle>
           <TableActions className="print:hidden">
             <TableActionButton
-              label="Unduh PDF"
+              label="Download PDF"
               icon={FileDown}
               onClick={() => onDownloadPDF(date, items)}
             />
             <TableActionButton
-              label="Cetak"
+              label="Print"
               icon={Printer}
               onClick={onPrint}
             />
@@ -59,7 +59,7 @@ export function CetakBPPCard({
         <div id={`pdf-content-${date}`}>
           <div className="space-y-4">
             <div className="mb-4 text-center print:mb-2">
-              <h3 className="text-lg font-bold">BUKTI PERMINTAAN BARANG (BPP)</h3>
+              <h3 className="text-lg font-bold">GOODS REQUEST RECEIPT (BPP)</h3>
             </div>
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div>
@@ -67,16 +67,16 @@ export function CetakBPPCard({
                 <p>{items[0]?.unit ?? ""}</p>
               </div>
               <div>
-                <p className="font-semibold">Departemen:</p>
+                <p className="font-semibold">Department:</p>
                 <p>{items[0]?.instansi ?? ""}</p>
               </div>
               <div>
-                <p className="font-semibold">Tanggal:</p>
+                <p className="font-semibold">Date:</p>
                 <p>{formatDate(date)}</p>
               </div>
               <div>
                 <p className="font-semibold">Status:</p>
-                <p>Disetujui</p>
+                <p>Approved</p>
               </div>
             </div>
 
@@ -85,9 +85,9 @@ export function CetakBPPCard({
               <TableHeader>
                 <TableRow>
                   <TableHead>No</TableHead>
-                  <TableHead>Nama Barang</TableHead>
-                  <TableHead className="text-center">Jumlah</TableHead>
-                  <TableHead className="text-center">Satuan</TableHead>
+                  <TableHead>Item name</TableHead>
+                  <TableHead className="text-center">Qty</TableHead>
+                  <TableHead className="text-center">Unit</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -109,14 +109,14 @@ export function CetakBPPCard({
 
             <div className="mt-8 grid grid-cols-2 gap-8">
               <div>
-                <p className="font-semibold mb-4">Yang Meminta,</p>
+                <p className="font-semibold mb-4">Requester,</p>
                 <div className="border-t pt-2">
                   <p>{jabatan}</p>
                   <p className="text-sm text-muted-foreground mt-8">{username}</p>
                 </div>
               </div>
               <div>
-                <p className="font-semibold mb-4">Mengetahui,</p>
+                <p className="font-semibold mb-4">Acknowledged by,</p>
                 <div className="border-t pt-2">
                   <p>Admin</p>
                   <p className="text-sm text-muted-foreground mt-8">

@@ -55,7 +55,7 @@ export function usePermintaanGroups() {
         `/api/purchasing/permintaan/groups?${params.toString()}`
       )
       if (!response.ok) {
-        toast.error("Gagal memuat data permintaan")
+        toast.error("Failed to load requests")
         return
       }
 
@@ -66,7 +66,7 @@ export function usePermintaanGroups() {
       setTotalPages(result.totalPages ?? 1)
       setPageSize(result.pageSize ?? PERMINTAAN_GROUP_PAGE_SIZE)
     } catch {
-      toast.error("Terjadi kesalahan saat memuat data")
+      toast.error("An error occurred while loading data")
     } finally {
       setLoading(false)
     }

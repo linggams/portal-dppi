@@ -1,7 +1,5 @@
 "use client"
 
-import { format } from "date-fns"
-import { id } from "date-fns/locale"
 import { Eye, Printer } from "lucide-react"
 import {
   TableActionButton,
@@ -19,6 +17,7 @@ import {
 import { TableContainer } from "@/components/ui/table-container"
 import { getGroupStatusBadge } from "@/lib/purchasing/permintaan-status"
 import { downloadPengajuanGroupPdf } from "@/lib/purchasing/pengajuan-pdf"
+import { formatDateId } from "@/lib/shared/date"
 import type { PengajuanGroupRow } from "../types"
 
 interface Props {
@@ -28,11 +27,7 @@ interface Props {
 }
 
 function formatDate(dateString: string) {
-  try {
-    return format(new Date(dateString), "dd MMM yyyy", { locale: id })
-  } catch {
-    return dateString
-  }
+  return formatDateId(dateString, dateString)
 }
 
 function formatRupiah(value: number) {
@@ -50,13 +45,13 @@ export function PengajuanGroupTable({ groups, page, pageSize }: Props) {
         <TableHeader>
           <TableRow>
             <TableHead className="w-12">No</TableHead>
-            <TableHead>Tanggal</TableHead>
+            <TableHead>Date</TableHead>
             <TableHead>Unit</TableHead>
             <TableHead className="text-right">Item</TableHead>
             <TableHead className="text-right">Total Qty</TableHead>
-            <TableHead className="text-right">Total Nominal</TableHead>
+            <TableHead className="text-right">Total amount</TableHead>
             <TableHead>Status</TableHead>
-            <TableHead className="text-right">Aksi</TableHead>
+            <TableHead className="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -89,7 +84,7 @@ export function PengajuanGroupTable({ groups, page, pageSize }: Props) {
                       href={detailHref}
                     />
                     <TableActionButton
-                      label="Cetak PDF"
+                      label="Print PDF"
                       icon={Printer}
                       onClick={() =>
                         downloadPengajuanGroupPdf(group.unit, group.tglPengajuan)

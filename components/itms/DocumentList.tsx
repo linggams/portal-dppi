@@ -21,7 +21,7 @@ import { TableContainer } from "@/components/ui/table-container"
 import { TablePagination } from "@/components/ui/table-pagination"
 import { TableActionLink, TableActions } from "@/components/ui/table-actions"
 import { KB_STATUS_LABEL } from "@/lib/itms/kb"
-import { formatTicketDate } from "@/lib/itms/format"
+import { formatTicketDateOnly } from "@/lib/itms/format"
 import { DEFAULT_PAGE_SIZE, readPaginatedJson } from "@/lib/shared/pagination"
 import type { ItmsKbStatus } from "@prisma/client"
 
@@ -248,12 +248,12 @@ function ItmsDocumentListPageInner({
                     </TableCell>
                     <TableCell className="text-muted-foreground">
                       {row.effectiveDate
-                        ? formatTicketDate(row.effectiveDate)
+                        ? formatTicketDateOnly(row.effectiveDate)
                         : "—"}
                     </TableCell>
                     <TableCell className="text-muted-foreground">
                       {row.nextReviewAt
-                        ? formatTicketDate(row.nextReviewAt)
+                        ? formatTicketDateOnly(row.nextReviewAt)
                         : "—"}
                     </TableCell>
                     <TableCell>

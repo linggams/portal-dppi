@@ -44,20 +44,20 @@ export function DeleteKategoriDialog({
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Hapus Kategori?</AlertDialogTitle>
+          <AlertDialogTitle>Delete category?</AlertDialogTitle>
           <AlertDialogDescription>
-            Apakah Anda yakin ingin menghapus kategori &quot;{item?.jenisBrg}&quot;?
-            Tindakan ini tidak dapat dibatalkan.
+            Are you sure you want to delete category &quot;{item?.jenisBrg}&quot;?
+            This action cannot be undone.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={deleting}>Batal</AlertDialogCancel>
+          <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
           <AlertDialogAction
             onClick={handleDelete}
             disabled={deleting}
             variant="destructive"
           >
-            {deleting ? "Menghapus..." : "Hapus"}
+            {deleting ? "Deleting..." : "Delete"}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

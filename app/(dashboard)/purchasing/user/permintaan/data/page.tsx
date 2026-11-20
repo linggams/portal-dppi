@@ -19,13 +19,13 @@ export default function DataPermintaanPage() {
   const hasData = Object.keys(groupedPermintaan).length > 0
 
   return (
-    <DashboardLayout title="Data Permintaan Barang">
+    <DashboardLayout title="Goods Request Data">
       <div className="space-y-6">
         {loading ? (
           <DataPermintaanSkeleton />
         ) : total === 0 ? (
           <div className="text-center py-12">
-            <p className="text-muted-foreground">Tidak ada data permintaan</p>
+            <p className="text-muted-foreground">No request data</p>
           </div>
         ) : (
           <>

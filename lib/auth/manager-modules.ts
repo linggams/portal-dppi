@@ -61,7 +61,7 @@ export function managerModulesForRole(
   }
   const modules = resolveManagerModules(true, input ?? ALL_MANAGER_MODULES)
   if (!hasAnyManagerModule(modules)) {
-    return { ok: false, error: "Pilih minimal satu modul" }
+    return { ok: false, error: "Select at least one module" }
   }
   return { ok: true, modules }
 }

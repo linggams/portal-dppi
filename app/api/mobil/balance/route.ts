@@ -16,14 +16,14 @@ export async function GET(request: NextRequest) {
       10
     )
     if (!idKendaraan || Number.isNaN(idKendaraan)) {
-      return NextResponse.json({ error: "id_kendaraan wajib" }, { status: 400 })
+      return NextResponse.json({ error: "id_kendaraan is required" }, { status: 400 })
     }
 
     const kendaraan = await prisma.mobilKendaraan.findUnique({
       where: { idKendaraan },
     })
     if (!kendaraan) {
-      return NextResponse.json({ error: "Kendaraan tidak ditemukan" }, { status: 404 })
+      return NextResponse.json({ error: "Vehicle not found" }, { status: 404 })
     }
 
     const last = await prisma.mobilLaporanKm.findFirst({

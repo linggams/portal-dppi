@@ -12,6 +12,6 @@ export function normalizeUserLevel(level: string): AppUserLevel {
 }
 
 export const USER_LEVEL_LABEL: Record<AppUserLevel, string> = {
-  user: "Pemohon",
-  administrator: "Pengelola",
+  user: "Requester",
+  administrator: "Administrator",
 }

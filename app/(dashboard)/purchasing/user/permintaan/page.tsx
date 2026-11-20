@@ -110,7 +110,7 @@ export default function PermintaanPage() {
         setDailyLimit(data)
       }
     } catch {
-      toast.error("Gagal memuat status permintaan harian")
+      toast.error("Failed to load daily request status")
     }
   }
 
@@ -128,7 +128,7 @@ export default function PermintaanPage() {
         setJenisBarang(data)
       }
     } catch (error) {
-      toast.error("Gagal memuat data jenis barang")
+      toast.error("Failed to load item types")
     }
   }
 
@@ -144,7 +144,7 @@ export default function PermintaanPage() {
         setStokBarang(result.data.filter((item) => item.sisa > 0))
       }
     } catch (error) {
-      toast.error("Gagal memuat data stok barang")
+      toast.error("Failed to load stock data")
     }
   }
 
@@ -160,7 +160,7 @@ export default function PermintaanPage() {
         setSementaraList(data)
       }
     } catch (error) {
-      toast.error("Gagal memuat data permintaan")
+      toast.error("Failed to load request data")
     } finally {
       setLoading(false)
     }
@@ -175,18 +175,18 @@ export default function PermintaanPage() {
     }
 
     if (!formData.idJenis || !formData.kodeBrg || !formData.jumlah || formData.jumlah <= 0) {
-      toast.error("Mohon lengkapi semua field")
+      toast.error("Please complete all fields")
       return
     }
 
     const selectedStok = stokBarang.find((s) => s.kodeBrg === formData.kodeBrg)
     if (!selectedStok) {
-      toast.error("Barang tidak ditemukan")
+      toast.error("Item not found")
       return
     }
 
     if (selectedStok.sisa < formData.jumlah) {
-      toast.error(`Stok tidak mencukupi. Stok tersedia: ${selectedStok.sisa}`)
+      toast.error(`Insufficient stock. Available stock: ${selectedStok.sisa}`)
       return
     }
 
@@ -206,15 +206,15 @@ export default function PermintaanPage() {
       })
 
       if (response.ok) {
-        toast.success("Barang ditambahkan ke permintaan")
+        toast.success("Item added to request")
         setFormData({ idJenis: "", kodeBrg: "", jumlah: 0 })
         fetchSementara()
       } else {
         const error = await response.json()
-        toast.error(error.error || "Terjadi kesalahan")
+        toast.error(error.error || "Something went wrong")
       }
     } catch (error) {
-      toast.error("Terjadi kesalahan saat menambahkan")
+      toast.error("Something went wrong while adding")
     }
   }
 
@@ -225,14 +225,14 @@ export default function PermintaanPage() {
       })
 
       if (response.ok) {
-        toast.success("Barang dihapus dari permintaan")
+        toast.success("Item removed from request")
         fetchSementara()
       } else {
         const error = await response.json()
-        toast.error(error.error || "Terjadi kesalahan")
+        toast.error(error.error || "Something went wrong")
       }
     } catch (error) {
-      toast.error("Terjadi kesalahan saat menghapus")
+      toast.error("Something went wrong while deleting")
     }
   }
 
@@ -243,7 +243,7 @@ export default function PermintaanPage() {
     }
 
     if (sementaraList.length === 0) {
-      toast.error("Tidak ada permintaan untuk disubmit")
+      toast.error("No requests to submit")
       return
     }
     setSubmitDialogOpen(true)
@@ -267,15 +267,15 @@ export default function PermintaanPage() {
       })
 
       if (response.ok) {
-        toast.success("Permintaan berhasil dikirim")
+        toast.success("Request submitted successfully")
         fetchSementara()
         fetchDailyLimit()
       } else {
         const error = await response.json()
-        toast.error(error.error || "Terjadi kesalahan")
+        toast.error(error.error || "Something went wrong")
       }
     } catch (error) {
-      toast.error("Terjadi kesalahan saat mengirim permintaan")
+      toast.error("Something went wrong while submitting request")
     } finally {
       setSubmitting(false)
     }
@@ -285,14 +285,14 @@ export default function PermintaanPage() {
   const formDisabled = dailyLimit?.alreadySubmitted ?? false
 
   return (
-    <DashboardLayout title="Permintaan Barang">
+    <DashboardLayout title="Goods Request">
       {sementaraList.length > 0 && !formDisabled ? (
         <PageActions>
           <Button
             onClick={handleSubmitClick}
             disabled={submitting || formDisabled}
           >
-            {submitting ? "Mengirim..." : "Kirim Permintaan"}
+            {submitting ? "Sending..." : "Submit Request"}
           </Button>
         </PageActions>
       ) : null}
@@ -307,10 +307,10 @@ export default function PermintaanPage() {
                 <div className="grid gap-6 md:grid-cols-2">
           {/* Form */}
           <Card className="p-6">
-            <h2 className="text-xl font-semibold mb-4 text-foreground">Tambah Barang</h2>
+            <h2 className="text-xl font-semibold mb-4 text-foreground">Add Item</h2>
             <form onSubmit={handleAdd} className="space-y-4">
               <div className="grid gap-2">
-                <Label htmlFor="idJenis">Jenis Barang</Label>
+                <Label htmlFor="idJenis">Item type</Label>
                 <Select
                   value={formData.idJenis}
                   onValueChange={(value) => {
@@ -320,7 +320,7 @@ export default function PermintaanPage() {
                   disabled={formDisabled}
                 >
                   <SelectTrigger id="idJenis">
-                    <SelectValue placeholder="Pilih Jenis Barang" />
+                    <SelectValue placeholder="Select item type" />
                   </SelectTrigger>
                   <SelectContent>
                     {jenisBarang.map((jenis) => (
@@ -333,7 +333,7 @@ export default function PermintaanPage() {
               </div>
 
               <div className="grid gap-2">
-                <Label htmlFor="kodeBrg">Nama Barang</Label>
+                <Label htmlFor="kodeBrg">Item name</Label>
                 <Select
                   value={formData.kodeBrg}
                   onValueChange={(value) =>
@@ -343,12 +343,12 @@ export default function PermintaanPage() {
                   disabled={!formData.idJenis || formDisabled}
                 >
                   <SelectTrigger id="kodeBrg">
-                    <SelectValue placeholder="Pilih Nama Barang" />
+                    <SelectValue placeholder="Select item name" />
                   </SelectTrigger>
                   <SelectContent>
                     {stokBarang.map((stok) => (
                       <SelectItem key={stok.kodeBrg} value={stok.kodeBrg}>
-                        {stok.namaBrg} (Sisa: {stok.sisa} {stok.satuan})
+                        {stok.namaBrg} (Remaining: {stok.sisa} {stok.satuan})
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -358,13 +358,13 @@ export default function PermintaanPage() {
               {selectedStok && (
                 <div className="p-3 bg-muted rounded-md">
                   <p className="text-sm text-muted-foreground">
-                    Stok Tersedia: <span className="font-semibold text-foreground">{selectedStok.sisa} {selectedStok.satuan}</span>
+                    Available stock: <span className="font-semibold text-foreground">{selectedStok.sisa} {selectedStok.satuan}</span>
                   </p>
                 </div>
               )}
 
               <div className="grid gap-2">
-                <Label htmlFor="jumlah">Jumlah</Label>
+                <Label htmlFor="jumlah">Qty</Label>
                 <Input
                   id="jumlah"
                   type="number"
@@ -383,19 +383,19 @@ export default function PermintaanPage() {
               </div>
 
               <Button type="submit" className="w-full" disabled={formDisabled}>
-                Tambah ke Permintaan
+                Add to Request
               </Button>
             </form>
           </Card>
 
-          <PageSection title="Permintaan Hari Ini">
+          <PageSection title="Today's Requests">
             {loading ? (
               <div className="flex justify-center items-center py-8">
                 <Loader2 className="h-6 w-6 animate-spin" />
               </div>
             ) : sementaraList.length === 0 ? (
               <p className="text-center text-muted-foreground py-8">
-                Tidak ada permintaan barang hari ini
+                No goods requests today
               </p>
             ) : (
               <div className="space-y-2">
@@ -403,10 +403,10 @@ export default function PermintaanPage() {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Nama Barang</TableHead>
-                        <TableHead>Jumlah</TableHead>
-                        <TableHead>Satuan</TableHead>
-                        <TableHead className="text-right">Aksi</TableHead>
+                        <TableHead>Item name</TableHead>
+                        <TableHead>Qty</TableHead>
+                        <TableHead>Unit</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -418,7 +418,7 @@ export default function PermintaanPage() {
                           <TableCell className="text-right">
                             <TableActions>
                               <TableActionButton
-                                label="Hapus"
+                                label="Delete"
                                 icon={Trash2}
                                 className="text-destructive hover:text-destructive"
                                 onClick={() => handleDelete(item.idSementara)}
@@ -438,14 +438,14 @@ export default function PermintaanPage() {
       <AlertDialog open={submitDialogOpen} onOpenChange={setSubmitDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Kirim Permintaan?</AlertDialogTitle>
+            <AlertDialogTitle>Submit request?</AlertDialogTitle>
             <AlertDialogDescription>
-              Apakah Anda yakin ingin mengirim permintaan ini?
+              Are you sure you want to submit this request?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Batal</AlertDialogCancel>
-            <AlertDialogAction onClick={handleSubmit}>Kirim</AlertDialogAction>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleSubmit}>Submit</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

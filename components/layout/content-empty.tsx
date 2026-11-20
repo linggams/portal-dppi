@@ -15,7 +15,7 @@ interface ContentEmptyProps {
 }
 
 export function ContentEmpty({
-  title = "Tidak ada data",
+  title = "No data",
   description,
   className,
 }: ContentEmptyProps) {

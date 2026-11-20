@@ -28,10 +28,10 @@ export function useKategori() {
         setTotalPages(result.totalPages)
         setPageSize(result.pageSize)
       } else {
-        toast.error("Gagal memuat data kategori")
+        toast.error("Failed to load categories")
       }
     } catch {
-      toast.error("Gagal memuat data kategori")
+      toast.error("Failed to load categories")
     } finally {
       setLoading(false)
     }
@@ -49,13 +49,13 @@ export function useKategori() {
     })
 
     if (response.ok) {
-      toast.success("Kategori berhasil ditambahkan")
+      toast.success("Category added successfully")
       await fetchKategori()
       return true
     }
 
     const error = await response.json()
-    toast.error(error.error || "Gagal menambahkan kategori")
+    toast.error(error.error || "Failed to add category")
     return false
   }
 
@@ -65,13 +65,13 @@ export function useKategori() {
     })
 
     if (response.ok) {
-      toast.success("Kategori berhasil dihapus")
+      toast.success("Category deleted successfully")
       await fetchKategori()
       return true
     }
 
     const error = await response.json()
-    toast.error(error.error || "Gagal menghapus kategori")
+    toast.error(error.error || "Failed to delete category")
     return false
   }
 

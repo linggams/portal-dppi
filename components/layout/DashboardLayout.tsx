@@ -38,7 +38,7 @@ export function DashboardLayout({
               <AppSidebar />
             </Suspense>
             <SidebarInset className="min-h-0 overflow-hidden">
-              <PageActionsBar roleName={user.roleName || user.level} />
+              <PageActionsBar />
               <div className="relative min-h-0 flex-1 overflow-y-auto [scrollbar-gutter:stable] focus:outline-none">
                 <div className="w-full space-y-6 px-4 py-6">
                   {children}

@@ -2,8 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from "react"
 import { toast } from "sonner"
-import { format } from "date-fns"
-import { id } from "date-fns/locale"
+import { formatDateId } from "@/lib/shared/date"
 import { DEFAULT_PAGE_SIZE, paginateArray } from "@/lib/shared/pagination"
 import type { Permintaan } from "../types"
 
@@ -22,7 +21,7 @@ export function useDataPermintaan() {
         setPage(1)
       }
     } catch {
-      toast.error("Gagal memuat data permintaan")
+      toast.error("Failed to load request data")
     } finally {
       setLoading(false)
     }
@@ -32,13 +31,10 @@ export function useDataPermintaan() {
     fetchPermintaan()
   }, [fetchPermintaan])
 
-  const formatDate = useCallback((dateString: string) => {
-    try {
-      return format(new Date(dateString), "dd MMMM yyyy", { locale: id })
-    } catch {
-      return dateString
-    }
-  }, [])
+  const formatDate = useCallback(
+    (dateString: string) => formatDateId(dateString, dateString),
+    []
+  )
 
   const dateGroups = useMemo(() => {
     const grouped = permintaan.reduce(

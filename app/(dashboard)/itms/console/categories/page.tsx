@@ -2,7 +2,12 @@
 
 import { useCallback, useEffect, useState } from "react"
 import { toast } from "sonner"
-import { DashboardLayout, ContentEmpty, PageActions } from "@/components/layout"
+import {
+  DashboardLayout,
+  ContentEmpty,
+  PageActions,
+  PageActionsFilters,
+} from "@/components/layout"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -74,7 +79,7 @@ export default function ItmsCategoriesPage() {
   return (
     <DashboardLayout title="Categories">
       <PageActions>
-        <div className="flex gap-2">
+        <PageActionsFilters label="Add" title="Add category">
           <Input
             value={name}
             onChange={(e) => setName(e.target.value)}
@@ -84,11 +89,11 @@ export default function ItmsCategoriesPage() {
           <Button onClick={onCreate} disabled={saving || !name.trim()}>
             Add
           </Button>
-        </div>
+        </PageActionsFilters>
       </PageActions>
 
       {!loading && rows.length === 0 ? (
-        <ContentEmpty title="No categories" />
+        <ContentEmpty title="No categories yet" />
       ) : (
         <TableContainer>
           <Table>

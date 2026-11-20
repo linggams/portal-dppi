@@ -2,7 +2,12 @@
 
 import { useCallback, useEffect, useState } from "react"
 import { Eye } from "lucide-react"
-import { DashboardLayout, ContentEmpty, PageActions } from "@/components/layout"
+import {
+  DashboardLayout,
+  ContentEmpty,
+  PageActions,
+  PageActionsFilters,
+} from "@/components/layout"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
@@ -72,9 +77,9 @@ export default function ItmsConsoleTicketsPage() {
   }, [load])
 
   return (
-    <DashboardLayout title="Ticket Queue">
+    <DashboardLayout title="Ticket queue">
       <PageActions>
-        <div className="flex flex-wrap gap-2">
+        <PageActionsFilters label="View" title="Filter queue">
           {(
             [
               ["all", "All"],
@@ -84,7 +89,6 @@ export default function ItmsConsoleTicketsPage() {
           ).map(([key, label]) => (
             <Button
               key={key}
-              size="sm"
               variant={view === key ? "default" : "outline"}
               onClick={() => {
                 setView(key)
@@ -94,7 +98,7 @@ export default function ItmsConsoleTicketsPage() {
               {label}
             </Button>
           ))}
-        </div>
+        </PageActionsFilters>
       </PageActions>
 
       {loading ? (

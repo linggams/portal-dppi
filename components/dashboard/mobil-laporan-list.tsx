@@ -1,7 +1,5 @@
 import Link from "next/link"
 import { Eye } from "lucide-react"
-import { format } from "date-fns"
-import { id } from "date-fns/locale"
 import { ContentEmpty } from "@/components/layout/content-empty"
 import { Button } from "@/components/ui/button"
 import { TableActionLink, TableActions } from "@/components/ui/table-actions"
@@ -15,6 +13,7 @@ import {
 } from "@/components/ui/table"
 import { TableContainer } from "@/components/ui/table-container"
 import { formatRupiah } from "@/lib/shared/currency"
+import { formatDateId } from "@/lib/shared/date"
 import type { DashboardMobilLaporanItem } from "@/lib/platform/dashboard-types"
 
 interface Props {
@@ -22,19 +21,15 @@ interface Props {
 }
 
 function formatDate(dateString: string) {
-  try {
-    return format(new Date(dateString), "dd MMM yyyy", { locale: id })
-  } catch {
-    return dateString
-  }
+  return formatDateId(dateString, dateString)
 }
 
 export function DashboardMobilLaporanList({ items }: Props) {
   if (items.length === 0) {
     return (
       <ContentEmpty
-        title="Belum ada laporan KM"
-        description="Belum ada laporan penggunaan mobil."
+        title="No mileage reports yet"
+        description="No vehicle usage reports yet."
         className="py-8"
       />
     )
@@ -46,13 +41,13 @@ export function DashboardMobilLaporanList({ items }: Props) {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Tanggal</TableHead>
-              <TableHead>Nopol</TableHead>
-              <TableHead>Pelapor</TableHead>
-              <TableHead className="text-right">Pemakaian</TableHead>
-              <TableHead className="text-right">Uang jalan</TableHead>
+              <TableHead>Date</TableHead>
+              <TableHead>Plate</TableHead>
+              <TableHead>Reporter</TableHead>
+              <TableHead className="text-right">Usage</TableHead>
+              <TableHead className="text-right">Travel allowance</TableHead>
               <TableHead className="text-right">Balance</TableHead>
-              <TableHead className="text-right">Aksi</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -88,7 +83,7 @@ export function DashboardMobilLaporanList({ items }: Props) {
       </TableContainer>
       <div className="flex justify-end">
         <Button asChild variant="link" size="sm" className="h-auto p-0">
-          <Link href="/mobil/admin/laporan">Lihat semua laporan</Link>
+          <Link href="/mobil/admin/laporan">View all reports</Link>
         </Button>
       </div>
     </div>

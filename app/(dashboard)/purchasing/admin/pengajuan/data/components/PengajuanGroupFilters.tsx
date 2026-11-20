@@ -1,5 +1,6 @@
 "use client"
 
+import { PageActionsFilters } from "@/components/layout"
 import { Button } from "@/components/ui/button"
 import { DatePicker } from "@/components/ui/date-picker"
 import { Input } from "@/components/ui/input"
@@ -26,18 +27,18 @@ export function PengajuanGroupFilters({
   onReset,
 }: Props) {
   return (
-    <div className="mr-auto flex min-w-0 flex-wrap items-center gap-2">
+    <PageActionsFilters label="Filter" title="Filter submissions">
       <DatePicker
         className="w-[160px]"
         value={filters.startDate}
         onChange={(startDate) => onFiltersChange({ ...filters, startDate })}
-        placeholder="Tanggal mulai"
+        placeholder="Start date"
       />
       <DatePicker
         className="w-[160px]"
         value={filters.endDate}
         onChange={(endDate) => onFiltersChange({ ...filters, endDate })}
-        placeholder="Tanggal akhir"
+        placeholder="End date"
       />
       <Select
         value={filters.status}
@@ -47,15 +48,15 @@ export function PengajuanGroupFilters({
           <SelectValue placeholder="Status" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="all">Semua</SelectItem>
+          <SelectItem value="all">All</SelectItem>
           <SelectItem value="0">Pending</SelectItem>
-          <SelectItem value="1">Disetujui</SelectItem>
-          <SelectItem value="2">Ditolak</SelectItem>
+          <SelectItem value="1">Approved</SelectItem>
+          <SelectItem value="2">Rejected</SelectItem>
         </SelectContent>
       </Select>
       <Input
         className="w-[160px]"
-        placeholder="Unit / pemohon"
+        placeholder="Unit / requester"
         value={filters.unit}
         onChange={(e) => onFiltersChange({ ...filters, unit: e.target.value })}
       />
@@ -63,8 +64,8 @@ export function PengajuanGroupFilters({
         Reset
       </Button>
       <Button type="button" onClick={onApply}>
-        Tampilkan
+        Show
       </Button>
-    </div>
+    </PageActionsFilters>
   )
 }

@@ -110,7 +110,7 @@ function PlatformDashboardContent() {
           ) : null}
         </div>
         <Button asChild variant="outline">
-          <Link href="/platform/users">Kelola User</Link>
+          <Link href="/platform/users">Manage users</Link>
         </Button>
       </PageActions>
 
@@ -130,7 +130,7 @@ function PlatformDashboardContent() {
           ) : null}
           {availableTabs.includes("mobil") ? (
             <TabsTrigger value="mobil">
-              Mobil
+              Vehicles
               {!loading ? badge(stats?.mobil.laporanHariIni) : ""}
             </TabsTrigger>
           ) : null}
@@ -142,38 +142,38 @@ function PlatformDashboardContent() {
           ) : (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <StatCard
-                label="Permintaan Pending"
+                label="Pending requests"
                 value={
                   <span>
                     {stats?.purchasing.permintaanPendingToday ?? 0}
                     <span className="mt-1 block text-xs font-normal text-muted-foreground">
-                      hari ini
+                      today
                     </span>
                   </span>
                 }
               />
               <StatCard
-                label="Pengajuan Pending"
+                label="Pending submissions"
                 value={
                   <span>
                     {stats?.purchasing.pengajuanPendingToday ?? 0}
                     <span className="mt-1 block text-xs font-normal text-muted-foreground">
-                      hari ini
+                      today
                     </span>
                   </span>
                 }
               />
               <StatCard
-                label="Stok Kritis"
+                label="Critical stock"
                 value={stats?.purchasing.stokKritisTotal ?? 0}
               />
               <StatCard
-                label="Total User"
+                label="Total users"
                 value={
                   <span>
                     {stats?.users.total ?? 0}
                     <span className="mt-1 block text-xs font-normal text-muted-foreground">
-                      {stats ? `${stats.users.roleCount} role aktif` : "-"}
+                      {stats ? `${stats.users.roleCount} active roles` : "-"}
                     </span>
                   </span>
                 }
@@ -184,17 +184,17 @@ function PlatformDashboardContent() {
           <Tabs defaultValue="stok-kritis" className="w-full gap-4">
             <TabsList className="grid h-auto w-full grid-cols-1 gap-1 sm:grid-cols-3 lg:inline-grid lg:w-auto">
               <TabsTrigger value="stok-kritis">
-                Stok Kritis
+                Critical stock
                 {!loading ? badge(stats?.purchasing.stokKritisTotal) : ""}
               </TabsTrigger>
               <TabsTrigger value="permintaan">
-                Permintaan Pending
+                Pending requests
                 {!loading
                   ? badge(stats?.purchasing.permintaanPendingToday)
                   : ""}
               </TabsTrigger>
               <TabsTrigger value="pengajuan">
-                Pengajuan Pending
+                Pending submissions
                 {!loading
                   ? badge(stats?.purchasing.pengajuanPendingToday)
                   : ""}
@@ -262,26 +262,26 @@ function PlatformDashboardContent() {
           ) : (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <StatCard
-                label="Laporan Hari Ini"
+                label="Reports today"
                 value={stats?.mobil.laporanHariIni ?? 0}
               />
               <StatCard
-                label="KM Bulan Ini"
+                label="KM this month"
                 value={(stats?.mobil.kmBulan ?? 0).toLocaleString("id-ID")}
               />
               <StatCard
-                label="Kendaraan Aktif"
+                label="Active vehicles"
                 value={stats?.mobil.kendaraanAktif ?? 0}
               />
               <StatCard
-                label="Total User"
+                label="Total users"
                 value={stats?.users.total ?? 0}
               />
             </div>
           )}
 
           <section className="space-y-3">
-            <h2 className="text-sm font-medium">Laporan KM Terbaru</h2>
+            <h2 className="text-sm font-medium">Latest mileage reports</h2>
             {loading ? (
               <Skeleton className="h-48" />
             ) : (

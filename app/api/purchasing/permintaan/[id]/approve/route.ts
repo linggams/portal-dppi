@@ -30,14 +30,14 @@ export async function POST(
 
     if (!permintaan) {
       return NextResponse.json(
-        { error: "Permintaan tidak ditemukan" },
+        { error: "Request not found" },
         { status: 404 }
       )
     }
 
     if (permintaan.status !== 0) {
       return NextResponse.json(
-        { error: "Permintaan sudah diproses" },
+        { error: "Request already processed" },
         { status: 400 }
       )
     }
@@ -45,7 +45,7 @@ export async function POST(
     // Check stok availability
     if (permintaan.stokbarang.sisa < permintaan.jumlah) {
       return NextResponse.json(
-        { error: `Stok tidak mencukupi. Stok tersedia: ${permintaan.stokbarang.sisa}` },
+        { error: `Insufficient stock. Available: ${permintaan.stokbarang.sisa}` },
         { status: 400 }
       )
     }
@@ -82,7 +82,7 @@ export async function POST(
       })
     })
 
-    return NextResponse.json({ message: "Permintaan berhasil disetujui" })
+    return NextResponse.json({ message: "Request approved successfully" })
   } catch (error) {
     console.error("Error approving permintaan:", error)
     return NextResponse.json(

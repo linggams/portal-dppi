@@ -3,10 +3,9 @@
 import { useState, useEffect, useCallback } from "react"
 import { useSession } from "next-auth/react"
 import { toast } from "sonner"
-import { format } from "date-fns"
-import { id } from "date-fns/locale"
 import { downloadPdf } from "@/lib/shared/makepdf"
 import { COMPANY_LEGAL_NAME, companyPdfHeader } from "@/lib/shared/app-branding"
+import { formatDateId } from "@/lib/shared/date"
 import type { Permintaan } from "../types"
 
 export function useCetakBPP() {
@@ -29,7 +28,7 @@ export function useCetakBPP() {
         setPermintaan(data)
       }
     } catch {
-      toast.error("Gagal memuat data permintaan")
+      toast.error("Failed to load request data")
     } finally {
       setLoading(false)
     }
@@ -41,13 +40,10 @@ export function useCetakBPP() {
     }
   }, [selectedDate, session?.user?.username, fetchPermintaan])
 
-  const formatDate = useCallback((dateString: string) => {
-    try {
-      return format(new Date(dateString), "dd MMMM yyyy", { locale: id })
-    } catch {
-      return dateString
-    }
-  }, [])
+  const formatDate = useCallback(
+    (dateString: string) => formatDateId(dateString, dateString),
+    []
+  )
 
   const groupedPermintaan = permintaan.reduce((acc, item) => {
     const date = item.tglPermintaan.split("T")[0]
@@ -64,7 +60,7 @@ export function useCetakBPP() {
     async (date: string, items: Permintaan[]) => {
       try {
         if (!items.length) {
-          toast.error("Tidak ada data untuk diunduh")
+          toast.error("No data to download")
           return
         }
 
@@ -77,7 +73,7 @@ export function useCetakBPP() {
           pageMargins: [40, 60, 40, 40],
           content: [
             ...companyPdfHeader({ lineWidth: 515, afterLine: 10 }),
-            { text: "BUKTI PERMINTAAN BARANG (BPP)", style: "title", alignment: "center", margin: [0, 0, 0, 12] },
+            { text: "GOODS REQUEST RECEIPT (BPP)", style: "title", alignment: "center", margin: [0, 0, 0, 12] },
             {
               columns: [
                 {
@@ -85,17 +81,17 @@ export function useCetakBPP() {
                   stack: [
                     { text: "Unit:", style: "label" },
                     { text: items[0]?.unit ?? "", style: "value" },
-                    { text: "Tanggal:", style: "label", margin: [0, 8, 0, 0] },
+                    { text: "Date:", style: "label", margin: [0, 8, 0, 0] },
                     { text: formatDate(date), style: "value" },
                   ],
                 },
                 {
                   width: "*",
                   stack: [
-                    { text: "Departemen:", style: "label" },
+                    { text: "Department:", style: "label" },
                     { text: items[0]?.instansi ?? "", style: "value" },
                     { text: "Status:", style: "label", margin: [0, 8, 0, 0] },
-                    { text: "Disetujui", style: "value" },
+                    { text: "Approved", style: "value" },
                   ],
                 },
               ],
@@ -108,9 +104,9 @@ export function useCetakBPP() {
                 body: [
                   [
                     { text: "No", style: "tableHeader" },
-                    { text: "Nama Barang", style: "tableHeader" },
-                    { text: "Jumlah", style: "tableHeader" },
-                    { text: "Satuan", style: "tableHeader" },
+                    { text: "Item name", style: "tableHeader" },
+                    { text: "Qty", style: "tableHeader" },
+                    { text: "Unit", style: "tableHeader" },
                   ],
                   ...items.map((item, index) => [
                     { text: String(index + 1), alignment: "center" },
@@ -127,7 +123,7 @@ export function useCetakBPP() {
                 {
                   width: "*",
                   stack: [
-                    { text: "Yang Meminta,", style: "signTitle", margin: [0, 18, 0, 30] },
+                    { text: "Requester,", style: "signTitle", margin: [0, 18, 0, 30] },
                     { canvas: [{ type: "line", x1: 0, y1: 0, x2: 200, y2: 0, lineWidth: 1 }] },
                     { text: session?.user?.jabatan ?? "", style: "signMeta", margin: [0, 6, 0, 0] },
                     { text: session?.user?.username ?? "", style: "signName", margin: [0, 30, 0, 0] },
@@ -136,7 +132,7 @@ export function useCetakBPP() {
                 {
                   width: "*",
                   stack: [
-                    { text: "Mengetahui,", style: "signTitle", margin: [0, 18, 0, 30] },
+                    { text: "Acknowledged by,", style: "signTitle", margin: [0, 18, 0, 30] },
                     { canvas: [{ type: "line", x1: 0, y1: 0, x2: 200, y2: 0, lineWidth: 1 }] },
                     { text: "Admin", style: "signMeta", margin: [0, 6, 0, 0] },
                     { text: COMPANY_LEGAL_NAME, style: "signName", margin: [0, 30, 0, 0] },
@@ -160,10 +156,10 @@ export function useCetakBPP() {
         }
 
         downloadPdf(docDefinition, filename)
-        toast.success("PDF berhasil diunduh")
+        toast.success("PDF downloaded successfully")
       } catch (error) {
         console.error("Error generating PDF:", error)
-        toast.error("Gagal mengunduh PDF")
+        toast.error("Failed to download PDF")
       }
     },
     []
@@ -172,7 +168,7 @@ export function useCetakBPP() {
   const handleExportAllPDF = useCallback(async () => {
     const dates = Object.keys(groupedPermintaan)
     if (dates.length === 0) {
-      toast.error("Tidak ada data untuk diekspor")
+      toast.error("No data to export")
       return
     }
     try {
@@ -187,7 +183,7 @@ export function useCetakBPP() {
 
         content.push(
           ...companyPdfHeader({ lineWidth: 515, afterLine: 10 }),
-          { text: "BUKTI PERMINTAAN BARANG (BPP)", style: "title", alignment: "center", margin: [0, 0, 0, 12] },
+          { text: "GOODS REQUEST RECEIPT (BPP)", style: "title", alignment: "center", margin: [0, 0, 0, 12] },
           {
             columns: [
               {
@@ -195,17 +191,17 @@ export function useCetakBPP() {
                 stack: [
                   { text: "Unit:", style: "label" },
                   { text: items[0]?.unit ?? "", style: "value" },
-                  { text: "Tanggal:", style: "label", margin: [0, 8, 0, 0] },
+                  { text: "Date:", style: "label", margin: [0, 8, 0, 0] },
                   { text: formatDate(date), style: "value" },
                 ],
               },
               {
                 width: "*",
                 stack: [
-                  { text: "Departemen:", style: "label" },
+                  { text: "Department:", style: "label" },
                   { text: items[0]?.instansi ?? "", style: "value" },
                   { text: "Status:", style: "label", margin: [0, 8, 0, 0] },
-                  { text: "Disetujui", style: "value" },
+                  { text: "Approved", style: "value" },
                 ],
               },
             ],
@@ -218,9 +214,9 @@ export function useCetakBPP() {
               body: [
                 [
                   { text: "No", style: "tableHeader" },
-                  { text: "Nama Barang", style: "tableHeader" },
-                  { text: "Jumlah", style: "tableHeader" },
-                  { text: "Satuan", style: "tableHeader" },
+                  { text: "Item name", style: "tableHeader" },
+                  { text: "Qty", style: "tableHeader" },
+                  { text: "Unit", style: "tableHeader" },
                 ],
                 ...items.map((item, index) => [
                   { text: String(index + 1), alignment: "center" },
@@ -237,7 +233,7 @@ export function useCetakBPP() {
               {
                 width: "*",
                 stack: [
-                  { text: "Yang Meminta,", style: "signTitle", margin: [0, 18, 0, 30] },
+                  { text: "Requester,", style: "signTitle", margin: [0, 18, 0, 30] },
                   { canvas: [{ type: "line", x1: 0, y1: 0, x2: 200, y2: 0, lineWidth: 1 }] },
                   { text: session?.user?.jabatan ?? "", style: "signMeta", margin: [0, 6, 0, 0] },
                   { text: session?.user?.username ?? "", style: "signName", margin: [0, 30, 0, 0] },
@@ -246,7 +242,7 @@ export function useCetakBPP() {
               {
                 width: "*",
                 stack: [
-                  { text: "Mengetahui,", style: "signTitle", margin: [0, 18, 0, 30] },
+                  { text: "Acknowledged by,", style: "signTitle", margin: [0, 18, 0, 30] },
                   { canvas: [{ type: "line", x1: 0, y1: 0, x2: 200, y2: 0, lineWidth: 1 }] },
                   { text: "Admin", style: "signMeta", margin: [0, 6, 0, 0] },
                   { text: COMPANY_LEGAL_NAME, style: "signName", margin: [0, 30, 0, 0] },
@@ -278,10 +274,10 @@ export function useCetakBPP() {
       }
 
       downloadPdf(docDefinition, filename)
-      toast.success("PDF berhasil diekspor")
+      toast.success("PDF exported successfully")
     } catch (error) {
       console.error("Error exporting PDF:", error)
-      toast.error("Gagal mengekspor PDF")
+      toast.error("Failed to export PDF")
     }
   }, [groupedPermintaan, selectedDate, session?.user?.jabatan, session?.user?.username, formatDate])
 

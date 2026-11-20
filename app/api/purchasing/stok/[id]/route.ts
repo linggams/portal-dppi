@@ -52,7 +52,7 @@ export async function PUT(
 
       if (kodeTaken) {
         return NextResponse.json(
-          { error: "Kode barang sudah ada" },
+          { error: "Item code already exists" },
           { status: 400 }
         )
       }

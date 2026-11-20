@@ -18,8 +18,7 @@ import { TableActionLink, TableActions } from "@/components/ui/table-actions"
 import { TablePagination } from "@/components/ui/table-pagination"
 import { DEFAULT_PAGE_SIZE, paginateArray } from "@/lib/shared/pagination"
 import { toast } from "sonner"
-import { format } from "date-fns"
-import { id } from "date-fns/locale"
+import { formatDateId } from "@/lib/shared/date"
 
 interface Permintaan {
   idPermintaan: number
@@ -77,19 +76,13 @@ export default function PermintaanPage() {
         setPage(1)
       }
     } catch {
-      toast.error("Gagal memuat data permintaan")
+      toast.error("Failed to load requests")
     } finally {
       setLoading(false)
     }
   }
 
-  const formatDate = (dateString: string) => {
-    try {
-      return format(new Date(dateString), "dd MMMM yyyy", { locale: id })
-    } catch {
-      return dateString
-    }
-  }
+  const formatDate = (dateString: string) => formatDateId(dateString, dateString)
 
   const groupedList = useMemo(() => {
     const grouped = permintaan.reduce(
@@ -117,7 +110,7 @@ export default function PermintaanPage() {
   )
 
   return (
-    <DashboardLayout title="Data Permintaan Barang">
+    <DashboardLayout title="Item request data">
       <div className="space-y-6">
         {loading ? (
           <div className="space-y-6">
@@ -136,7 +129,7 @@ export default function PermintaanPage() {
           </div>
         ) : groupedList.length === 0 ? (
           <div className="text-center py-12">
-            <p className="text-muted-foreground">Tidak ada permintaan pending</p>
+            <p className="text-muted-foreground">No pending requests</p>
           </div>
         ) : (
           <div className="space-y-6">
@@ -148,7 +141,7 @@ export default function PermintaanPage() {
                 action={
                   <TableActions>
                     <TableActionLink
-                      label="Detail Permintaan"
+                      label="Request detail"
                       icon={Eye}
                       href={`/purchasing/admin/permintaan/detail?unit=${encodeURIComponent(group.unit)}&tgl=${group.tglPermintaan.split("T")[0]}`}
                     />
@@ -160,10 +153,10 @@ export default function PermintaanPage() {
                     <TableHeader>
                       <TableRow>
                         <TableHead>No</TableHead>
-                        <TableHead>Nama Barang</TableHead>
-                        <TableHead>Jumlah</TableHead>
-                        <TableHead>Satuan</TableHead>
-                        <TableHead>Stok Tersedia</TableHead>
+                        <TableHead>Item name</TableHead>
+                        <TableHead>Qty</TableHead>
+                        <TableHead>Unit</TableHead>
+                        <TableHead>Available stock</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>

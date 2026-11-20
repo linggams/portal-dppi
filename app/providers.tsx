@@ -23,7 +23,7 @@ function ThemeProvider({ children, ...props }: ThemeProviderProps) {
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
-    <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
+    <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
       <SessionProvider>{children}</SessionProvider>
     </ThemeProvider>
   )

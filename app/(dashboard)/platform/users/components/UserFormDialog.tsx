@@ -159,12 +159,12 @@ export function UserFormDialog({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>
-            {editingUser ? "Edit User" : "Tambah User"}
+            {editingUser ? "Edit user" : "Add user"}
           </DialogTitle>
           <DialogDescription>
             {editingUser
-              ? "Ubah informasi user. Kosongkan password jika tidak ingin mengubah."
-              : "Tambahkan user baru ke sistem"}
+              ? "Update user details. Leave password blank to keep the current one."
+              : "Add a new user to the system"}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
@@ -182,7 +182,7 @@ export function UserFormDialog({
             </div>
             <div className="grid gap-2">
               <Label htmlFor="password">
-                Password {editingUser && "(kosongkan jika tidak diubah)"}
+                Password {editingUser && "(leave blank to keep unchanged)"}
               </Label>
               <Input
                 id="password"
@@ -202,7 +202,7 @@ export function UserFormDialog({
                 required
               >
                 <SelectTrigger id="role">
-                  <SelectValue placeholder="Pilih Role" />
+                  <SelectValue placeholder="Select role" />
                 </SelectTrigger>
                 <SelectContent>
                   {roles.map((role) => (
@@ -220,7 +220,7 @@ export function UserFormDialog({
             </div>
             {isPengelola ? (
               <div className="grid gap-2">
-                <Label>Modul yang dikelola</Label>
+                <Label>Managed modules</Label>
                 <div className="rounded-md border p-3 space-y-3">
                   {MANAGER_MODULE_OPTIONS.map((option) => (
                     <label
@@ -249,14 +249,14 @@ export function UserFormDialog({
                 </div>
                 {!hasAnyManagerModule(formData.modules) ? (
                   <p className="text-xs text-destructive">
-                    Pilih minimal satu modul.
+                    Select at least one module.
                   </p>
                 ) : null}
               </div>
             ) : null}
             {isPemohon ? (
               <div className="grid gap-2">
-                <Label>Akses modul</Label>
+                <Label>Module access</Label>
                 <div className="rounded-md border p-3 space-y-3">
                   {APPLICANT_MODULE_OPTIONS.map((option) => (
                     <label
@@ -285,13 +285,13 @@ export function UserFormDialog({
                 </div>
                 {!hasAnyApplicantModule(formData.accessModules) ? (
                   <p className="text-xs text-destructive">
-                    Pilih minimal satu modul.
+                    Select at least one module.
                   </p>
                 ) : null}
               </div>
             ) : null}
             <div className="grid gap-2">
-              <Label htmlFor="jabatan">Jabatan</Label>
+              <Label htmlFor="jabatan">Position</Label>
               <Input
                 id="jabatan"
                 value={formData.jabatan}
@@ -308,14 +308,14 @@ export function UserFormDialog({
               variant="outline"
               onClick={() => onOpenChange(false)}
             >
-              Batal
+              Cancel
             </Button>
             <Button type="submit" disabled={submitting || !canSubmit}>
               {submitting
-                ? "Menyimpan..."
+                ? "Saving..."
                 : editingUser
                   ? "Update"
-                  : "Simpan"}
+                  : "Save"}
             </Button>
           </DialogFooter>
         </form>

@@ -34,11 +34,11 @@ export async function saveMobilBuktiJpg(
   meta: { nopol: string; tanggal: string; urutan: number }
 ): Promise<{ ok: true; relativePath: string } | { ok: false; error: string }> {
   if (!file || file.size <= 0) {
-    return { ok: false, error: "Bukti foto wajib dilampirkan" }
+    return { ok: false, error: "Proof photo is required" }
   }
 
   if (file.size > MOBIL_BUKTI_MAX_BYTES) {
-    return { ok: false, error: "Ukuran foto maksimal 2 MB" }
+    return { ok: false, error: "Photo size must be at most 2 MB" }
   }
 
   const type = (file.type || "").toLowerCase()
@@ -49,12 +49,12 @@ export async function saveMobilBuktiJpg(
     name.endsWith(".jpg") ||
     name.endsWith(".jpeg")
   if (!looksJpg) {
-    return { ok: false, error: "File harus berformat JPG" }
+    return { ok: false, error: "File must be JPG format" }
   }
 
   const buffer = Buffer.from(await file.arrayBuffer())
   if (!isJpeg(buffer)) {
-    return { ok: false, error: "File harus berformat JPG" }
+    return { ok: false, error: "File must be JPG format" }
   }
 
   await mkdir(MOBIL_BUKTI_DIR, { recursive: true })

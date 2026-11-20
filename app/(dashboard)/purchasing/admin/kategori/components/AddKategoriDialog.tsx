@@ -47,26 +47,26 @@ export function AddKategoriDialog({ onSubmit, children }: AddKategoriDialogProps
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        {children ?? <Button onClick={handleOpen}>Tambah Kategori</Button>}
+        {children ?? <Button onClick={handleOpen}>Add category</Button>}
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Tambah Kategori</DialogTitle>
+          <DialogTitle>Add category</DialogTitle>
           <DialogDescription>
-            Masukkan informasi kategori baru
+            Enter new category information
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="jenisBrg">Nama Kategori</Label>
+              <Label htmlFor="jenisBrg">Category name</Label>
               <Input
                 id="jenisBrg"
                 value={formData.jenisBrg}
                 onChange={(e) =>
                   setFormData({ ...formData, jenisBrg: e.target.value })
                 }
-                placeholder="Contoh: PERLENGKAPAN KANTOR"
+                placeholder="e.g. OFFICE SUPPLIES"
                 required
               />
             </div>
@@ -77,10 +77,10 @@ export function AddKategoriDialog({ onSubmit, children }: AddKategoriDialogProps
               variant="outline"
               onClick={() => setOpen(false)}
             >
-              Batal
+              Cancel
             </Button>
             <Button type="submit" disabled={submitting}>
-              {submitting ? "Menyimpan..." : "Simpan"}
+              {submitting ? "Saving..." : "Save"}
             </Button>
           </DialogFooter>
         </form>

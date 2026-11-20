@@ -1,6 +1,10 @@
 "use client"
 
-import { DashboardLayout, PageActions } from "@/components/layout"
+import {
+  DashboardLayout,
+  PageActions,
+  PageActionsFilters,
+} from "@/components/layout"
 import { Button } from "@/components/ui/button"
 import { DatePicker } from "@/components/ui/date-picker"
 import { useCetakBPP } from "./hooks/useCetakBPP"
@@ -23,26 +27,26 @@ export default function CetakBPPPage() {
   const hasData = Object.keys(groupedPermintaan).length > 0
 
   return (
-    <DashboardLayout title="Cetak BPP">
+    <DashboardLayout title="Print BPP">
       <PageActions>
-        <div className="mr-auto flex min-w-0 flex-wrap items-center gap-2">
+        <PageActionsFilters label="Filter" title="Filter by date">
           <DatePicker
             className="w-[180px]"
             value={selectedDate}
             onChange={setSelectedDate}
-            placeholder="Tanggal permintaan"
+            placeholder="Request date"
           />
           <Button onClick={fetchPermintaan} disabled={loading}>
-            Tampilkan
+            Show
           </Button>
-        </div>
+        </PageActionsFilters>
         {hasData ? (
           <>
             <Button variant="outline" onClick={handleExportAllPDF}>
               Export
             </Button>
             <Button variant="outline" onClick={handlePrint}>
-              Cetak
+              Print
             </Button>
           </>
         ) : null}
@@ -54,7 +58,7 @@ export default function CetakBPPPage() {
         ) : !hasData ? (
           <div className="text-center py-12">
             <p className="text-muted-foreground">
-              Tidak ada permintaan yang disetujui pada tanggal tersebut
+              No approved requests on that date
             </p>
           </div>
         ) : (

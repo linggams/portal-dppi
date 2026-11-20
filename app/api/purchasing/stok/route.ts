@@ -131,7 +131,7 @@ export async function POST(request: NextRequest) {
 
     if (existingStok) {
       return NextResponse.json(
-        { error: "Kode barang sudah ada" },
+        { error: "Item code already exists" },
         { status: 400 }
       )
     }

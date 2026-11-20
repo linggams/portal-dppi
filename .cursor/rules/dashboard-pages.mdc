@@ -20,21 +20,21 @@ Header (full width)
 ```
 
 ```
-┌────────────────────────────────────────────┐
-│ Header [DASAN] [☰] …………… [theme]           │
-├──────────┬─────────────────────────────────┤
-│ Sidebar  │ PageActionsBar                  │
-│ Nav…     │ [Title] [Role] …… [aksi…]       │
-│          ├─────────────────────────────────┤
-│          │ main                            │
-└──────────┴─────────────────────────────────┘
+┌────────────────────────────────────────────────┐
+│ Header [DASAN] [☰] …… [theme] [account ▾]      │
+├──────────┬─────────────────────────────────────┤
+│ Sidebar  │ PageActionsBar                      │
+│ Nav…     │ [Title] …… [filters] [actions]      │
+│          ├─────────────────────────────────────┤
+│          │ main                                │
+└──────────┴─────────────────────────────────────┘
 ```
 
 Setiap halaman dashboard memakai `DashboardLayout`. Urutan UI:
 
-- Header full width di atas: **BrandMark (DASAN) paling kiri**, SidebarTrigger di kanan logo, theme di kanan header
-- Sidebar di bawah header (kiri) — tanpa logo; lebar **bisa di-drag** (200–360px, tersimpan di localStorage); submenu wrap + scroll; accordion per modul
-- PageActionsBar + main di kanan: **judul paling kiri**, lalu Role, aksi/filter di kanan
+- Header full width di atas: **BrandMark (DASAN) paling kiri**, SidebarTrigger, spacer, theme, **account menu paling kanan** (avatar + username + role + Sign out)
+- Sidebar di bawah header (kiri) — tanpa logo dan tanpa account footer; lebar **bisa di-drag** (200–360px, tersimpan di localStorage); submenu wrap + scroll; accordion per modul
+- PageActionsBar + main di kanan: **judul paling kiri**, aksi/filter di kanan (tanpa role badge)
 
 ```tsx
 "use client"
@@ -60,8 +60,8 @@ export default function MyPage() {
 
 | Lokasi | Aturan |
 |--------|--------|
-| **PageActionsBar (kiri)** | Judul via `title` / `usePageTitle`; Role badge di sebelahnya |
-| **Header** | **Jangan** taruh judul / role di sini |
+| **PageActionsBar (kiri)** | Judul via `title` / `usePageTitle` saja |
+| **Header (kanan)** | Account menu: username + role (Requester / Administrator) + Sign out |
 | **Area konten** | **Jangan** duplikasi judul di atas tabel/list |
 | `contentTitle` | Hanya jika benar-benar dibutuhkan (default: `false`) |
 | `PageSection title` | **Jangan** untuk halaman list/tabel tunggal; boleh untuk sub-section dalam halaman kompleks (form + list, multi blok) |
@@ -75,16 +75,21 @@ Semua aksi utama dan filter global → `<PageActions>` (bukan di `PageSection ac
 
 ```tsx
 <PageActions>
+  <PageActionsFilters>
+    <Select>...</Select>
+    <Button variant="outline">Tampilkan</Button>
+  </PageActionsFilters>
+  <Button variant="outline">Export</Button>
   <Button onClick={handleAdd}>Tambah</Button>
-  <Select>...</Select>           {/* filter status, dll. */}
-  <AddKategoriDialog />          {/* dialog trigger boleh di sini */}
 </PageActions>
 ```
 
 - `PageActions` me-render `null`; konten tampil di `PageActionsBar` di bawah header.
-- Ukuran kontrol: default shadcn (`Button` tanpa `size`, `Input`/`SelectTrigger` tanpa override `h-8`).
-- Urutan: filter global di kiri (`mr-auto`) → aksi sekunder (outline) → aksi utama (default).
-- Halaman **laporan** (purchasing / IT / mobil): filter di `PageActions` kiri; ringkasan metrik tetap di konten di atas tabel.
+- Ukuran kontrol: default shadcn **`h-9`** (`Button` tanpa `size="sm"`, `Input`/`SelectTrigger` tanpa override `h-8`). `PageActionsBar` menormalisasi tinggi kontrol.
+- Wrap global filters in `<PageActionsFilters>`: inline on desktop, **Sheet** on mobile (`md` breakpoint).
+- Order: filters (`PageActionsFilters`) → secondary actions (outline) → primary action (default).
+- Report pages (purchasing / IT / mobil): filters in left `PageActions`; summary metrics stay in content above the table.
+- UI copy: English.
 
 ## Pola per jenis halaman
 
@@ -93,8 +98,8 @@ Semua aksi utama dan filter global → `<PageActions>` (bukan di `PageSection ac
 Referensi: `purchasing/admin/stok`, `it/staff/kategori`, `it/staff/tiket`, `platform/users`
 
 ```
-[Header: Theme | ☰]
-[PageActionsBar: Judul | Role | … | Filter | Export | Tambah]
+[Header: Brand | ☰ | … | Theme | Account]
+[PageActionsBar: Title | … | Filter | Export | Add]
 [Tabel langsung — tanpa Card wrapper]
 ```
 
@@ -109,8 +114,8 @@ Referensi: `purchasing/admin/stok`, `it/staff/kategori`, `it/staff/tiket`, `plat
 Referensi: `purchasing/admin/permintaan/data`, `purchasing/admin/pengajuan/data`, `it/staff/laporan`
 
 ```
-[Header: Theme | ☰]
-[PageActionsBar: Judul | Role | filter | aksi]
+[Header: Brand | ☰ | … | Theme | Account]
+[PageActionsBar: Title | filter | actions]
 [CompactSummaryGrid — tabel ringkasan (Label judul + Table)]
 [Tabel + Pagination]
 ```
@@ -138,7 +143,7 @@ Referensi: `purchasing/user/permintaan`, `purchasing/admin/pengajuan`
 
 ### E. Halaman detail
 
-- `DashboardLayout title="Detail ..."` — judul di kiri PageActionsBar (Role di sebelahnya).
+- `DashboardLayout title="Detail ..."` — judul di kiri PageActionsBar.
 - Tombol kembali/aksi: `PageActions` (kanan).
 - Konten: `SectionCard` atau tabel item; approve per baris.
 

@@ -23,9 +23,9 @@ function getStatusBadge(status: number) {
     case 0:
       return <Badge variant="outline">Pending</Badge>
     case 1:
-      return <Badge variant="default">Disetujui</Badge>
+      return <Badge variant="default">Approved</Badge>
     case 2:
-      return <Badge variant="destructive">Ditolak</Badge>
+      return <Badge variant="destructive">Rejected</Badge>
     default:
       return <Badge>{status}</Badge>
   }
@@ -44,9 +44,9 @@ export function DataPermintaanTable({
               <TableHeader>
                 <TableRow>
                   <TableHead>No</TableHead>
-                  <TableHead>Nama Barang</TableHead>
-                  <TableHead>Jumlah</TableHead>
-                  <TableHead>Satuan</TableHead>
+                  <TableHead>Item name</TableHead>
+                  <TableHead>Qty</TableHead>
+                  <TableHead>Unit</TableHead>
                   <TableHead>Status</TableHead>
                 </TableRow>
               </TableHeader>

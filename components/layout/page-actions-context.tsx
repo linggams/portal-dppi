@@ -8,7 +8,6 @@ import {
   useState,
   type ReactNode,
 } from "react"
-import { Badge } from "@/components/ui/badge"
 import { usePageTitleValue } from "@/components/layout/page-title-context"
 import { cn } from "@/lib/utils"
 
@@ -46,20 +45,25 @@ function usePageActionsContext() {
   return context
 }
 
-interface PageActionsBarProps {
-  roleName?: string
-}
+/** Tinggi kontrol default shadcn (h-9) di seluruh bar aksi. */
+const ACTIONS_CONTROL_CLASS = cn(
+  "[&_button]:h-9",
+  "[&_button[data-size=sm]]:h-9 [&_button[data-size=sm]]:px-4",
+  "[&_[data-slot=input]]:h-9",
+  "[&_[data-slot=select-trigger]]:h-9",
+  "[&_[data-slot=select-trigger][data-size=sm]]:h-9"
+)
 
-/** Bar judul + role + aksi di bawah header; sticky, lebar penuh. */
-export function PageActionsBar({ roleName }: PageActionsBarProps) {
+/** Bar judul + aksi di bawah header; sticky, lebar penuh. Role ada di Header account. */
+export function PageActionsBar() {
   const { actions } = usePageActionsContext()
   const pageTitle = usePageTitleValue()
 
-  if (!actions && !pageTitle && !roleName) return null
+  if (!actions && !pageTitle) return null
 
   return (
     <div className="sticky top-0 z-30 shrink-0 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="flex flex-wrap items-center gap-2 px-4 py-1.5">
+      <div className="flex flex-col gap-2 px-4 py-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-2 sm:py-1.5">
         {pageTitle ? (
           <h1
             className={cn(
@@ -69,12 +73,15 @@ export function PageActionsBar({ roleName }: PageActionsBarProps) {
             {pageTitle}
           </h1>
         ) : null}
-        {roleName ? (
-          <Badge variant="secondary" className="hidden shrink-0 sm:inline-flex">
-            {roleName}
-          </Badge>
-        ) : null}
-        <div className="flex min-w-0 flex-1 flex-wrap items-center justify-end gap-2">
+
+        <div
+          className={cn(
+            "flex min-w-0 flex-1 flex-wrap items-center gap-2",
+            "justify-start sm:justify-end",
+            "max-sm:[&>button]:min-h-9 max-sm:[&>button]:flex-1 max-sm:[&>a]:flex-1",
+            ACTIONS_CONTROL_CLASS
+          )}
+        >
           {actions}
         </div>
       </div>

@@ -68,7 +68,7 @@ export async function GET(
     const { id } = await params
     const idLaporan = parseInt(id, 10)
     if (!idLaporan || Number.isNaN(idLaporan)) {
-      return NextResponse.json({ error: "ID tidak valid" }, { status: 400 })
+      return NextResponse.json({ error: "Invalid ID" }, { status: 400 })
     }
 
     const row = await prisma.mobilLaporanKm.findUnique({
@@ -76,7 +76,7 @@ export async function GET(
       include: includeLaporan,
     })
     if (!row) {
-      return NextResponse.json({ error: "Laporan tidak ditemukan" }, { status: 404 })
+      return NextResponse.json({ error: "Report not found" }, { status: 404 })
     }
 
     return NextResponse.json(toMobilLaporan(row))
@@ -100,7 +100,7 @@ export async function POST(
     const { id } = await params
     const idLaporan = parseInt(id, 10)
     if (!idLaporan || Number.isNaN(idLaporan)) {
-      return NextResponse.json({ error: "ID tidak valid" }, { status: 400 })
+      return NextResponse.json({ error: "Invalid ID" }, { status: 400 })
     }
 
     const existing = await prisma.mobilLaporanKm.findUnique({
@@ -111,7 +111,7 @@ export async function POST(
       },
     })
     if (!existing) {
-      return NextResponse.json({ error: "Laporan tidak ditemukan" }, { status: 404 })
+      return NextResponse.json({ error: "Report not found" }, { status: 404 })
     }
 
     if (
@@ -134,22 +134,22 @@ export async function POST(
         : Number(tolRaw)
 
     if (!dari || !ke) {
-      return NextResponse.json({ error: "Dari dan ke wajib diisi" }, { status: 400 })
+      return NextResponse.json({ error: "From and to are required" }, { status: 400 })
     }
     if (!jamDari || !jamKe) {
       return NextResponse.json(
-        { error: "Jam dari dan jam ke wajib (HH:mm)" },
+        { error: "Start and end time are required (HH:mm)" },
         { status: 400 }
       )
     }
     if (dari.length > 100 || ke.length > 100) {
-      return NextResponse.json({ error: "Dari/ke maksimal 100 karakter" }, { status: 400 })
+      return NextResponse.json({ error: "From/to must be at most 100 characters" }, { status: 400 })
     }
     if (!Number.isInteger(km) || km <= 0) {
-      return NextResponse.json({ error: "KM harus bilangan bulat > 0" }, { status: 400 })
+      return NextResponse.json({ error: "KM must be an integer > 0" }, { status: 400 })
     }
     if (!Number.isInteger(tol) || tol < 0) {
-      return NextResponse.json({ error: "Tol tidak valid" }, { status: 400 })
+      return NextResponse.json({ error: "Invalid toll amount" }, { status: 400 })
     }
 
     const urutan = (existing.perjalanan[0]?.urutan ?? 0) + 1
@@ -215,7 +215,7 @@ export async function DELETE(
     const { id } = await params
     const idLaporan = parseInt(id, 10)
     if (!idLaporan || Number.isNaN(idLaporan)) {
-      return NextResponse.json({ error: "ID tidak valid" }, { status: 400 })
+      return NextResponse.json({ error: "Invalid ID" }, { status: 400 })
     }
 
     const row = await prisma.mobilLaporanKm.findUnique({
@@ -223,7 +223,7 @@ export async function DELETE(
       include: { perjalanan: { select: { buktiPath: true } } },
     })
     if (!row) {
-      return NextResponse.json({ error: "Laporan tidak ditemukan" }, { status: 404 })
+      return NextResponse.json({ error: "Report not found" }, { status: 404 })
     }
 
     for (const trip of row.perjalanan) {

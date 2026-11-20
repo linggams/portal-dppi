@@ -106,14 +106,14 @@ export async function POST(request: NextRequest) {
 
     if (!stokBarang) {
       return NextResponse.json(
-        { error: "Barang tidak ditemukan" },
+        { error: "Item not found" },
         { status: 404 }
       )
     }
 
     if (stokBarang.sisa < validatedData.jumlah) {
       return NextResponse.json(
-        { error: `Stok tidak mencukupi. Stok tersedia: ${stokBarang.sisa}` },
+        { error: `Insufficient stock. Available: ${stokBarang.sisa}` },
         { status: 400 }
       )
     }

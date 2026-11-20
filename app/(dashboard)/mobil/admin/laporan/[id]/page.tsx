@@ -11,7 +11,7 @@ export default function AdminMobilLaporanDetailPage({
     <MobilLaporanDetailPage
       params={params}
       backHref="/mobil/admin/laporan"
-      title="Detail Laporan KM"
+      title="Mileage report detail"
     />
   )
 }

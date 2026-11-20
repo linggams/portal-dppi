@@ -9,17 +9,17 @@ export type GroupStatusFields = {
 export function getGroupStatusBadge(group: GroupStatusFields) {
   if (group.hasPending) {
     if (group.statusMin !== group.statusMax) {
-      return <Badge variant="outline">Sebagian pending</Badge>
+      return <Badge variant="outline">Partially pending</Badge>
     }
     return <Badge variant="outline">Pending</Badge>
   }
   if (group.statusMin === 1 && group.statusMax === 1) {
-    return <Badge variant="default">Disetujui</Badge>
+    return <Badge variant="default">Approved</Badge>
   }
   if (group.statusMin === 2 && group.statusMax === 2) {
-    return <Badge variant="destructive">Ditolak</Badge>
+    return <Badge variant="destructive">Rejected</Badge>
   }
-  return <Badge variant="secondary">Campuran</Badge>
+  return <Badge variant="secondary">Mixed</Badge>
 }
 
 export function getPermintaanItemStatusBadge(status: number) {
@@ -27,9 +27,9 @@ export function getPermintaanItemStatusBadge(status: number) {
     case 0:
       return <Badge variant="outline">Pending</Badge>
     case 1:
-      return <Badge variant="default">Disetujui</Badge>
+      return <Badge variant="default">Approved</Badge>
     case 2:
-      return <Badge variant="destructive">Ditolak</Badge>
+      return <Badge variant="destructive">Rejected</Badge>
     default:
       return <Badge>{status}</Badge>
   }

@@ -75,8 +75,8 @@ function validateJpg(file: File): string | null {
     type === "image/jpg" ||
     name.endsWith(".jpg") ||
     name.endsWith(".jpeg")
-  if (!isJpg) return "File harus JPG"
-  if (file.size > MOBIL_BUKTI_MAX_BYTES) return `Ukuran foto maksimal ${MOBIL_BUKTI_MAX_MB} MB`
+  if (!isJpg) return "File must be JPG"
+  if (file.size > MOBIL_BUKTI_MAX_BYTES) return `Max photo size ${MOBIL_BUKTI_MAX_MB} MB`
   return null
 }
 
@@ -90,7 +90,7 @@ export function MobilLaporanFormPage({
   return (
     <Suspense
       fallback={
-        <DashboardLayout title="Input Laporan">
+        <DashboardLayout title="Log trip">
           <div className="space-y-3 rounded-md border p-4">
             <div className="h-8 w-48 animate-pulse rounded bg-muted" />
             <div className="h-40 w-full animate-pulse rounded bg-muted" />
@@ -253,39 +253,39 @@ function MobilLaporanForm({
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
         throw new Error(
-          typeof data.error === "string" ? data.error : "Gagal menyimpan"
+          typeof data.error === "string" ? data.error : "Failed to save"
         )
       }
       const created = await res.json()
-      toast.success("Laporan KM tersimpan")
+      toast.success("Mileage report saved")
       router.push(`${detailHrefBase}/${created.idLaporan}`)
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Gagal menyimpan")
+      toast.error(error instanceof Error ? error.message : "Failed to save")
     } finally {
       setSaving(false)
     }
   }
 
   return (
-    <DashboardLayout title="Input Laporan">
+    <DashboardLayout title="Log trip">
       <PageActions>
         <Button variant="outline" asChild>
-          <Link href={listHref}>Kembali ke daftar</Link>
+          <Link href={listHref}>Back to list</Link>
         </Button>
         <Button type="submit" form="mobil-laporan-form" disabled={saving || !canSubmit}>
-          {saving ? "Menyimpan..." : "Simpan"}
+          {saving ? "Saving..." : "Save"}
         </Button>
       </PageActions>
 
       <form id="mobil-laporan-form" onSubmit={handleSave}>
-        <SectionCard title="Input Laporan">
+        <SectionCard title="Log trip">
           <div className="space-y-6">
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label>Kendaraan *</Label>
+                <Label>Vehicle *</Label>
                 <Select value={idKendaraan} onValueChange={setIdKendaraan}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Pilih kendaraan" />
+                    <SelectValue placeholder="Select vehicle" />
                   </SelectTrigger>
                   <SelectContent>
                     {kendaraan.map((k) => (
@@ -298,7 +298,7 @@ function MobilLaporanForm({
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label>Tanggal *</Label>
+                <Label>Date *</Label>
                 <Input
                   type="date"
                   value={tanggal}
@@ -307,18 +307,18 @@ function MobilLaporanForm({
                 />
               </div>
               <div className="space-y-2">
-                <Label>KM awal</Label>
+                <Label>Start KM</Label>
                 <Input value={kmAwal.toLocaleString("id-ID")} disabled />
               </div>
               <div className="space-y-2">
-                <Label>KM akhir</Label>
+                <Label>End KM</Label>
                 <Input value={kmAkhir.toLocaleString("id-ID")} disabled />
                 <p className="text-xs text-muted-foreground">
-                  Otomatis = KM awal + total perjalanan
+                  Auto = start KM + total trips
                 </p>
               </div>
               <div className="space-y-2">
-                <Label>Uang jalan</Label>
+                <Label>Travel allowance</Label>
                 <Input
                   inputMode="numeric"
                   value={uangJalan ? formatRupiah(uangJalan) : ""}
@@ -329,24 +329,24 @@ function MobilLaporanForm({
                 />
               </div>
               <div className="space-y-2">
-                <Label>Total biaya perjalanan</Label>
+                <Label>Total trip cost</Label>
                 <Input value={formatRupiah(totalTol)} disabled />
                 <p className="text-xs text-muted-foreground">
-                  Jumlah tol seluruh perjalanan
+                  Sum of tolls for all trips
                 </p>
               </div>
               <div className="space-y-2">
                 <Label>Balance</Label>
                 <Input value={formatRupiah(balanceUangJalan)} disabled />
                 <p className="text-xs text-muted-foreground">
-                  Uang jalan − total biaya perjalanan
+                  Travel allowance − total trip cost
                 </p>
               </div>
             </div>
 
             <div className="space-y-3 border-t pt-6">
               <div className="flex items-center justify-between gap-3">
-                <h3 className="text-sm font-medium">Perjalanan</h3>
+                <h3 className="text-sm font-medium">Trips</h3>
                 <p className="text-sm text-muted-foreground">
                   Total{" "}
                   <span className="font-medium text-foreground">
@@ -365,14 +365,14 @@ function MobilLaporanForm({
                   <TableHeader>
                     <TableRow>
                       <TableHead className="w-12">#</TableHead>
-                      <TableHead>Dari</TableHead>
-                      <TableHead className="w-28">Jam</TableHead>
-                      <TableHead>Ke</TableHead>
-                      <TableHead className="w-28">Jam</TableHead>
+                      <TableHead>From</TableHead>
+                      <TableHead className="w-28">Time</TableHead>
+                      <TableHead>To</TableHead>
+                      <TableHead className="w-28">Time</TableHead>
                       <TableHead className="w-24 text-right">KM</TableHead>
-                      <TableHead className="w-36 text-right">Tol</TableHead>
-                      <TableHead>Bukti</TableHead>
-                      <TableHead className="w-[72px] text-right">Aksi</TableHead>
+                      <TableHead className="w-36 text-right">Toll</TableHead>
+                      <TableHead>Proof</TableHead>
+                      <TableHead className="w-[72px] text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -388,7 +388,7 @@ function MobilLaporanForm({
                               onChange={(e) =>
                                 updateTrip(trip.key, { dari: e.target.value })
                               }
-                              placeholder="Asal"
+                              placeholder="Origin"
                               required
                             />
                           </TableCell>
@@ -399,7 +399,7 @@ function MobilLaporanForm({
                               onChange={(e) =>
                                 updateTrip(trip.key, { jamDari: e.target.value })
                               }
-                              aria-label={`Jam dari perjalanan ${index + 1}`}
+                              aria-label={`Departure time for trip ${index + 1}`}
                               required
                             />
                           </TableCell>
@@ -409,7 +409,7 @@ function MobilLaporanForm({
                               onChange={(e) =>
                                 updateTrip(trip.key, { ke: e.target.value })
                               }
-                              placeholder="Tujuan"
+                              placeholder="Destination"
                               required
                             />
                           </TableCell>
@@ -420,7 +420,7 @@ function MobilLaporanForm({
                               onChange={(e) =>
                                 updateTrip(trip.key, { jamKe: e.target.value })
                               }
-                              aria-label={`Jam ke perjalanan ${index + 1}`}
+                              aria-label={`Arrival time for trip ${index + 1}`}
                               required
                             />
                           </TableCell>
@@ -465,7 +465,7 @@ function MobilLaporanForm({
                                 // eslint-disable-next-line @next/next/no-img-element
                                 <img
                                   src={trip.previewUrl}
-                                  alt={`Preview perjalanan ${index + 1}`}
+                                  alt={`Trip ${index + 1} preview`}
                                   className="size-9 shrink-0 rounded border object-cover"
                                 />
                               ) : null}
@@ -475,7 +475,7 @@ function MobilLaporanForm({
                             {trips.length > 1 ? (
                               <TableActions>
                                 <TableActionButton
-                                  label="Hapus"
+                                  label="Delete"
                                   icon={Trash2}
                                   className="text-destructive"
                                   onClick={() => removeTrip(trip.key)}
@@ -501,7 +501,7 @@ function MobilLaporanForm({
               </TableContainer>
 
               <Button type="button" variant="outline" onClick={addTrip}>
-                Tambah perjalanan
+                Add trip
               </Button>
             </div>
           </div>

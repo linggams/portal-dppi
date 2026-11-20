@@ -3,6 +3,7 @@
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { ThemeToggle } from "@/components/ui/theme-toggle"
 import { BrandMark } from "@/components/layout/BrandMark"
+import { HeaderAccountMenu } from "@/components/layout/header-account-menu"
 
 export function Header() {
   return (
@@ -11,6 +12,7 @@ export function Header() {
       <SidebarTrigger className="size-8 shrink-0" />
       <div className="flex-1" />
       <ThemeToggle />
+      <HeaderAccountMenu />
     </header>
   )
 }

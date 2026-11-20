@@ -73,7 +73,7 @@ export default function MobilKendaraanPage() {
 
   const fetchJenis = useCallback(async () => {
     const jenisRes = await fetch("/api/mobil/jenis")
-    if (!jenisRes.ok) throw new Error("Gagal memuat data jenis")
+    if (!jenisRes.ok) throw new Error("Failed to load types")
     const data = await jenisRes.json()
     setJenis(Array.isArray(data) ? data : [])
   }, [])
@@ -87,7 +87,7 @@ export default function MobilKendaraanPage() {
         `/api/mobil/kendaraan?${params.toString()}`
       )
       if (!kendaraanRes.ok) {
-        throw new Error("Gagal memuat data kendaraan")
+        throw new Error("Failed to load vehicles")
       }
       const result = readPaginatedJson<MobilKendaraan>(
         await kendaraanRes.json()
@@ -97,7 +97,7 @@ export default function MobilKendaraanPage() {
       setTotalPages(result.totalPages)
       setPageSize(result.pageSize)
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Gagal memuat")
+      toast.error(error instanceof Error ? error.message : "Failed to load")
       setRows([])
       setTotal(0)
       setTotalPages(1)
@@ -108,7 +108,7 @@ export default function MobilKendaraanPage() {
 
   useEffect(() => {
     fetchJenis().catch((error) => {
-      toast.error(error instanceof Error ? error.message : "Gagal memuat")
+      toast.error(error instanceof Error ? error.message : "Failed to load")
     })
   }, [fetchJenis])
 
@@ -160,37 +160,37 @@ export default function MobilKendaraanPage() {
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
         throw new Error(
-          typeof data.error === "string" ? data.error : "Gagal menyimpan"
+          typeof data.error === "string" ? data.error : "Failed to save"
         )
       }
-      toast.success(editing ? "Kendaraan diperbarui" : "Kendaraan ditambahkan")
+      toast.success(editing ? "Vehicle updated" : "Vehicle added")
       setOpen(false)
       await refresh()
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Gagal menyimpan")
+      toast.error(error instanceof Error ? error.message : "Failed to save")
     } finally {
       setSaving(false)
     }
   }
 
   const handleDelete = async (row: MobilKendaraan) => {
-    if (!confirm(`Hapus kendaraan ${row.nopol}?`)) return
+    if (!confirm(`Delete vehicle ${row.nopol}?`)) return
     const res = await fetch(`/api/mobil/kendaraan/${row.idKendaraan}`, {
       method: "DELETE",
     })
     if (!res.ok) {
       const data = await res.json().catch(() => ({}))
-      toast.error(typeof data.error === "string" ? data.error : "Gagal menghapus")
+      toast.error(typeof data.error === "string" ? data.error : "Failed to delete")
       return
     }
-    toast.success("Kendaraan dihapus")
+    toast.success("Vehicle deleted")
     await refresh()
   }
 
   return (
-    <DashboardLayout title="Data Kendaraan">
+    <DashboardLayout title="Vehicles">
       <PageActions>
-        <Button onClick={openCreate}>Tambah Kendaraan</Button>
+        <Button onClick={openCreate}>Add vehicle</Button>
       </PageActions>
 
       {loading ? (
@@ -206,16 +206,16 @@ export default function MobilKendaraanPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Nopol</TableHead>
-                  <TableHead>Jenis</TableHead>
-                  <TableHead className="text-right">KM terakhir</TableHead>
+                  <TableHead>Plate</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead className="text-right">Latest KM</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Aksi</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {rows.length === 0 ? (
-                  <TableEmptyState colSpan={5} title="Belum ada kendaraan" />
+                  <TableEmptyState colSpan={5} title="No vehicles yet" />
                 ) : (
                   rows.map((row) => (
                     <TableRow key={row.idKendaraan}>
@@ -226,7 +226,7 @@ export default function MobilKendaraanPage() {
                       </TableCell>
                       <TableCell>
                         <Badge variant={row.aktif ? "default" : "secondary"}>
-                          {row.aktif ? "Aktif" : "Nonaktif"}
+                          {row.aktif ? "Active" : "Inactive"}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right">
@@ -237,7 +237,7 @@ export default function MobilKendaraanPage() {
                             onClick={() => openEdit(row)}
                           />
                           <TableActionButton
-                            label="Hapus"
+                            label="Delete"
                             icon={Trash2}
                             className="text-destructive hover:text-destructive"
                             onClick={() => handleDelete(row)}
@@ -256,7 +256,7 @@ export default function MobilKendaraanPage() {
             total={total}
             pageSize={pageSize}
             onPageChange={setPage}
-            itemLabel="kendaraan"
+            itemLabel="vehicles"
           />
         </div>
       )}
@@ -265,12 +265,12 @@ export default function MobilKendaraanPage() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              {editing ? "Edit Kendaraan" : "Tambah Kendaraan"}
+              {editing ? "Edit vehicle" : "Add vehicle"}
             </DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSave} className="space-y-4">
             <div className="space-y-2">
-              <Label>Nopol</Label>
+              <Label>Plate</Label>
               <Input
                 value={form.nopol}
                 onChange={(e) => setForm({ ...form, nopol: e.target.value })}
@@ -278,13 +278,13 @@ export default function MobilKendaraanPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label>Jenis</Label>
+              <Label>Type</Label>
               <Select
                 value={form.idJenis}
                 onValueChange={(idJenis) => setForm({ ...form, idJenis })}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Pilih jenis" />
+                  <SelectValue placeholder="Select type" />
                 </SelectTrigger>
                 <SelectContent>
                   {jenis.map((j) => (
@@ -296,7 +296,7 @@ export default function MobilKendaraanPage() {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>KM awal</Label>
+              <Label>Start KM</Label>
               <Input
                 type="number"
                 min={0}
@@ -315,17 +315,17 @@ export default function MobilKendaraanPage() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="true">Aktif</SelectItem>
-                  <SelectItem value="false">Nonaktif</SelectItem>
+                  <SelectItem value="true">Active</SelectItem>
+                  <SelectItem value="false">Inactive</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setOpen(false)}>
-                Batal
+                Cancel
               </Button>
               <Button type="submit" disabled={saving || !form.idJenis}>
-                {saving ? "Menyimpan..." : "Simpan"}
+                {saving ? "Saving..." : "Save"}
               </Button>
             </DialogFooter>
           </form>

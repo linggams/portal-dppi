@@ -52,14 +52,14 @@ export default function MobilJenisPage() {
       const params = new URLSearchParams()
       params.set("page", String(page))
       const res = await fetch(`/api/mobil/jenis?${params.toString()}`)
-      if (!res.ok) throw new Error("Gagal memuat jenis")
+      if (!res.ok) throw new Error("Failed to load types")
       const result = readPaginatedJson<MobilJenis>(await res.json())
       setRows(result.data)
       setTotal(result.total)
       setTotalPages(result.totalPages)
       setPageSize(result.pageSize)
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Gagal memuat")
+      toast.error(error instanceof Error ? error.message : "Failed to load")
       setRows([])
       setTotal(0)
       setTotalPages(1)
@@ -101,35 +101,35 @@ export default function MobilJenisPage() {
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
         throw new Error(
-          typeof data.error === "string" ? data.error : "Gagal menyimpan"
+          typeof data.error === "string" ? data.error : "Failed to save"
         )
       }
-      toast.success(editing ? "Jenis diperbarui" : "Jenis ditambahkan")
+      toast.success(editing ? "Type updated" : "Type added")
       setOpen(false)
       await fetchRows()
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Gagal menyimpan")
+      toast.error(error instanceof Error ? error.message : "Failed to save")
     } finally {
       setSaving(false)
     }
   }
 
   const handleDelete = async (row: MobilJenis) => {
-    if (!confirm(`Hapus jenis "${row.nama}"?`)) return
+    if (!confirm(`Delete type "${row.nama}"?`)) return
     const res = await fetch(`/api/mobil/jenis/${row.idJenis}`, { method: "DELETE" })
     if (!res.ok) {
       const data = await res.json().catch(() => ({}))
-      toast.error(typeof data.error === "string" ? data.error : "Gagal menghapus")
+      toast.error(typeof data.error === "string" ? data.error : "Failed to delete")
       return
     }
-    toast.success("Jenis dihapus")
+    toast.success("Type deleted")
     await fetchRows()
   }
 
   return (
-    <DashboardLayout title="Data Jenis Kendaraan">
+    <DashboardLayout title="Vehicle types">
       <PageActions>
-        <Button onClick={openCreate}>Tambah Jenis</Button>
+        <Button onClick={openCreate}>Add type</Button>
       </PageActions>
 
       {loading ? (
@@ -145,14 +145,14 @@ export default function MobilJenisPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Nama</TableHead>
-                  <TableHead>Keterangan</TableHead>
-                  <TableHead className="text-right">Aksi</TableHead>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Description</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {rows.length === 0 ? (
-                  <TableEmptyState colSpan={3} title="Belum ada jenis kendaraan" />
+                  <TableEmptyState colSpan={3} title="No vehicle types yet" />
                 ) : (
                   rows.map((row) => (
                     <TableRow key={row.idJenis}>
@@ -166,7 +166,7 @@ export default function MobilJenisPage() {
                             onClick={() => openEdit(row)}
                           />
                           <TableActionButton
-                            label="Hapus"
+                            label="Delete"
                             icon={Trash2}
                             className="text-destructive hover:text-destructive"
                             onClick={() => handleDelete(row)}
@@ -185,7 +185,7 @@ export default function MobilJenisPage() {
             total={total}
             pageSize={pageSize}
             onPageChange={setPage}
-            itemLabel="jenis"
+            itemLabel="types"
           />
         </div>
       )}
@@ -193,11 +193,11 @@ export default function MobilJenisPage() {
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{editing ? "Edit Jenis" : "Tambah Jenis"}</DialogTitle>
+            <DialogTitle>{editing ? "Edit type" : "Add type"}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSave} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="nama">Nama</Label>
+              <Label htmlFor="nama">Name</Label>
               <Input
                 id="nama"
                 value={nama}
@@ -206,7 +206,7 @@ export default function MobilJenisPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="keterangan">Keterangan</Label>
+              <Label htmlFor="keterangan">Description</Label>
               <Input
                 id="keterangan"
                 value={keterangan}
@@ -215,10 +215,10 @@ export default function MobilJenisPage() {
             </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setOpen(false)}>
-                Batal
+                Cancel
               </Button>
               <Button type="submit" disabled={saving}>
-                {saving ? "Menyimpan..." : "Simpan"}
+                {saving ? "Saving..." : "Save"}
               </Button>
             </DialogFooter>
           </form>

@@ -42,7 +42,7 @@ export async function PATCH(
       },
     })
     if (duplicate) {
-      return NextResponse.json({ error: "Nopol sudah terdaftar" }, { status: 400 })
+      return NextResponse.json({ error: "License plate already registered" }, { status: 400 })
     }
 
     const row = await prisma.mobilKendaraan.update({
@@ -81,7 +81,7 @@ export async function DELETE(
     const used = await prisma.mobilLaporanKm.count({ where: { idKendaraan } })
     if (used > 0) {
       return NextResponse.json(
-        { error: "Kendaraan masih punya laporan KM" },
+        { error: "Vehicle still has KM reports" },
         { status: 400 }
       )
     }

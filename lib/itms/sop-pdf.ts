@@ -5,7 +5,7 @@ import {
   companyPdfHeader,
 } from "@/lib/shared/app-branding"
 import { parseDocumentBlocks } from "@/lib/itms/kb"
-import { formatTicketDate } from "@/lib/itms/format"
+import { formatTicketDateOnly } from "@/lib/itms/format"
 
 export type SopPdfInput = {
   number: string | null
@@ -19,12 +19,7 @@ export type SopPdfInput = {
 }
 
 function formatDateOnly(value: string | null | undefined) {
-  if (!value) return "—"
-  try {
-    return formatTicketDate(value).split(",")[0] ?? formatTicketDate(value)
-  } catch {
-    return value
-  }
+  return formatTicketDateOnly(value)
 }
 
 function roleFromTags(tags: string | undefined): string {

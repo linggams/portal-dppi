@@ -41,14 +41,14 @@ export function UsersTable({
             <TableHead>No</TableHead>
             <TableHead>Username</TableHead>
             <TableHead>Role</TableHead>
-            <TableHead>Modul</TableHead>
-            <TableHead>Jabatan</TableHead>
-            <TableHead className="text-right">Aksi</TableHead>
+            <TableHead>Modules</TableHead>
+            <TableHead>Position</TableHead>
+            <TableHead className="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {data.length === 0 ? (
-            <TableEmptyState colSpan={6} title="Tidak ada data user" />
+            <TableEmptyState colSpan={6} title="No users found" />
           ) : (
             data.map((user, index) => (
               <TableRow key={user.idUser}>
@@ -97,7 +97,7 @@ export function UsersTable({
                       onClick={() => onEdit(user)}
                     />
                     <TableActionButton
-                      label="Hapus"
+                      label="Delete"
                       icon={Trash2}
                       className="text-destructive hover:text-destructive"
                       onClick={() => onDelete(user)}

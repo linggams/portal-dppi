@@ -26,10 +26,10 @@ export function useUsers() {
         setTotalPages(result.totalPages)
         setPageSize(result.pageSize)
       } else {
-        toast.error("Gagal memuat data user")
+        toast.error("Failed to load users")
       }
     } catch {
-      toast.error("Gagal memuat data user")
+      toast.error("Failed to load users")
     } finally {
       setLoading(false)
     }
@@ -66,13 +66,13 @@ export function useUsers() {
     })
 
     if (response.ok) {
-      toast.success(editingUser ? "User berhasil diupdate" : "User berhasil dibuat")
+      toast.success(editingUser ? "User updated" : "User created")
       await fetchUsers()
       return true
     }
 
     const error = await response.json()
-    toast.error(error.error || "Terjadi kesalahan")
+    toast.error(error.error || "Something went wrong")
     return false
   }
 
@@ -82,13 +82,13 @@ export function useUsers() {
     })
 
     if (response.ok) {
-      toast.success("User berhasil dihapus")
+      toast.success("User deleted")
       await fetchUsers()
       return true
     }
 
     const error = await response.json()
-    toast.error(error.error || "Terjadi kesalahan")
+    toast.error(error.error || "Something went wrong")
     return false
   }
 

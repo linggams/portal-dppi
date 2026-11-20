@@ -111,7 +111,7 @@ export async function PUT(
     })
     if (!role) {
       return NextResponse.json(
-        { error: "Role tidak ditemukan" },
+        { error: "Role not found" },
         { status: 400 }
       )
     }

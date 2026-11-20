@@ -56,20 +56,9 @@ export function canReadPurchasingTransactions(input: AccessInput): boolean {
   return canAccessPurchasingUser(input) || canHandlePurchasingWorkflow(input)
 }
 
-export function getDefaultHomePath(input: AccessInput): string {
-  if (typeof input !== "string" && input.homePath) {
-    return input.homePath
-  }
-
-  const caps = resolveCapabilities(input)
-  if (caps.platform) {
-    return SYSTEM_ROLE_HOME_PATH.administrator
-  }
-  if (caps.purchasingUser) return "/purchasing/user/dashboard"
-  if (caps.itmsUser) return "/itms/portal"
-  if (caps.mobilUser) return "/mobil/user/laporan"
-
-  return SYSTEM_ROLE_HOME_PATH.user
+export function getDefaultHomePath(_input: AccessInput): string {
+  // Unified module hub for all roles.
+  return "/home"
 }
 
 export function canAccessMobilUser(input: AccessInput): boolean {
@@ -121,7 +110,15 @@ export function canAccessUiPath(input: AccessInput, pathname: string): boolean {
     return canHandleMobilWorkflow(input)
   }
 
-  if (pathname === "/unauthorized") return true
+  if (
+    pathname === "/unauthorized" ||
+    pathname === "/home" ||
+    pathname === "/" ||
+    pathname.startsWith("/~offline") ||
+    pathname.startsWith("/serwist")
+  ) {
+    return true
+  }
 
   return false
 }

@@ -11,7 +11,7 @@ export default function UserMobilLaporanDetailPage({
     <MobilLaporanDetailPage
       params={params}
       backHref="/mobil/user/laporan"
-      title="Detail Laporan"
+      title="Report detail"
     />
   )
 }

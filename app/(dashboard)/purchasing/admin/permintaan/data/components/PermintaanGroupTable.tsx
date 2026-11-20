@@ -1,7 +1,5 @@
 "use client"
 
-import { format } from "date-fns"
-import { id } from "date-fns/locale"
 import { Eye } from "lucide-react"
 import { TableActionLink, TableActions } from "@/components/ui/table-actions"
 import {
@@ -14,6 +12,7 @@ import {
 } from "@/components/ui/table"
 import { TableContainer } from "@/components/ui/table-container"
 import { getGroupStatusBadge } from "@/lib/purchasing/permintaan-status"
+import { formatDateId } from "@/lib/shared/date"
 import type { PermintaanGroupRow } from "../types"
 
 interface Props {
@@ -23,11 +22,7 @@ interface Props {
 }
 
 function formatDate(dateString: string) {
-  try {
-    return format(new Date(dateString), "dd MMM yyyy", { locale: id })
-  } catch {
-    return dateString
-  }
+  return formatDateId(dateString, dateString)
 }
 
 export function PermintaanGroupTable({ groups, page, pageSize }: Props) {
@@ -37,13 +32,13 @@ export function PermintaanGroupTable({ groups, page, pageSize }: Props) {
         <TableHeader>
           <TableRow>
             <TableHead className="w-12">No</TableHead>
-            <TableHead>Tanggal</TableHead>
+            <TableHead>Date</TableHead>
             <TableHead>Unit</TableHead>
-            <TableHead>Instansi</TableHead>
+            <TableHead>Organization</TableHead>
             <TableHead className="text-right">Item</TableHead>
             <TableHead className="text-right">Total Qty</TableHead>
             <TableHead>Status</TableHead>
-            <TableHead className="text-right">Aksi</TableHead>
+            <TableHead className="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>

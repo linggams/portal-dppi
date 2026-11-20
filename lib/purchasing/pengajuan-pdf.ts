@@ -1,8 +1,7 @@
-import { format } from "date-fns"
-import { id } from "date-fns/locale"
 import { toast } from "sonner"
 import { downloadPdf } from "@/lib/shared/makepdf"
 import { companyPdfHeader } from "@/lib/shared/app-branding"
+import { formatDateId } from "@/lib/shared/date"
 
 interface PengajuanPdfItem {
   kodeBrg: string
@@ -14,11 +13,7 @@ interface PengajuanPdfItem {
 }
 
 function formatDate(dateString: string) {
-  try {
-    return format(new Date(dateString), "dd MMMM yyyy", { locale: id })
-  } catch {
-    return dateString
-  }
+  return formatDateId(dateString, dateString)
 }
 
 function formatRupiah(value: number) {
@@ -38,12 +33,12 @@ export async function downloadPengajuanGroupPdf(
       `/api/purchasing/pengajuan?unit=${encodeURIComponent(unit)}&tgl_pengajuan=${tglPengajuan}`
     )
     if (!response.ok) {
-      throw new Error("Gagal memuat data pengajuan")
+      throw new Error("Failed to load submission data")
     }
     const data: PengajuanPdfItem[] = await response.json()
 
     if (data.length === 0) {
-      toast.error("Tidak ada data untuk dicetak")
+      toast.error("No data to print")
       return
     }
 
@@ -53,11 +48,11 @@ export async function downloadPengajuanGroupPdf(
     const body: any[] = [
       [
         { text: "No.", style: "tableHeader" },
-        { text: "Kode Barang", style: "tableHeader" },
-        { text: "Nama Barang", style: "tableHeader" },
-        { text: "Satuan", style: "tableHeader" },
-        { text: "Jumlah", style: "tableHeader" },
-        { text: "Harga Barang", style: "tableHeader" },
+        { text: "Item code", style: "tableHeader" },
+        { text: "Item name", style: "tableHeader" },
+        { text: "Unit", style: "tableHeader" },
+        { text: "Qty", style: "tableHeader" },
+        { text: "Unit price", style: "tableHeader" },
         { text: "Total", style: "tableHeader" },
       ],
       ...data.map((item, index) => [
@@ -89,10 +84,10 @@ export async function downloadPengajuanGroupPdf(
           decoration: "underline",
           margin: [0, 0, 0, 10],
         },
-        { text: "Permintaan Pembelian Barang", style: "meta" },
+        { text: "Goods Purchase Request", style: "meta" },
         {
           text: [
-            { text: "Pada Tanggal : ", style: "meta" },
+            { text: "Date: ", style: "meta" },
             { text: formatDate(tglPengajuan), style: "metaBold" },
           ],
           margin: [0, 0, 0, 10],
@@ -156,9 +151,9 @@ export async function downloadPengajuanGroupPdf(
     }
 
     downloadPdf(docDefinition, filename)
-    toast.success("PDF berhasil diunduh")
+    toast.success("PDF downloaded")
   } catch (error) {
     console.error("Error generating PDF:", error)
-    toast.error("Gagal mengunduh PDF")
+    toast.error("Failed to download PDF")
   }
 }

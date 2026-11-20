@@ -1,8 +1,11 @@
+import { formatDateId, formatDateTimeId } from "@/lib/shared/date"
+
+/** Ticket/SOP timestamps: DD/MM/YYYY HH:mm (WIB). */
 export function formatTicketDate(value: string | Date) {
-  const date = typeof value === "string" ? new Date(value) : value
-  return new Intl.DateTimeFormat("en-GB", {
-    dateStyle: "medium",
-    timeStyle: "short",
-    timeZone: "Asia/Jakarta",
-  }).format(date)
+  return formatDateTimeId(value)
+}
+
+/** Date-only fields (warranty, effective date): DD/MM/YYYY. */
+export function formatTicketDateOnly(value: string | Date | null | undefined) {
+  return formatDateId(value)
 }

@@ -65,7 +65,7 @@ export default function LaporanPage() {
   )
 
   return (
-    <DashboardLayout title="Laporan">
+    <DashboardLayout title="Reports">
       <PageActions>
         <LaporanFiltersComponent
           filters={filters}
@@ -81,7 +81,7 @@ export default function LaporanPage() {
           onClick={openExportDialog}
           disabled={loading || exporting || data.length === 0}
         >
-          {exporting ? "Menyiapkan…" : "Export"}
+          {exporting ? "Preparing…" : "Export"}
         </Button>
       </PageActions>
 
@@ -102,11 +102,11 @@ export default function LaporanPage() {
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-5 lg:w-auto lg:inline-grid">
-            <TabsTrigger value="permintaan">Permintaan</TabsTrigger>
-            <TabsTrigger value="pengajuan">Pengajuan</TabsTrigger>
-            <TabsTrigger value="pemasukan">Pemasukan</TabsTrigger>
-            <TabsTrigger value="pengeluaran">Pengeluaran</TabsTrigger>
-            <TabsTrigger value="stok">Stok</TabsTrigger>
+            <TabsTrigger value="permintaan">Requests</TabsTrigger>
+            <TabsTrigger value="pengajuan">Submissions</TabsTrigger>
+            <TabsTrigger value="pemasukan">Inbound</TabsTrigger>
+            <TabsTrigger value="pengeluaran">Outbound</TabsTrigger>
+            <TabsTrigger value="stok">Stock</TabsTrigger>
           </TabsList>
 
           <TabsContent value="permintaan">
@@ -115,7 +115,7 @@ export default function LaporanPage() {
               hasData={data.length > 0}
               tab="permintaan"
               sections={sections}
-              columns={["Nama Barang", "Jumlah", "Satuan", "User", "Status"]}
+              columns={["Item name", "Qty", "Unit", "User", "Status"]}
               formatSectionTitle={formatDate}
               renderRow={(item) => (
                 <>
@@ -142,7 +142,7 @@ export default function LaporanPage() {
               )}
               renderGrandTotal={() => (
                 <SubtotalRow
-                  label="Total keseluruhan"
+                  label="Grand total"
                   colSpanLabel={1}
                   tone="grand"
                 >
@@ -167,10 +167,10 @@ export default function LaporanPage() {
               tab="pengajuan"
               sections={sections}
               columns={[
-                "Nama Barang",
-                "Jumlah",
-                "Satuan",
-                "Harga",
+                "Item name",
+                "Qty",
+                "Unit",
+                "Price",
                 "Total",
                 "User",
                 "Status",
@@ -209,7 +209,7 @@ export default function LaporanPage() {
               )}
               renderGrandTotal={() => (
                 <SubtotalRow
-                  label="Total keseluruhan"
+                  label="Grand total"
                   colSpanLabel={1}
                   tone="grand"
                 >
@@ -237,7 +237,7 @@ export default function LaporanPage() {
               hasData={data.length > 0}
               tab="pemasukan"
               sections={sections}
-              columns={["Nama Barang", "Jumlah", "Satuan", "User"]}
+              columns={["Item name", "Qty", "Unit", "User"]}
               formatSectionTitle={formatDate}
               renderRow={(item) => (
                 <>
@@ -260,7 +260,7 @@ export default function LaporanPage() {
               )}
               renderGrandTotal={() => (
                 <SubtotalRow
-                  label="Total keseluruhan"
+                  label="Grand total"
                   colSpanLabel={1}
                   tone="grand"
                 >
@@ -302,12 +302,12 @@ export default function LaporanPage() {
               tab="stok"
               sections={sections}
               columns={[
-                "Kode Barang",
-                "Nama Barang",
-                "Stok",
-                "Keluar",
-                "Sisa",
-                "Satuan",
+                "Item code",
+                "Item name",
+                "Stock",
+                "Out",
+                "Remaining",
+                "Unit",
               ]}
               renderRow={(item) => (
                 <>
@@ -342,7 +342,7 @@ export default function LaporanPage() {
               )}
               renderGrandTotal={() => (
                 <SubtotalRow
-                  label="Total keseluruhan"
+                  label="Grand total"
                   colSpanLabel={2}
                   tone="grand"
                 >
