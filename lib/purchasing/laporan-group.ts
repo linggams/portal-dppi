@@ -518,15 +518,11 @@ export function paginateByCompleteGroups(
   return toPaginatedResult(pageRows, allMerged.length, safePage, pageSize)
 }
 
-/** Baris flat untuk tabel Pengeluaran: Tanggal/User rowspan. */
+/** Baris dalam tabel kategori Pengeluaran (User span). */
 export type PengeluaranTableRow =
   | {
       type: "item"
       key: string
-      tanggalKey: string
-      tanggalLabel: string
-      showTanggal: boolean
-      tanggalRowSpan: number
       user: string
       showUser: boolean
       userRowSpan: number
@@ -535,15 +531,34 @@ export type PengeluaranTableRow =
       total: number
     }
   | {
-      type: "user-subtotal" | "date-subtotal" | "grand"
+      type: "user-subtotal" | "category-subtotal"
       key: string
       label: string
       qty: number
       total: number
     }
 
+export type PengeluaranCategoryBlock = {
+  key: string
+  label: string
+  itemCount: number
+  users: string[]
+  qty: number
+  rows: PengeluaranTableRow[]
+}
+
+export type PengeluaranDaySection = {
+  tanggalKey: string
+  tanggalLabel: string
+  itemCount: number
+  users: string[]
+  qty: number
+  categories: PengeluaranCategoryBlock[]
+}
+
 type PengeluaranItem = {
   tanggalKey: string
+  kategori: string
   user: string
   namaBarang: string
   qty: number
@@ -555,6 +570,7 @@ function preparePengeluaranItems(
   const merged = mergeSameNamaRows(rows, "pengeluaran")
   const items: PengeluaranItem[] = merged.map((row) => ({
     tanggalKey: rowTanggalKey(row, "pengeluaran"),
+    kategori: kategoriLabel(row, "pengeluaran"),
     user: singleUnitLabel(row),
     namaBarang: namaBarangLabel(row) || "Tanpa nama",
     qty: num(row, "jumlah"),
@@ -563,6 +579,8 @@ function preparePengeluaranItems(
   items.sort((a, b) => {
     const byDate = b.tanggalKey.localeCompare(a.tanggalKey, "id")
     if (byDate !== 0) return byDate
+    const byKat = a.kategori.localeCompare(b.kategori, "id")
+    if (byKat !== 0) return byKat
     const byUser = a.user.localeCompare(b.user, "id")
     if (byUser !== 0) return byUser
     return a.namaBarang.localeCompare(b.namaBarang, "id")
@@ -570,16 +588,86 @@ function preparePengeluaranItems(
   return items
 }
 
+function buildCategoryBlock(
+  tanggalKey: string,
+  kategori: string,
+  catItems: PengeluaranItem[]
+): PengeluaranCategoryBlock {
+  const userOrder: string[] = []
+  const byUser = new Map<string, PengeluaranItem[]>()
+  for (const item of catItems) {
+    const bucket = byUser.get(item.user)
+    if (bucket) bucket.push(item)
+    else {
+      userOrder.push(item.user)
+      byUser.set(item.user, [item])
+    }
+  }
+
+  const rows: PengeluaranTableRow[] = []
+  let catQty = 0
+  let itemCount = 0
+
+  for (const user of userOrder) {
+    const userItems = byUser.get(user) ?? []
+    const userRowSpan = userItems.length
+    let userQty = 0
+    let userShown = false
+
+    for (const [index, item] of userItems.entries()) {
+      userQty += item.qty
+      itemCount += 1
+      rows.push({
+        type: "item",
+        key: `${tanggalKey}|${kategori}|${user}|${item.namaBarang}|${index}`,
+        user,
+        showUser: !userShown,
+        userRowSpan,
+        namaBarang: item.namaBarang,
+        qty: item.qty,
+        total: item.qty,
+      })
+      userShown = true
+    }
+
+    rows.push({
+      type: "user-subtotal",
+      key: `${tanggalKey}|${kategori}|${user}|sub`,
+      label: `Subtotal ${user}`,
+      qty: userQty,
+      total: userQty,
+    })
+    catQty += userQty
+  }
+
+  rows.push({
+    type: "category-subtotal",
+    key: `${tanggalKey}|${kategori}|cat-sub`,
+    label: `Subtotal ${kategori}`,
+    qty: catQty,
+    total: catQty,
+  })
+
+  return {
+    key: `${tanggalKey}|${kategori}`,
+    label: kategori,
+    itemCount,
+    users: userOrder,
+    qty: catQty,
+    rows,
+  }
+}
+
 /**
- * Model tabel Pengeluaran: Tanggal (span) → User (span) → Nama, Qty, Total.
+ * Pengeluaran: Hari → Kategori → User (span) → Item.
  * Total = qty (agregat jumlah).
  */
-export function buildPengeluaranTableRows(
+export function buildPengeluaranDaySections(
   rows: Record<string, unknown>[],
   formatTanggal: (tanggalKey: string) => string
-): { rows: PengeluaranTableRow[]; grandQty: number } {
+): { days: PengeluaranDaySection[]; grandQty: number } {
   const items = preparePengeluaranItems(rows)
-  if (items.length === 0) return { rows: [], grandQty: 0 }
+  if (items.length === 0) return { days: [], grandQty: 0 }
 
   const dateOrder: string[] = []
   const byDate = new Map<string, PengeluaranItem[]>()
@@ -592,177 +680,273 @@ export function buildPengeluaranTableRows(
     }
   }
 
-  const out: PengeluaranTableRow[] = []
+  const days: PengeluaranDaySection[] = []
   let grandQty = 0
 
   for (const tanggalKey of dateOrder) {
     const dateItems = byDate.get(tanggalKey) ?? []
-    const userOrder: string[] = []
-    const byUser = new Map<string, PengeluaranItem[]>()
+    const katOrder: string[] = []
+    const byKat = new Map<string, PengeluaranItem[]>()
     for (const item of dateItems) {
-      const bucket = byUser.get(item.user)
+      const bucket = byKat.get(item.kategori)
       if (bucket) bucket.push(item)
       else {
-        userOrder.push(item.user)
-        byUser.set(item.user, [item])
+        katOrder.push(item.kategori)
+        byKat.set(item.kategori, [item])
       }
     }
 
-    // Tanggal span: semua baris item + subtotal user (tanpa subtotal tanggal)
-    let tanggalRowSpan = 0
-    for (const user of userOrder) {
-      const userItems = byUser.get(user) ?? []
-      tanggalRowSpan += userItems.length + 1
-    }
+    const categories = katOrder.map((kat) =>
+      buildCategoryBlock(tanggalKey, kat, byKat.get(kat) ?? [])
+    )
+    const dateQty = categories.reduce((sum, c) => sum + c.qty, 0)
+    const itemCount = categories.reduce((sum, c) => sum + c.itemCount, 0)
+    const users = Array.from(
+      new Set(categories.flatMap((c) => c.users))
+    ).sort((a, b) => a.localeCompare(b, "id"))
 
-    let dateQty = 0
-    let tanggalShown = false
-
-    for (const user of userOrder) {
-      const userItems = byUser.get(user) ?? []
-      const userRowSpan = userItems.length
-      let userQty = 0
-      let userShown = false
-
-      for (const [index, item] of userItems.entries()) {
-        userQty += item.qty
-        out.push({
-          type: "item",
-          key: `${tanggalKey}|${user}|${item.namaBarang}|${index}`,
-          tanggalKey,
-          tanggalLabel: formatTanggal(tanggalKey),
-          showTanggal: !tanggalShown,
-          tanggalRowSpan,
-          user,
-          showUser: !userShown,
-          userRowSpan,
-          namaBarang: item.namaBarang,
-          qty: item.qty,
-          total: item.qty,
-        })
-        tanggalShown = true
-        userShown = true
-      }
-
-      out.push({
-        type: "user-subtotal",
-        key: `${tanggalKey}|${user}|sub`,
-        label: `Subtotal ${user}`,
-        qty: userQty,
-        total: userQty,
-      })
-      dateQty += userQty
-    }
-
-    out.push({
-      type: "date-subtotal",
-      key: `${tanggalKey}|date-sub`,
-      label: `Subtotal ${formatTanggal(tanggalKey)}`,
+    days.push({
+      tanggalKey,
+      tanggalLabel: formatTanggal(tanggalKey),
+      itemCount,
+      users,
       qty: dateQty,
-      total: dateQty,
+      categories,
     })
     grandQty += dateQty
   }
 
-  out.push({
-    type: "grand",
-    key: "grand",
-    label: "Total keseluruhan",
-    qty: grandQty,
-    total: grandQty,
-  })
-
-  return { rows: out, grandQty }
+  return { days, grandQty }
 }
 
-/** Body pdfmake untuk tabel Pengeluaran (rowSpan Tanggal/User). */
-export function buildPengeluaranPdfTableBody(
+/** @deprecated gunakan buildPengeluaranDaySections */
+export function buildPengeluaranTableRows(
+  rows: Record<string, unknown>[],
+  formatTanggal: (tanggalKey: string) => string
+) {
+  const { days, grandQty } = buildPengeluaranDaySections(rows, formatTanggal)
+  const flat: PengeluaranTableRow[] = days.flatMap((d) =>
+    d.categories.flatMap((c) => c.rows)
+  )
+  return { rows: flat, grandQty }
+}
+
+/**
+ * PDF content blocks untuk Pengeluaran: hari → kategori (full-width).
+ * Setiap kategori = satu tabel User/Item/Qty/Total.
+ */
+export function buildPengeluaranPdfContent(
   rows: Record<string, unknown>[],
   formatTanggal: (tanggalKey: string) => string
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-): { body: any[][]; grandQty: number } {
-  const { rows: tableRows, grandQty } = buildPengeluaranTableRows(
-    rows,
-    formatTanggal
-  )
+): { blocks: any[]; grandQty: number } {
+  const { days, grandQty } = buildPengeluaranDaySections(rows, formatTanggal)
+  const widths = [70, "*", 42, 42]
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const blocks: any[] = []
 
   const header = [
-    { text: "Date", style: "tableHeader", alignment: "center" },
     { text: "User", style: "tableHeader", alignment: "center" },
     { text: "Item name", style: "tableHeader", alignment: "center" },
     { text: "Qty", style: "tableHeader", alignment: "center" },
     { text: "Total", style: "tableHeader", alignment: "center" },
   ]
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const body: any[][] = [header]
-
-  for (const row of tableRows) {
-    if (row.type === "item") {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const line: any[] = []
-      if (row.showTanggal) {
-        line.push({
-          text: row.tanggalLabel,
-          style: "tableCell",
-          rowSpan: row.tanggalRowSpan,
-          valign: "middle",
-        })
-      } else {
-        line.push({})
-      }
-      if (row.showUser) {
-        line.push({
-          text: row.user,
-          style: "tableCell",
-          rowSpan: row.userRowSpan,
-          valign: "middle",
-        })
-      } else {
-        line.push({})
-      }
-      line.push({ text: row.namaBarang, style: "tableCell" })
-      line.push({ text: String(row.qty), style: "tableCell", alignment: "right" })
-      line.push({
-        text: String(row.total),
-        style: "tableCell",
-        alignment: "right",
-      })
-      body.push(line)
-      continue
-    }
-
-    if (row.type === "user-subtotal") {
-      // Masih di dalam rowspan Tanggal; User sudah selesai → label di kolom User+Nama
-      body.push([
-        {},
-        {
-          text: row.label,
-          style: "subtotal",
-          colSpan: 2,
-          alignment: "left",
-        },
-        {},
-        { text: String(row.qty), style: "subtotal", alignment: "right" },
-        { text: String(row.total), style: "subtotal", alignment: "right" },
-      ])
-      continue
-    }
-
-    const style = row.type === "grand" ? "grandTotal" : "sectionTotal"
-    body.push([
+  days.forEach((day, dayIndex) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const dayStack: any[] = [
       {
-        text: row.label,
-        style,
-        colSpan: 3,
-        alignment: "left",
+        text: `${day.tanggalLabel}   ·   ${day.itemCount} item · ${day.users.length} user · jml ${day.qty}`,
+        style: "sectionTitle",
+        margin: [0, 0, 0, 8],
       },
-      {},
-      {},
-      { text: String(row.qty), style, alignment: "right" },
-      { text: String(row.total), style, alignment: "right" },
-    ])
-  }
+    ]
 
-  return { body, grandQty }
+    day.categories.forEach((cat, catIndex) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const body: any[][] = [header]
+
+      for (const row of cat.rows) {
+        if (row.type === "item") {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const line: any[] = []
+          if (row.showUser) {
+            line.push({
+              text: row.user,
+              style: "tableCell",
+              rowSpan: row.userRowSpan,
+              valign: "middle",
+            })
+          } else {
+            line.push({})
+          }
+          line.push({ text: row.namaBarang, style: "tableCell" })
+          line.push({
+            text: String(row.qty),
+            style: "tableCell",
+            alignment: "right",
+          })
+          line.push({
+            text: String(row.total),
+            style: "tableCell",
+            alignment: "right",
+          })
+          body.push(line)
+          continue
+        }
+
+        if (row.type === "user-subtotal") {
+          body.push([
+            {
+              text: row.label,
+              style: "subtotal",
+              colSpan: 2,
+              alignment: "left",
+            },
+            {},
+            { text: String(row.qty), style: "subtotal", alignment: "right" },
+            { text: String(row.total), style: "subtotal", alignment: "right" },
+          ])
+          continue
+        }
+
+        // category-subtotal
+        body.push([
+          {
+            text: row.label,
+            style: "sectionTotal",
+            colSpan: 2,
+            alignment: "left",
+          },
+          {},
+          {
+            text: String(row.qty),
+            style: "sectionTotal",
+            alignment: "right",
+          },
+          {
+            text: String(row.total),
+            style: "sectionTotal",
+            alignment: "right",
+          },
+        ])
+      }
+
+      dayStack.push({
+        text: `Kategori: ${cat.label}   ·   ${cat.itemCount} item · jml ${cat.qty}`,
+        style: "unitTitle",
+        margin: [0, catIndex === 0 ? 0 : 10, 0, 4],
+      })
+      dayStack.push({
+        table: { widths, headerRows: 1, body },
+        layout: {
+          hLineWidth: () => 0.7,
+          vLineWidth: () => 0.7,
+          hLineColor: () => "#9ca3af",
+          vLineColor: () => "#9ca3af",
+          paddingLeft: () => 6,
+          paddingRight: () => 6,
+          paddingTop: () => 4,
+          paddingBottom: () => 4,
+          fillColor: (rowIndex: number) => {
+            if (rowIndex === 0) return "#f3f4f6"
+            return null
+          },
+        },
+        margin: [0, 0, 0, 4],
+      })
+    })
+
+    dayStack.push({
+      table: {
+        widths,
+        body: [
+          [
+            {
+              text: `Subtotal ${day.tanggalLabel}`,
+              style: "sectionTotal",
+              colSpan: 2,
+            },
+            {},
+            {
+              text: String(day.qty),
+              style: "sectionTotal",
+              alignment: "right",
+            },
+            {
+              text: String(day.qty),
+              style: "sectionTotal",
+              alignment: "right",
+            },
+          ],
+        ],
+      },
+      layout: {
+        hLineWidth: () => 0.7,
+        vLineWidth: () => 0.7,
+        hLineColor: () => "#9ca3af",
+        vLineColor: () => "#9ca3af",
+        paddingLeft: () => 6,
+        paddingRight: () => 6,
+        paddingTop: () => 4,
+        paddingBottom: () => 4,
+        fillColor: () => "#f3f4f6",
+      },
+      margin: [0, 6, 0, 0],
+    })
+
+    blocks.push({
+      stack: dayStack,
+      pageBreak: dayIndex > 0 ? "before" : undefined,
+    })
+  })
+
+  blocks.push({
+    table: {
+      widths,
+      body: [
+        [
+          {
+            text: "Total keseluruhan",
+            style: "grandTotal",
+            colSpan: 2,
+          },
+          {},
+          {
+            text: String(grandQty),
+            style: "grandTotal",
+            alignment: "right",
+          },
+          {
+            text: String(grandQty),
+            style: "grandTotal",
+            alignment: "right",
+          },
+        ],
+      ],
+    },
+    layout: {
+      hLineWidth: () => 0.7,
+      vLineWidth: () => 0.7,
+      hLineColor: () => "#9ca3af",
+      vLineColor: () => "#9ca3af",
+      paddingLeft: () => 6,
+      paddingRight: () => 6,
+      paddingTop: () => 4,
+      paddingBottom: () => 4,
+      fillColor: () => "#e5e7eb",
+    },
+    margin: [0, 12, 0, 0],
+  })
+
+  return { blocks, grandQty }
+}
+
+/** @deprecated gunakan buildPengeluaranPdfContent */
+export function buildPengeluaranPdfTableBody(
+  rows: Record<string, unknown>[],
+  formatTanggal: (tanggalKey: string) => string
+) {
+  const { blocks, grandQty } = buildPengeluaranPdfContent(rows, formatTanggal)
+  return { body: blocks, grandQty }
 }

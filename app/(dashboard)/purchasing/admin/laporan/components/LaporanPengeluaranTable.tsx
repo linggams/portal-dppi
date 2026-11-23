@@ -10,7 +10,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import {
-  buildPengeluaranTableRows,
+  buildPengeluaranDaySections,
   type PengeluaranTableRow,
 } from "@/lib/purchasing/laporan-group"
 import { cn } from "@/lib/utils"
@@ -24,105 +24,150 @@ interface Props {
 }
 
 function toneClass(row: PengeluaranTableRow) {
-  if (row.type === "grand") return "bg-muted font-semibold"
-  if (row.type === "date-subtotal") return "bg-muted/40 font-medium"
+  if (row.type === "category-subtotal") return "bg-muted/40 font-medium"
   if (row.type === "user-subtotal") return "bg-muted/20 font-medium"
   return ""
 }
 
-export function LaporanPengeluaranTable({ data }: Props) {
-  const { rows } = buildPengeluaranTableRows(data, formatDate)
-  if (rows.length === 0) return null
-
+function CategoryTable({ rows }: { rows: PengeluaranTableRow[] }) {
   return (
     <TableContainer className="border-0">
       <Table className={borderedTableClass}>
-          <TableHeader className="[&_tr]:border-0">
-            <TableRow className="bg-muted/50 hover:bg-muted/50">
-              <TableHead className="font-semibold">Date</TableHead>
-              <TableHead className="font-semibold">User</TableHead>
-              <TableHead className="font-semibold">Item name</TableHead>
-              <TableHead className="font-semibold text-right">Qty</TableHead>
-              <TableHead className="font-semibold text-right">Total</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {rows.map((row) => {
-              if (row.type === "item") {
-                return (
-                  <TableRow
-                    key={row.key}
-                    className="border-0 hover:bg-transparent"
-                  >
-                    {row.showTanggal ? (
-                      <TableCell
-                        rowSpan={row.tanggalRowSpan}
-                        className="align-middle font-medium whitespace-nowrap"
-                      >
-                        {row.tanggalLabel}
-                      </TableCell>
-                    ) : null}
-                    {row.showUser ? (
-                      <TableCell
-                        rowSpan={row.userRowSpan}
-                        className="align-middle whitespace-nowrap"
-                      >
-                        {row.user}
-                      </TableCell>
-                    ) : null}
-                    <TableCell>{row.namaBarang}</TableCell>
-                    <TableCell className="text-right">{row.qty}</TableCell>
-                    <TableCell className="text-right">{row.total}</TableCell>
-                  </TableRow>
-                )
-              }
-
-              if (row.type === "user-subtotal") {
-                return (
-                  <TableRow
-                    key={row.key}
-                    className={cn(
-                      "border-0 hover:bg-transparent",
-                      toneClass(row)
-                    )}
-                  >
-                    {/* Tanggal masih di-span; User selesai */}
-                    <TableCell colSpan={2} className="font-medium">
-                      {row.label}
-                    </TableCell>
-                    <TableCell className="text-right font-medium">
-                      {row.qty}
-                    </TableCell>
-                    <TableCell className="text-right font-medium">
-                      {row.total}
-                    </TableCell>
-                  </TableRow>
-                )
-              }
-
-              // date-subtotal / grand — di luar rowspan tanggal
+        <TableHeader className="[&_tr]:border-0">
+          <TableRow className="border-0 bg-muted/50 hover:bg-muted/50">
+            <TableHead className="font-semibold">User</TableHead>
+            <TableHead className="font-semibold">Item name</TableHead>
+            <TableHead className="font-semibold text-right">Qty</TableHead>
+            <TableHead className="font-semibold text-right">Total</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {rows.map((row) => {
+            if (row.type === "item") {
               return (
                 <TableRow
                   key={row.key}
-                  className={cn(
-                    "border-0 hover:bg-transparent",
-                    toneClass(row)
-                  )}
+                  className="border-0 hover:bg-transparent"
                 >
-                  <TableCell colSpan={3} className="font-medium">
-                    {row.label}
-                  </TableCell>
-                  <TableCell className="text-right font-medium">
-                    {row.qty}
-                  </TableCell>
-                  <TableCell className="text-right font-medium">
-                    {row.total}
-                  </TableCell>
+                  {row.showUser ? (
+                    <TableCell
+                      rowSpan={row.userRowSpan}
+                      className="align-middle whitespace-nowrap"
+                    >
+                      {row.user}
+                    </TableCell>
+                  ) : null}
+                  <TableCell>{row.namaBarang}</TableCell>
+                  <TableCell className="text-right">{row.qty}</TableCell>
+                  <TableCell className="text-right">{row.total}</TableCell>
                 </TableRow>
               )
-            })}
-          </TableBody>
+            }
+
+            return (
+              <TableRow
+                key={row.key}
+                className={cn(
+                  "border-0 hover:bg-transparent",
+                  toneClass(row)
+                )}
+              >
+                <TableCell colSpan={2} className="font-medium">
+                  {row.label}
+                </TableCell>
+                <TableCell className="text-right font-medium">
+                  {row.qty}
+                </TableCell>
+                <TableCell className="text-right font-medium">
+                  {row.total}
+                </TableCell>
+              </TableRow>
+            )
+          })}
+        </TableBody>
       </Table>
     </TableContainer>
+  )
+}
+
+export function LaporanPengeluaranTable({ data }: Props) {
+  const { days, grandQty } = buildPengeluaranDaySections(data, formatDate)
+  if (days.length === 0) return null
+
+  return (
+    <div className="space-y-5">
+      {days.map((day) => (
+        <div key={day.tanggalKey} className="space-y-3">
+          <div className="flex flex-wrap items-center gap-2 border-l-4 border-l-primary pl-3">
+            <h3 className="text-sm font-semibold tracking-tight sm:text-base">
+              {day.tanggalLabel}
+            </h3>
+            <span className="text-xs text-muted-foreground sm:text-sm">
+              {day.itemCount} item
+              {day.users.length > 0 ? ` · ${day.users.length} user` : ""}
+              {` · jml ${day.qty}`}
+            </span>
+          </div>
+
+          <div className="space-y-3">
+            {day.categories.map((cat) => (
+              <div
+                key={cat.key}
+                className="overflow-hidden rounded-md"
+              >
+                <div className="flex flex-wrap items-center justify-between gap-2 border border-b-0 border-border bg-muted px-3 py-2">
+                  <span className="text-sm font-medium">
+                    Kategori: {cat.label}
+                  </span>
+                  <span className="shrink-0 text-xs text-muted-foreground sm:text-sm">
+                    {cat.itemCount} item · jml {cat.qty}
+                    {cat.users.length > 0
+                      ? ` · ${cat.users.length} user`
+                      : ""}
+                  </span>
+                </div>
+                <CategoryTable rows={cat.rows} />
+              </div>
+            ))}
+          </div>
+
+          <TableContainer className="border-0">
+            <Table className={cn(borderedTableClass, "w-full text-sm")}>
+              <TableBody>
+                <TableRow className="border-0 bg-muted/40 hover:bg-transparent">
+                  <TableCell colSpan={2} className="font-medium">
+                    Subtotal {day.tanggalLabel}
+                  </TableCell>
+                  <TableCell className="text-right font-medium">
+                    {day.qty}
+                  </TableCell>
+                  <TableCell className="text-right font-medium">
+                    {day.qty}
+                  </TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </div>
+      ))}
+
+      <TableContainer className="border-0">
+        <Table className={cn(borderedTableClass, "w-full text-sm")}>
+          <TableBody>
+            <TableRow className="border-0 bg-muted font-semibold hover:bg-transparent">
+              <TableCell colSpan={2} className="font-semibold">
+                Total keseluruhan
+              </TableCell>
+              <TableCell className="text-right font-semibold">
+                {grandQty}
+              </TableCell>
+              <TableCell className="text-right font-semibold">
+                {grandQty}
+              </TableCell>
+            </TableRow>
+          </TableBody>
+        </Table>
+      </TableContainer>
+    </div>
   )
 }

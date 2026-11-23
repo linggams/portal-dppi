@@ -13,7 +13,7 @@ import {
 import { formatDate, formatRupiah } from "../utils"
 import {
   buildLaporanSectionsByKategori,
-  buildPengeluaranPdfTableBody,
+  buildPengeluaranPdfContent,
   isTransaksiTab,
   kategoriLabel,
   listKategoriOptions,
@@ -277,7 +277,7 @@ export function useLaporan() {
         content.push({ text: " ", margin: [0, 0, 0, 8] })
       }
 
-      // Pengeluaran: mirror UI — satu tabel Tanggal/User rowspan
+      // Pengeluaran: mirror UI — Hari → Kategori → User span
       if (activeTab === "pengeluaran") {
         const allow = new Set(exportSelected)
         const filtered = exportRows.filter((row) =>
@@ -288,22 +288,8 @@ export function useLaporan() {
           return
         }
 
-        const widths = [78, 70, "*", 42, 42]
-        const { body } = buildPengeluaranPdfTableBody(filtered, formatDate)
-        content.push({
-          table: {
-            widths,
-            headerRows: 1,
-            body,
-          },
-          layout: {
-            ...gridLayout,
-            fillColor: (rowIndex: number) => {
-              if (rowIndex === 0) return "#f3f4f6"
-              return null
-            },
-          },
-        })
+        const { blocks } = buildPengeluaranPdfContent(filtered, formatDate)
+        content.push(...blocks)
       } else {
         const headers = getHeaders(activeTab)
         const sections = buildLaporanSectionsByKategori(
@@ -511,6 +497,7 @@ export function useLaporan() {
           subheader: { fontSize: 8, color: "#4b5563" },
           title: { fontSize: 12, bold: true },
           sectionTitle: { fontSize: 10, bold: true },
+          unitTitle: { fontSize: 9, bold: true },
           tableHeader: { bold: true, fontSize: 8 },
           subtotal: { bold: true, fontSize: 8 },
           sectionTotal: { bold: true, fontSize: 8 },
