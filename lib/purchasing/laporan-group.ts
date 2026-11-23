@@ -518,8 +518,13 @@ export function paginateByCompleteGroups(
   return toPaginatedResult(pageRows, allMerged.length, safePage, pageSize)
 }
 
-/** Baris dalam tabel kategori Pengeluaran (User span). */
+/** Baris dalam tabel kategori Pengeluaran. */
 export type PengeluaranTableRow =
+  | {
+      type: "date-header"
+      key: string
+      label: string
+    }
   | {
       type: "item"
       key: string
@@ -531,29 +536,21 @@ export type PengeluaranTableRow =
       total: number
     }
   | {
-      type: "user-subtotal" | "category-subtotal"
+      type: "user-subtotal" | "date-subtotal" | "category-subtotal"
       key: string
       label: string
       qty: number
       total: number
     }
 
-export type PengeluaranCategoryBlock = {
+/** Blok per kategori: di dalamnya tanggal sebagai row. */
+export type PengeluaranCategorySection = {
   key: string
   label: string
   itemCount: number
   users: string[]
   qty: number
   rows: PengeluaranTableRow[]
-}
-
-export type PengeluaranDaySection = {
-  tanggalKey: string
-  tanggalLabel: string
-  itemCount: number
-  users: string[]
-  qty: number
-  categories: PengeluaranCategoryBlock[]
 }
 
 type PengeluaranItem = {
@@ -564,23 +561,44 @@ type PengeluaranItem = {
   qty: number
 }
 
+/**
+ * Merge nama hanya dalam tanggal yang sama (tidak lintas hari).
+ * Urutan: kategori → tanggal desc → user → nama.
+ */
 function preparePengeluaranItems(
   rows: Record<string, unknown>[]
 ): PengeluaranItem[] {
-  const merged = mergeSameNamaRows(rows, "pengeluaran")
-  const items: PengeluaranItem[] = merged.map((row) => ({
-    tanggalKey: rowTanggalKey(row, "pengeluaran"),
-    kategori: kategoriLabel(row, "pengeluaran"),
-    user: singleUnitLabel(row),
-    namaBarang: namaBarangLabel(row) || "Tanpa nama",
-    qty: num(row, "jumlah"),
-  }))
+  const dateOrder: string[] = []
+  const byDate = new Map<string, Record<string, unknown>[]>()
+  for (const row of rows) {
+    const d = rowTanggalKey(row, "pengeluaran")
+    const bucket = byDate.get(d)
+    if (bucket) bucket.push(row)
+    else {
+      dateOrder.push(d)
+      byDate.set(d, [row])
+    }
+  }
+
+  const items: PengeluaranItem[] = []
+  for (const tanggalKey of dateOrder) {
+    const merged = mergeSameNamaRows(byDate.get(tanggalKey) ?? [], "pengeluaran")
+    for (const row of merged) {
+      items.push({
+        tanggalKey,
+        kategori: kategoriLabel(row, "pengeluaran"),
+        user: singleUnitLabel(row),
+        namaBarang: namaBarangLabel(row) || "Tanpa nama",
+        qty: num(row, "jumlah"),
+      })
+    }
+  }
 
   items.sort((a, b) => {
-    const byDate = b.tanggalKey.localeCompare(a.tanggalKey, "id")
-    if (byDate !== 0) return byDate
     const byKat = a.kategori.localeCompare(b.kategori, "id")
     if (byKat !== 0) return byKat
+    const byDate = b.tanggalKey.localeCompare(a.tanggalKey, "id")
+    if (byDate !== 0) return byDate
     const byUser = a.user.localeCompare(b.user, "id")
     if (byUser !== 0) return byUser
     return a.namaBarang.localeCompare(b.namaBarang, "id")
@@ -588,159 +606,187 @@ function preparePengeluaranItems(
   return items
 }
 
-function buildCategoryBlock(
-  tanggalKey: string,
-  kategori: string,
-  catItems: PengeluaranItem[]
-): PengeluaranCategoryBlock {
-  const userOrder: string[] = []
-  const byUser = new Map<string, PengeluaranItem[]>()
-  for (const item of catItems) {
-    const bucket = byUser.get(item.user)
-    if (bucket) bucket.push(item)
-    else {
-      userOrder.push(item.user)
-      byUser.set(item.user, [item])
-    }
-  }
-
-  const rows: PengeluaranTableRow[] = []
-  let catQty = 0
-  let itemCount = 0
-
-  for (const user of userOrder) {
-    const userItems = byUser.get(user) ?? []
-    const userRowSpan = userItems.length
-    let userQty = 0
-    let userShown = false
-
-    for (const [index, item] of userItems.entries()) {
-      userQty += item.qty
-      itemCount += 1
-      rows.push({
-        type: "item",
-        key: `${tanggalKey}|${kategori}|${user}|${item.namaBarang}|${index}`,
-        user,
-        showUser: !userShown,
-        userRowSpan,
-        namaBarang: item.namaBarang,
-        qty: item.qty,
-        total: item.qty,
-      })
-      userShown = true
-    }
-
-    rows.push({
-      type: "user-subtotal",
-      key: `${tanggalKey}|${kategori}|${user}|sub`,
-      label: `Subtotal ${user}`,
-      qty: userQty,
-      total: userQty,
-    })
-    catQty += userQty
-  }
-
-  rows.push({
-    type: "category-subtotal",
-    key: `${tanggalKey}|${kategori}|cat-sub`,
-    label: `Subtotal ${kategori}`,
-    qty: catQty,
-    total: catQty,
-  })
-
-  return {
-    key: `${tanggalKey}|${kategori}`,
-    label: kategori,
-    itemCount,
-    users: userOrder,
-    qty: catQty,
-    rows,
-  }
-}
-
 /**
- * Pengeluaran: Hari → Kategori → User (span) → Item.
+ * Pengeluaran: Kategori → row Tanggal → User (span) → Item.
  * Total = qty (agregat jumlah).
  */
-export function buildPengeluaranDaySections(
+export function buildPengeluaranCategorySections(
   rows: Record<string, unknown>[],
   formatTanggal: (tanggalKey: string) => string
-): { days: PengeluaranDaySection[]; grandQty: number } {
+): { categories: PengeluaranCategorySection[]; grandQty: number } {
   const items = preparePengeluaranItems(rows)
-  if (items.length === 0) return { days: [], grandQty: 0 }
+  if (items.length === 0) return { categories: [], grandQty: 0 }
 
-  const dateOrder: string[] = []
-  const byDate = new Map<string, PengeluaranItem[]>()
+  const katOrder: string[] = []
+  const byKat = new Map<string, PengeluaranItem[]>()
   for (const item of items) {
-    const bucket = byDate.get(item.tanggalKey)
+    const bucket = byKat.get(item.kategori)
     if (bucket) bucket.push(item)
     else {
-      dateOrder.push(item.tanggalKey)
-      byDate.set(item.tanggalKey, [item])
+      katOrder.push(item.kategori)
+      byKat.set(item.kategori, [item])
     }
   }
 
-  const days: PengeluaranDaySection[] = []
+  const categories: PengeluaranCategorySection[] = []
   let grandQty = 0
 
-  for (const tanggalKey of dateOrder) {
-    const dateItems = byDate.get(tanggalKey) ?? []
-    const katOrder: string[] = []
-    const byKat = new Map<string, PengeluaranItem[]>()
-    for (const item of dateItems) {
-      const bucket = byKat.get(item.kategori)
+  for (const kategori of katOrder) {
+    const catItems = byKat.get(kategori) ?? []
+    const dateOrder: string[] = []
+    const byDate = new Map<string, PengeluaranItem[]>()
+    for (const item of catItems) {
+      const bucket = byDate.get(item.tanggalKey)
       if (bucket) bucket.push(item)
       else {
-        katOrder.push(item.kategori)
-        byKat.set(item.kategori, [item])
+        dateOrder.push(item.tanggalKey)
+        byDate.set(item.tanggalKey, [item])
       }
     }
 
-    const categories = katOrder.map((kat) =>
-      buildCategoryBlock(tanggalKey, kat, byKat.get(kat) ?? [])
-    )
-    const dateQty = categories.reduce((sum, c) => sum + c.qty, 0)
-    const itemCount = categories.reduce((sum, c) => sum + c.itemCount, 0)
-    const users = Array.from(
-      new Set(categories.flatMap((c) => c.users))
-    ).sort((a, b) => a.localeCompare(b, "id"))
+    const rowsOut: PengeluaranTableRow[] = []
+    const usersSet = new Set<string>()
+    let catQty = 0
+    let itemCount = 0
 
-    days.push({
-      tanggalKey,
-      tanggalLabel: formatTanggal(tanggalKey),
+    for (const tanggalKey of dateOrder) {
+      const dateItems = byDate.get(tanggalKey) ?? []
+      const tanggalLabel = formatTanggal(tanggalKey)
+
+      rowsOut.push({
+        type: "date-header",
+        key: `${kategori}|${tanggalKey}|header`,
+        label: tanggalLabel,
+      })
+
+      const userOrder: string[] = []
+      const byUser = new Map<string, PengeluaranItem[]>()
+      for (const item of dateItems) {
+        usersSet.add(item.user)
+        const bucket = byUser.get(item.user)
+        if (bucket) bucket.push(item)
+        else {
+          userOrder.push(item.user)
+          byUser.set(item.user, [item])
+        }
+      }
+
+      let dateQty = 0
+      for (const user of userOrder) {
+        const userItems = byUser.get(user) ?? []
+        const userRowSpan = userItems.length
+        let userQty = 0
+        let userShown = false
+
+        for (const [index, item] of userItems.entries()) {
+          userQty += item.qty
+          itemCount += 1
+          rowsOut.push({
+            type: "item",
+            key: `${kategori}|${tanggalKey}|${user}|${item.namaBarang}|${index}`,
+            user,
+            showUser: !userShown,
+            userRowSpan,
+            namaBarang: item.namaBarang,
+            qty: item.qty,
+            total: item.qty,
+          })
+          userShown = true
+        }
+
+        rowsOut.push({
+          type: "user-subtotal",
+          key: `${kategori}|${tanggalKey}|${user}|sub`,
+          label: `Subtotal ${user}`,
+          qty: userQty,
+          total: userQty,
+        })
+        dateQty += userQty
+      }
+
+      rowsOut.push({
+        type: "date-subtotal",
+        key: `${kategori}|${tanggalKey}|date-sub`,
+        label: `Subtotal ${tanggalLabel}`,
+        qty: dateQty,
+        total: dateQty,
+      })
+      catQty += dateQty
+    }
+
+    rowsOut.push({
+      type: "category-subtotal",
+      key: `${kategori}|cat-sub`,
+      label: `Subtotal ${kategori}`,
+      qty: catQty,
+      total: catQty,
+    })
+
+    const users = Array.from(usersSet).sort((a, b) => a.localeCompare(b, "id"))
+    categories.push({
+      key: kategori,
+      label: kategori,
       itemCount,
       users,
-      qty: dateQty,
-      categories,
+      qty: catQty,
+      rows: rowsOut,
     })
-    grandQty += dateQty
+    grandQty += catQty
   }
 
-  return { days, grandQty }
+  return { categories, grandQty }
 }
 
-/** @deprecated gunakan buildPengeluaranDaySections */
+/** @deprecated gunakan buildPengeluaranCategorySections */
+export function buildPengeluaranDaySections(
+  rows: Record<string, unknown>[],
+  formatTanggal: (tanggalKey: string) => string
+) {
+  const { categories, grandQty } = buildPengeluaranCategorySections(
+    rows,
+    formatTanggal
+  )
+  return { days: [], categories, grandQty }
+}
+
+/** @deprecated gunakan buildPengeluaranCategorySections */
 export function buildPengeluaranTableRows(
   rows: Record<string, unknown>[],
   formatTanggal: (tanggalKey: string) => string
 ) {
-  const { days, grandQty } = buildPengeluaranDaySections(rows, formatTanggal)
-  const flat: PengeluaranTableRow[] = days.flatMap((d) =>
-    d.categories.flatMap((c) => c.rows)
+  const { categories, grandQty } = buildPengeluaranCategorySections(
+    rows,
+    formatTanggal
   )
-  return { rows: flat, grandQty }
+  return {
+    rows: categories.flatMap((c) => c.rows),
+    grandQty,
+  }
+}
+
+const pengeluaranPdfLayout = {
+  hLineWidth: () => 0.7,
+  vLineWidth: () => 0.7,
+  hLineColor: () => "#9ca3af",
+  vLineColor: () => "#9ca3af",
+  paddingLeft: () => 6,
+  paddingRight: () => 6,
+  paddingTop: () => 4,
+  paddingBottom: () => 4,
 }
 
 /**
- * PDF content blocks untuk Pengeluaran: hari → kategori (full-width).
- * Setiap kategori = satu tabel User/Item/Qty/Total.
+ * PDF: Kategori (satu blok/halaman) → row Tanggal → User span → Item.
  */
 export function buildPengeluaranPdfContent(
   rows: Record<string, unknown>[],
   formatTanggal: (tanggalKey: string) => string
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ): { blocks: any[]; grandQty: number } {
-  const { days, grandQty } = buildPengeluaranDaySections(rows, formatTanggal)
+  const { categories, grandQty } = buildPengeluaranCategorySections(
+    rows,
+    formatTanggal
+  )
   const widths = [70, "*", 42, 42]
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const blocks: any[] = []
@@ -752,152 +798,110 @@ export function buildPengeluaranPdfContent(
     { text: "Total", style: "tableHeader", alignment: "center" },
   ]
 
-  days.forEach((day, dayIndex) => {
+  categories.forEach((cat, catIndex) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const dayStack: any[] = [
-      {
-        text: `${day.tanggalLabel}   ·   ${day.itemCount} item · ${day.users.length} user · jml ${day.qty}`,
-        style: "sectionTitle",
-        margin: [0, 0, 0, 8],
-      },
-    ]
+    const body: any[][] = [header]
 
-    day.categories.forEach((cat, catIndex) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const body: any[][] = [header]
-
-      for (const row of cat.rows) {
-        if (row.type === "item") {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const line: any[] = []
-          if (row.showUser) {
-            line.push({
-              text: row.user,
-              style: "tableCell",
-              rowSpan: row.userRowSpan,
-              valign: "middle",
-            })
-          } else {
-            line.push({})
-          }
-          line.push({ text: row.namaBarang, style: "tableCell" })
-          line.push({
-            text: String(row.qty),
-            style: "tableCell",
-            alignment: "right",
-          })
-          line.push({
-            text: String(row.total),
-            style: "tableCell",
-            alignment: "right",
-          })
-          body.push(line)
-          continue
-        }
-
-        if (row.type === "user-subtotal") {
-          body.push([
-            {
-              text: row.label,
-              style: "subtotal",
-              colSpan: 2,
-              alignment: "left",
-            },
-            {},
-            { text: String(row.qty), style: "subtotal", alignment: "right" },
-            { text: String(row.total), style: "subtotal", alignment: "right" },
-          ])
-          continue
-        }
-
-        // category-subtotal
+    for (const row of cat.rows) {
+      if (row.type === "date-header") {
         body.push([
           {
             text: row.label,
-            style: "sectionTotal",
-            colSpan: 2,
-            alignment: "left",
+            style: "sectionTitle",
+            colSpan: 4,
+            fillColor: "#e5e7eb",
           },
           {},
-          {
-            text: String(row.qty),
-            style: "sectionTotal",
-            alignment: "right",
-          },
-          {
-            text: String(row.total),
-            style: "sectionTotal",
-            alignment: "right",
-          },
+          {},
+          {},
         ])
+        continue
       }
 
-      dayStack.push({
-        text: `Kategori: ${cat.label}   ·   ${cat.itemCount} item · jml ${cat.qty}`,
-        style: "unitTitle",
-        margin: [0, catIndex === 0 ? 0 : 10, 0, 4],
-      })
-      dayStack.push({
-        table: { widths, headerRows: 1, body },
-        layout: {
-          hLineWidth: () => 0.7,
-          vLineWidth: () => 0.7,
-          hLineColor: () => "#9ca3af",
-          vLineColor: () => "#9ca3af",
-          paddingLeft: () => 6,
-          paddingRight: () => 6,
-          paddingTop: () => 4,
-          paddingBottom: () => 4,
-          fillColor: (rowIndex: number) => {
-            if (rowIndex === 0) return "#f3f4f6"
-            return null
-          },
-        },
-        margin: [0, 0, 0, 4],
-      })
-    })
+      if (row.type === "item") {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const line: any[] = []
+        if (row.showUser) {
+          line.push({
+            text: row.user,
+            style: "tableCell",
+            rowSpan: row.userRowSpan,
+            valign: "middle",
+          })
+        } else {
+          line.push({})
+        }
+        line.push({ text: row.namaBarang, style: "tableCell" })
+        line.push({
+          text: String(row.qty),
+          style: "tableCell",
+          alignment: "right",
+        })
+        line.push({
+          text: String(row.total),
+          style: "tableCell",
+          alignment: "right",
+        })
+        body.push(line)
+        continue
+      }
 
-    dayStack.push({
-      table: {
-        widths,
-        body: [
-          [
-            {
-              text: `Subtotal ${day.tanggalLabel}`,
-              style: "sectionTotal",
-              colSpan: 2,
-            },
-            {},
-            {
-              text: String(day.qty),
-              style: "sectionTotal",
-              alignment: "right",
-            },
-            {
-              text: String(day.qty),
-              style: "sectionTotal",
-              alignment: "right",
-            },
-          ],
-        ],
-      },
-      layout: {
-        hLineWidth: () => 0.7,
-        vLineWidth: () => 0.7,
-        hLineColor: () => "#9ca3af",
-        vLineColor: () => "#9ca3af",
-        paddingLeft: () => 6,
-        paddingRight: () => 6,
-        paddingTop: () => 4,
-        paddingBottom: () => 4,
-        fillColor: () => "#f3f4f6",
-      },
-      margin: [0, 6, 0, 0],
-    })
+      const style =
+        row.type === "category-subtotal"
+          ? "sectionTotal"
+          : row.type === "date-subtotal"
+            ? "sectionTotal"
+            : "subtotal"
+      const fill =
+        row.type === "category-subtotal"
+          ? "#e5e7eb"
+          : row.type === "date-subtotal"
+            ? "#f3f4f6"
+            : null
+
+      body.push([
+        {
+          text: row.label,
+          style,
+          colSpan: 2,
+          alignment: "left",
+          ...(fill ? { fillColor: fill } : {}),
+        },
+        {},
+        {
+          text: String(row.qty),
+          style,
+          alignment: "right",
+          ...(fill ? { fillColor: fill } : {}),
+        },
+        {
+          text: String(row.total),
+          style,
+          alignment: "right",
+          ...(fill ? { fillColor: fill } : {}),
+        },
+      ])
+    }
 
     blocks.push({
-      stack: dayStack,
-      pageBreak: dayIndex > 0 ? "before" : undefined,
+      stack: [
+        {
+          text: `Kategori: ${cat.label}   ·   ${cat.itemCount} item · ${cat.users.length} user · jml ${cat.qty}`,
+          style: "sectionTitle",
+          margin: [0, 0, 0, 6],
+        },
+        {
+          table: { widths, headerRows: 1, body },
+          layout: {
+            ...pengeluaranPdfLayout,
+            fillColor: (rowIndex: number) => {
+              if (rowIndex === 0) return "#f3f4f6"
+              return null
+            },
+          },
+        },
+      ],
+      pageBreak: catIndex > 0 ? "before" : undefined,
     })
   })
 
@@ -926,14 +930,7 @@ export function buildPengeluaranPdfContent(
       ],
     },
     layout: {
-      hLineWidth: () => 0.7,
-      vLineWidth: () => 0.7,
-      hLineColor: () => "#9ca3af",
-      vLineColor: () => "#9ca3af",
-      paddingLeft: () => 6,
-      paddingRight: () => 6,
-      paddingTop: () => 4,
-      paddingBottom: () => 4,
+      ...pengeluaranPdfLayout,
       fillColor: () => "#e5e7eb",
     },
     margin: [0, 12, 0, 0],

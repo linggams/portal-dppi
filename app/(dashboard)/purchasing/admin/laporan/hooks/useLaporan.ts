@@ -277,7 +277,7 @@ export function useLaporan() {
         content.push({ text: " ", margin: [0, 0, 0, 8] })
       }
 
-      // Pengeluaran: mirror UI — Hari → Kategori → User span
+      // Pengeluaran: mirror UI — Kategori → row Tanggal → User span
       if (activeTab === "pengeluaran") {
         const allow = new Set(exportSelected)
         const filtered = exportRows.filter((row) =>

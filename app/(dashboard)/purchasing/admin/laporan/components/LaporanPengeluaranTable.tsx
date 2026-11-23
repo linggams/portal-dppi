@@ -10,7 +10,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import {
-  buildPengeluaranDaySections,
+  buildPengeluaranCategorySections,
   type PengeluaranTableRow,
 } from "@/lib/purchasing/laporan-group"
 import { cn } from "@/lib/utils"
@@ -24,7 +24,9 @@ interface Props {
 }
 
 function toneClass(row: PengeluaranTableRow) {
-  if (row.type === "category-subtotal") return "bg-muted/40 font-medium"
+  if (row.type === "date-header") return "bg-muted font-semibold"
+  if (row.type === "category-subtotal") return "bg-muted/50 font-medium"
+  if (row.type === "date-subtotal") return "bg-muted/40 font-medium"
   if (row.type === "user-subtotal") return "bg-muted/20 font-medium"
   return ""
 }
@@ -43,6 +45,22 @@ function CategoryTable({ rows }: { rows: PengeluaranTableRow[] }) {
         </TableHeader>
         <TableBody>
           {rows.map((row) => {
+            if (row.type === "date-header") {
+              return (
+                <TableRow
+                  key={row.key}
+                  className={cn(
+                    "border-0 hover:bg-transparent",
+                    toneClass(row)
+                  )}
+                >
+                  <TableCell colSpan={4} className="font-semibold">
+                    {row.label}
+                  </TableCell>
+                </TableRow>
+              )
+            }
+
             if (row.type === "item") {
               return (
                 <TableRow
@@ -91,63 +109,26 @@ function CategoryTable({ rows }: { rows: PengeluaranTableRow[] }) {
 }
 
 export function LaporanPengeluaranTable({ data }: Props) {
-  const { days, grandQty } = buildPengeluaranDaySections(data, formatDate)
-  if (days.length === 0) return null
+  const { categories, grandQty } = buildPengeluaranCategorySections(
+    data,
+    formatDate
+  )
+  if (categories.length === 0) return null
 
   return (
     <div className="space-y-5">
-      {days.map((day) => (
-        <div key={day.tanggalKey} className="space-y-3">
-          <div className="flex flex-wrap items-center gap-2 border-l-4 border-l-primary pl-3">
-            <h3 className="text-sm font-semibold tracking-tight sm:text-base">
-              {day.tanggalLabel}
-            </h3>
-            <span className="text-xs text-muted-foreground sm:text-sm">
-              {day.itemCount} item
-              {day.users.length > 0 ? ` · ${day.users.length} user` : ""}
-              {` · jml ${day.qty}`}
+      {categories.map((cat) => (
+        <div key={cat.key} className="overflow-hidden rounded-md">
+          <div className="flex flex-wrap items-center justify-between gap-2 border border-b-0 border-border bg-muted px-3 py-2">
+            <span className="text-sm font-medium">
+              Kategori: {cat.label}
+            </span>
+            <span className="shrink-0 text-xs text-muted-foreground sm:text-sm">
+              {cat.itemCount} item · jml {cat.qty}
+              {cat.users.length > 0 ? ` · ${cat.users.length} user` : ""}
             </span>
           </div>
-
-          <div className="space-y-3">
-            {day.categories.map((cat) => (
-              <div
-                key={cat.key}
-                className="overflow-hidden rounded-md"
-              >
-                <div className="flex flex-wrap items-center justify-between gap-2 border border-b-0 border-border bg-muted px-3 py-2">
-                  <span className="text-sm font-medium">
-                    Kategori: {cat.label}
-                  </span>
-                  <span className="shrink-0 text-xs text-muted-foreground sm:text-sm">
-                    {cat.itemCount} item · jml {cat.qty}
-                    {cat.users.length > 0
-                      ? ` · ${cat.users.length} user`
-                      : ""}
-                  </span>
-                </div>
-                <CategoryTable rows={cat.rows} />
-              </div>
-            ))}
-          </div>
-
-          <TableContainer className="border-0">
-            <Table className={cn(borderedTableClass, "w-full text-sm")}>
-              <TableBody>
-                <TableRow className="border-0 bg-muted/40 hover:bg-transparent">
-                  <TableCell colSpan={2} className="font-medium">
-                    Subtotal {day.tanggalLabel}
-                  </TableCell>
-                  <TableCell className="text-right font-medium">
-                    {day.qty}
-                  </TableCell>
-                  <TableCell className="text-right font-medium">
-                    {day.qty}
-                  </TableCell>
-                </TableRow>
-              </TableBody>
-            </Table>
-          </TableContainer>
+          <CategoryTable rows={cat.rows} />
         </div>
       ))}
 
